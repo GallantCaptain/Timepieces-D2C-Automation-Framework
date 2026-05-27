@@ -12,97 +12,97 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
 /**
- * Cucumber lifecycle hooks: provisions a fresh ThreadLocal WebDriver and screen recorder per
- * scenario; on failure, attaches a PNG screenshot and the captured AVI to the Allure report.
+ * Cucumber lifecycle hooks: provisions a fresh ThreadLocal WebDriver and screen
+ * recorder per scenario; on failure, attaches a PNG screenshot and the captured
+ * AVI to the Allure report.
  */
 @Log4j2
 public class Hooks {
 
-  private static final String SEPARATOR =
-      "==========================================================================";
-  private static final String FILENAME_UNSAFE_CHARS = "[^A-Za-z0-9._-]";
+    private static final String SEPARATOR = "==========================================================================";
+    private static final String FILENAME_UNSAFE_CHARS = "[^A-Za-z0-9._-]";
 
-  @Before(order = 0)
-  public void setUp(Scenario scenario) {
-    log.info(SEPARATOR);
-    log.info("STARTING SCENARIO: {}", scenario.getName());
-    log.info(SEPARATOR);
+    @Before(order = 0)
+    public void setUp(Scenario scenario) {
+        log.info(SEPARATOR);
+        log.info("STARTING SCENARIO: {}", scenario.getName());
+        log.info(SEPARATOR);
 
-    DriverFactory.initDriver();
+        DriverFactory.initDriver();
 
-    if (isVideoRecordingEnabled()) {
-      ScreenRecorderUtil.start(buildRecordingName(scenario));
-    }
-  }
-
-  @After(order = 0)
-  public void tearDown(Scenario scenario) {
-    WebDriver driver = DriverFactory.getDriver();
-    try {
-      if (scenario.isFailed()) {
-        log.error("SCENARIO FAILED: {}", scenario.getName());
-        attachScreenshot(driver, scenario);
-        attachVideoIfRecording(scenario);
-      } else {
-        log.info("SCENARIO PASSED: {}", scenario.getName());
         if (isVideoRecordingEnabled()) {
-          ScreenRecorderUtil.stopAndDiscard();
+            ScreenRecorderUtil.start(buildRecordingName(scenario));
         }
-      }
-    } finally {
-      quitDriverQuietly(driver);
-      log.info(SEPARATOR);
     }
-  }
 
-  private void attachScreenshot(WebDriver driver, Scenario scenario) {
-    if (driver == null) {
-      log.warn("No active WebDriver; screenshot capture skipped.");
-      return;
+    @After(order = 0)
+    public void tearDown(Scenario scenario) {
+        WebDriver driver = DriverFactory.getDriver();
+        try {
+            if (scenario.isFailed()) {
+                log.error("SCENARIO FAILED: {}", scenario.getName());
+                attachScreenshot(driver, scenario);
+                attachVideoIfRecording(scenario);
+            } else {
+                log.info("SCENARIO PASSED: {}", scenario.getName());
+                if (isVideoRecordingEnabled()) {
+                    ScreenRecorderUtil.stopAndDiscard();
+                }
+            }
+        } finally {
+            quitDriverQuietly(driver);
+            log.info(SEPARATOR);
+        }
     }
-    try {
-      byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-      scenario.attach(screenshot, "image/png", "Screenshot on Failure");
-      log.info("Screenshot attached to Allure report.");
-    } catch (Exception e) {
-      log.error("Failed to capture failure screenshot: {}", e.getMessage(), e);
-    }
-  }
 
-  private void attachVideoIfRecording(Scenario scenario) {
-    if (!isVideoRecordingEnabled()) {
-      return;
+    private void attachScreenshot(WebDriver driver, Scenario scenario) {
+        if (driver == null) {
+            log.warn("No active WebDriver; screenshot capture skipped.");
+            return;
+        }
+        try {
+            byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+            scenario.attach(screenshot, "image/png", "Screenshot on Failure");
+            log.info("Screenshot attached to Allure report.");
+        } catch (Exception e) {
+            log.error("Failed to capture failure screenshot: {}", e.getMessage(), e);
+        }
     }
-    byte[] video = ScreenRecorderUtil.stopAndExtract();
-    if (video == null || video.length == 0) {
-      log.warn("No video bytes available to attach for scenario [{}].", scenario.getName());
-      return;
-    }
-    scenario.attach(video, "video/avi", "Video on Failure");
-    log.info("Video attached to Allure report ({} bytes).", video.length);
-  }
 
-  private void quitDriverQuietly(WebDriver driver) {
-    if (driver == null) {
-      return;
+    private void attachVideoIfRecording(Scenario scenario) {
+        if (!isVideoRecordingEnabled()) {
+            return;
+        }
+        byte[] video = ScreenRecorderUtil.stopAndExtract();
+        if (video == null || video.length == 0) {
+            log.warn("No video bytes available to attach for scenario [{}].", scenario.getName());
+            return;
+        }
+        scenario.attach(video, "video/avi", "Video on Failure");
+        log.info("Video attached to Allure report ({} bytes).", video.length);
     }
-    try {
-      driver.quit();
-      log.info("Browser closed and driver instance safely removed.");
-    } catch (Exception e) {
-      log.error("Failed to quit WebDriver cleanly: {}", e.getMessage(), e);
-    } finally {
-      DriverFactory.removeDriver();
+
+    private void quitDriverQuietly(WebDriver driver) {
+        if (driver == null) {
+            return;
+        }
+        try {
+            driver.quit();
+            log.info("Browser closed and driver instance safely removed.");
+        } catch (Exception e) {
+            log.error("Failed to quit WebDriver cleanly: {}", e.getMessage(), e);
+        } finally {
+            DriverFactory.removeDriver();
+        }
     }
-  }
 
-  private boolean isVideoRecordingEnabled() {
-    String flag = ConfigReader.get("recordVideo");
-    return flag == null || Boolean.parseBoolean(flag);
-  }
+    private boolean isVideoRecordingEnabled() {
+        String flag = ConfigReader.get("recordVideo");
+        return flag == null || Boolean.parseBoolean(flag);
+    }
 
-  private String buildRecordingName(Scenario scenario) {
-    String safeName = scenario.getName().replaceAll(FILENAME_UNSAFE_CHARS, "_");
-    return safeName + "_" + System.currentTimeMillis();
-  }
+    private String buildRecordingName(Scenario scenario) {
+        String safeName = scenario.getName().replaceAll(FILENAME_UNSAFE_CHARS, "_");
+        return safeName + "_" + System.currentTimeMillis();
+    }
 }
