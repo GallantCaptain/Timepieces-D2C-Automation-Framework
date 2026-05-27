@@ -1,0 +1,5 @@
+package com.timepieces.automation.pages.web.legal;
+
+public class TermsOfServicePage {
+
+}

@@ -1,0 +1,57 @@
+# Maven build output
+target/
+**/target/
+
+# Allure reports / results
+allure-results/
+allure-report/
+.allure/
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# IDE - VS Code (keep project settings tracked under .vscode/)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Test output
+test-output/
+screenshots/
+videos/
+
+# Secrets / local config
+*.env
+.env.local
+secrets.properties
+
+# Selenium / WebDriver
+chromedriver*
+geckodriver*
+msedgedriver*
+*.crx
+selenium-debug.log
+
+# Lombok / annotation processor caches
+.apt_generated/

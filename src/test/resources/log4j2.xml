@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="basePath">logs</Property>
+        <Property name="consolePattern">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %c{1} %logger{36} - %msg%n
+        </Property>
+        <Property name="filePattern">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %c{1} %logger{36} [%M:%L] - %msg%n
+        </Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${consolePattern}"/>
+        </Console>
+
+        <!-- General application log: rolls on new day or 10MB, keeps 10 archives -->
+        <RollingFile name="ApplicationLog"
+                     fileName="${basePath}/automation.log"
+                     filePattern="${basePath}/automation-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${filePattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <!-- Error-only log: rolls on new day or 10MB, keeps 5 archives -->
+        <RollingFile name="ErrorLog"
+                     fileName="${basePath}/automation-error.log"
+                     filePattern="${basePath}/automation-error-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${filePattern}"/>
+            <LevelRangeFilter minLevel="FATAL" maxLevel="ERROR"
+                              onMatch="ACCEPT" onMismatch="REJECT"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="com.timepieces.automation" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ApplicationLog"/>
+            <AppenderRef ref="ErrorLog"/>
+        </Logger>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ApplicationLog"/>
+            <AppenderRef ref="ErrorLog"/>
+        </Root>
+    </Loggers>
+</Configuration>
