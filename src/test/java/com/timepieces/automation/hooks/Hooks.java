@@ -3,13 +3,16 @@ package com.timepieces.automation.hooks;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.utils.ConfigReader;
 import com.timepieces.automation.utils.ScreenRecorderUtil;
+
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import lombok.extern.log4j.Log4j2;
+
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 
 /**
  * Cucumber lifecycle hooks: provisions a fresh ThreadLocal WebDriver and screen
@@ -64,7 +67,7 @@ public class Hooks {
             byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
             scenario.attach(screenshot, "image/png", "Screenshot on Failure");
             log.info("Screenshot attached to Allure report.");
-        } catch (Exception e) {
+        } catch (WebDriverException e) {
             log.error("Failed to capture failure screenshot: {}", e.getMessage(), e);
         }
     }
