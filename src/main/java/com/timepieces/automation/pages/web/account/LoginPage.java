@@ -5,7 +5,6 @@ import java.util.List;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import com.timepieces.automation.pages.BasePage;
 import com.timepieces.automation.utils.BrowserUtils;
@@ -105,21 +104,20 @@ public class LoginPage extends BasePage {
         log.debug("Opening country code dropdown and searching for: '{}'", searchTerm);
 
         // Open the dropdown
-        wait.until(ExpectedConditions.visibilityOfElementLocated(countryDropdownButton));
-        wait.until(ExpectedConditions.elementToBeClickable(countryCodeDropdownBox)).click();
+        waitForVisibility(countryDropdownButton);
+        clickElement(countryCodeDropdownBox);
         log.debug("Country code dropdown opened.");
 
         // Wait for the scroll area to be visible (confirms the dropdown is fully open)
-        wait.until(ExpectedConditions.visibilityOfElementLocated(countryDropdownScrollArea));
+        waitForVisibility(countryDropdownScrollArea);
 
         // Type the search term into the search field
-        wait.until(ExpectedConditions.visibilityOfElementLocated(countrySearchField)).sendKeys(searchTerm);
+        sendKeys(countrySearchField, searchTerm);
         log.debug("Search term '{}' entered into country search field.", searchTerm);
 
         // Find all the visible options in the dropdown after searching, and click on
         // the first match
-        List<WebElement> options = wait
-                .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(countryDropdownScrollArea));
+        List<WebElement> options = getElements(countryDropdownScrollArea);
         boolean found = false;
         for (WebElement option : options) {
             if (option.getText().contains(searchTerm)) {
@@ -152,7 +150,7 @@ public class LoginPage extends BasePage {
         String loginUrl = baseUrl + loginPath;
         log.info("Navigating to login page: {}", loginUrl);
         BrowserUtils.navigateTo(driver, loginUrl, 15);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(welcomeMessage));
+        waitForVisibility(welcomeMessage);
         log.info("Login page loaded and welcome message confirmed visible.");
         return this;
     }
@@ -197,9 +195,7 @@ public class LoginPage extends BasePage {
      */
     public LoginPage enterPhoneNumber(String phoneNumber) {
         log.info("Entering phone number: {}", phoneNumber);
-        WebElement phoneField = wait.until(ExpectedConditions.visibilityOfElementLocated(phoneNumberField));
-        phoneField.clear();
-        phoneField.sendKeys(phoneNumber);
+        sendKeys(phoneNumberField, phoneNumber);
         log.info("Phone Number {} entered successfully", phoneNumber);
         return this;
     }
@@ -238,7 +234,7 @@ public class LoginPage extends BasePage {
         log.info("Waiting for CloudFlare CAPTCHA iframe to load (max {}s)...", timeoutInSeconds);
         WindowUtils.waitAndSwitchToFrame(
                 driver,
-                wait.until(ExpectedConditions.presenceOfElementLocated(cloudflareChallengeFrame)),
+                getElementPresence(cloudflareChallengeFrame),
                 timeoutInSeconds);
         WindowUtils.switchToDefaultContent(driver);
         log.info("CloudFlare CAPTCHA ifrae loaded. Switched back to default content.");
@@ -257,8 +253,8 @@ public class LoginPage extends BasePage {
      */
     public LoginPage clickSendOtpButton() {
         log.info("Clicking Send OTP button.");
-        wait.until(ExpectedConditions.elementToBeClickable(sendOtpButton)).click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(verifyAccessMessage));
+        clickElement(sendOtpButton);
+        waitForVisibility(verifyAccessMessage);
         log.info("OTP dispatched. OTP entry screen is now visible.");
         return this;
     }
@@ -276,8 +272,7 @@ public class LoginPage extends BasePage {
      */
     public LoginPage enterOtp(String otp) {
         log.info("Entering OTP (length: {} digits).", otp.length());
-        List<WebElement> fields = wait.until(ExpectedConditions
-                .visibilityOfAllElementsLocatedBy(otpInputFields));
+        List<WebElement> fields = getElements(otpInputFields);
 
         if (otp.length() != fields.size()) {
             throw new IllegalArgumentException(
@@ -303,7 +298,7 @@ public class LoginPage extends BasePage {
      */
     public LoginPage clickContinueButton() {
         log.info("Clicking Continue button to submit OTP.");
-        wait.until(ExpectedConditions.elementToBeClickable(continueButton));
+        clickElement(continueButton);
         log.info("Continue clicked. Login flow submitted.");
         // TODO: Replace return type with AccountPage once AccountPage POM is created:
         // return new AccountPage(driver);
@@ -318,8 +313,8 @@ public class LoginPage extends BasePage {
      */
     public LoginPage clickChangePhoneNumber() {
         log.info("Clicking 'Change phone number' link.");
-        wait.until(ExpectedConditions.elementToBeClickable(changePhoneNumber)).click();
-        wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(phoneNumberField));
+        clickElement(changePhoneNumber);
+        waitForVisibility(phoneNumberField);
         log.info("Returned to phone number entry view.");
         return this;
     }
@@ -331,7 +326,7 @@ public class LoginPage extends BasePage {
      */
     public LoginPage clickResendOtp() {
         log.info("Clicking 'Resend OTP' link.");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(resendOtpLink)).click();
+        clickElement(resendOtpLink);
         log.info("Resend OTP requested.");
         return this;
     }
@@ -352,17 +347,12 @@ public class LoginPage extends BasePage {
      * @return true if the welcome message is displayed, false otherwise.
      */
     public boolean isWelcomeMessageDisplayed() {
-        try {
-            // First wait: Verifies the main container is visible
-            wait.until(ExpectedConditions.visibilityOfElementLocated(welcomeMessage));
-            // Second wait: Verifies the specific details inside are also visible
-            wait.until(ExpectedConditions.visibilityOfElementLocated(welcomeMessageDetails));
+        if (isDisplayed(welcomeMessage) && isDisplayed(welcomeMessageDetails)) {
             log.info("verified: Welcome message and details are displayed");
             return true;
-        } catch (Exception e) {
-            log.warn("Welcome message not displayed: {}", e.getMessage());
-            return false;
         }
+        log.warn("Welcome message not displayed.");
+        return false;
     }
 
     /**
@@ -375,17 +365,12 @@ public class LoginPage extends BasePage {
      * @return true if the OTP entry screen is displayed, false otherwise.
      */
     public boolean isOtpEntryScreenDisplayed() {
-        try {
-            // First wait: Verifies the main container is visible
-            wait.until(ExpectedConditions.visibilityOfElementLocated(verifyAccessMessage));
-            // First wait: Verifies the main container is visible
-            wait.until(ExpectedConditions.visibilityOfElementLocated(enterCodeMessageUnderVerifyAccess));
+        if (isDisplayed(verifyAccessMessage) && isDisplayed(enterCodeMessageUnderVerifyAccess)) {
             log.info("Verified: OTP entry screen messages are displayed.");
             return true;
-        } catch (Exception e) {
-            log.warn("Unsupported country message not displayed: {}", e.getMessage());
-            return false;
         }
+        log.warn("OTP entry screen messages not displayed.");
+        return false;
     }
 
     /**
@@ -396,14 +381,12 @@ public class LoginPage extends BasePage {
      *         otherwise.
      */
     public boolean isUnsupportedCountryMessageDisplayed() {
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(unsupportedCountryMessage));
+        if (isDisplayed(unsupportedCountryMessage)) {
             log.info("Verified: unsupported country message is displayed.");
             return true;
-        } catch (Exception e) {
-            log.warn("Unsupported country message not displayed: {}", e.getMessage());
-            return false;
         }
+        log.warn("Unsupported country message not displayed.");
+        return false;
     }
 
     /**
@@ -414,14 +397,12 @@ public class LoginPage extends BasePage {
      * @return true if the CAPTCHA failed message is displayed, false otherwise.
      */
     public boolean isCaptchaFailedMessageDisplayed() {
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(captchaChallengeFailedMessage));
+        if (isDisplayed(captchaChallengeFailedMessage)) {
             log.info("Verified: CAPTCHA failed message is displayed.");
             return true;
-        } catch (Exception e) {
-            log.warn("CAPTCHA failed message not displayed: {}", e.getMessage());
-            return false;
         }
+        log.warn("CAPTCHA failed message not displayed.");
+        return false;
     }
 
     /**
@@ -432,14 +413,12 @@ public class LoginPage extends BasePage {
      * @return true if the WhatsApp message is displayed, false otherwise.
      */
     public boolean isAdditionalWhatsAppMessageDisplayed() {
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(additionalWhatsAppMessage));
+        if (isDisplayed(additionalWhatsAppMessage)) {
             log.info("Verified: WhatsApp OTP delivery message is displayed.");
             return true;
-        } catch (Exception e) {
-            log.warn("WhatsApp OTP delivery message not displayed: {}", e.getMessage());
-            return false;
         }
+        log.warn("WhatsApp OTP delivery message not displayed.");
+        return false;
     }
 
 }

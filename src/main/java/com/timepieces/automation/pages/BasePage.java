@@ -19,19 +19,17 @@ import lombok.extern.log4j.Log4j2;
  *
  * Every page class in the framework MUST extend this class.
  *
- * RESPONSIBILITIES:
- * 1. Injects the WebDriver instance into the page so all page objects
- * use the same ThreadLocal-safe driver instance from DriverFactory.
- * 2. Initialises a shared WebDriverWait that all page methods inherit.
- * Timeout is read from config (explicit.wait.timeout), defaulting to 10s,
- * so it can be overridden per environment without touching code.
- * 3. Runs PageFactory.initElements() so @FindBy-annotated fields on any
- * subclass page are automatically proxied and lazily resolved on first use.
+ * RESPONSIBILITIES: 1. Injects the WebDriver instance into the page so all page
+ * objects use the same ThreadLocal-safe driver instance from DriverFactory. 2.
+ * Initialises a shared WebDriverWait that all page methods inherit. Timeout is
+ * read from config (explicit.wait.timeout), defaulting to 10s, so it can be
+ * overridden per environment without touching code. 3. Runs
+ * PageFactory.initElements() so @FindBy-annotated fields on any subclass page
+ * are automatically proxied and lazily resolved on first use.
  *
- * WHAT DOES NOT BELONG HERE:
- * - Business logic (belongs in individual page objects)
- * - Assertions (belong in step definitions or test classes)
- * - Driver initialisation or teardown (belongs in DriverFactory + Hooks)
+ * WHAT DOES NOT BELONG HERE: - Business logic (belongs in individual page
+ * objects) - Assertions (belong in step definitions or test classes) - Driver
+ * initialisation or teardown (belongs in DriverFactory + Hooks)
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class BasePage {
@@ -43,7 +41,8 @@ public class BasePage {
      * Constructs a BasePage, wiring up the driver, the explicit wait, and
      * PageFactory element proxies for the concrete subclass.
      *
-     * @param driver The WebDriver instance managed by DriverFactory (ThreadLocal).
+     * @param driver The WebDriver instance managed by DriverFactory
+     * (ThreadLocal).
      */
     public BasePage(WebDriver driver) {
         this.driver = driver;
@@ -62,16 +61,37 @@ public class BasePage {
                 timeoutSeconds);
     }
 
+    // Missing #1: presence (not visibility) — needed for hidden iframes like
+    // Cloudflare
+    protected WebElement getElementPresence(By locator) {
+        log.debug("Awaiting DOM presence (not visibility) for locator: [{}]", locator);
+        return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+    }
+
+    // Missing #2: pure "wait for visible" without returning the element —
+    // used as a navigation confirmation guard (e.g. after clickSendOtpButton)
+    protected void waitForVisibility(By locator) {
+        log.debug("Awaiting visibility confirmation for locator: [{}]", locator);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    // Missing #3 (optional but clean): wait for invisibility/disappearance —
+    // you'll need this soon for loading spinners
+    protected void waitForInvisibility(By locator) {
+        log.debug("Awaiting invisibility/disappearance of locator: [{}]", locator);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
+
     /**
      * * Synchronizes and isolates element retrieval using explicit visibility
-     * constraints.
-     * Guardrails agains lazy loading elements on heavy animated matrices and
-     * ensures that interactions are performed on elements that are present and
-     * visible in the DOM.
-     * 
+     * constraints. Guardrails agains lazy loading elements on heavy animated
+     * matrices and ensures that interactions are performed on elements that are
+     * present and visible in the DOM.
+     *
      * @param locator The By locator used to identify the target element on the
-     *                page.
-     * @return The WebElement that matches the locator and is visible on the page.
+     * page.
+     * @return The WebElement that matches the locator and is visible on the
+     * page.
      */
     protected WebElement getElement(By locator) {
         log.debug("Synchronizing element visibility tracking for locator target: [{}]", locator);
@@ -80,17 +100,16 @@ public class BasePage {
 
     /**
      * Synchronizes and isolates multiple elements retrieval using explicit
-     * visibility constraints.
-     * Retrieves a list of elements based on the provided locator.
-     * Ensures that all matching elements are visible and interactable before
-     * returning them.
-     * Useful for scenarios where multiple elements share the same locator, such as
-     * lists or tables, and allows for batch operations on those elements.
-     * 
+     * visibility constraints. Retrieves a list of elements based on the
+     * provided locator. Ensures that all matching elements are visible and
+     * interactable before returning them. Useful for scenarios where multiple
+     * elements share the same locator, such as lists or tables, and allows for
+     * batch operations on those elements.
+     *
      * @param locator The By locator used to identify the target elements on the
-     *                page.
-     * @return A List of WebElement objects that match the locator and are visible
-     *         on the page.
+     * page.
+     * @return A List of WebElement objects that match the locator and are
+     * visible on the page.
      */
     protected List<WebElement> getElements(By locator) {
         log.debug("Synchronizing multiple element visibility tracking for locator target: [{}]", locator);
@@ -100,12 +119,12 @@ public class BasePage {
     /**
      * Centralized click wrapper with proactive clickability verification.
      * Ensures that the element is not only visible but also interactable (i.e.,
-     * enabled and not obscured) before performing the click action,
-     * reducing the likelihood of ElementNotInteractableException and improving test
+     * enabled and not obscured) before performing the click action, reducing
+     * the likelihood of ElementNotInteractableException and improving test
      * stability.
-     * 
+     *
      * @param locator The By locator used to identify the target element on the
-     *                page.
+     * page.
      */
     protected void clickElement(By locator) {
         log.info("Executing safe click transaction on target element: [{}]", locator);
@@ -118,12 +137,13 @@ public class BasePage {
     }
 
     /**
-     * Centralized input wrapper. Flushes the existing text caches before injecting
-     * new input values to ensure clean state and prevent input anomalies.
-     * 
+     * Centralized input wrapper. Flushes the existing text caches before
+     * injecting new input values to ensure clean state and prevent input
+     * anomalies.
+     *
      * @param locator The By locator used to identify the target element on the
-     *                page.
-     * @param value   The text value to be injected into the target element.
+     * page.
+     * @param value The text value to be injected into the target element.
      */
     protected void sendKeys(By locator, String value) {
         if (value == null) {
@@ -142,12 +162,12 @@ public class BasePage {
     }
 
     /**
-     * Safely pulls inner text generator from validated DOM nodes. Guards against
-     * stale element references and ensures that the text content is accurately
-     * captured from the current state of the page.
-     * 
+     * Safely pulls inner text generator from validated DOM nodes. Guards
+     * against stale element references and ensures that the text content is
+     * accurately captured from the current state of the page.
+     *
      * @param locator The By locator used to identify the target element on the
-     *                page.
+     * page.
      * @return The text content of the target element.
      */
     protected String getText(By locator) {
@@ -162,9 +182,9 @@ public class BasePage {
 
     /**
      * Boolean Verification wrapper asserting active component status
-     * 
+     *
      * @param locator The By locator used to identify the target element on the
-     *                page.
+     * page.
      * @return true if the element is displayed, false otherwise.
      */
     protected Boolean isDisplayed(By locator) {
@@ -179,10 +199,11 @@ public class BasePage {
     }
 
     /**
-     * Centralized method for retrieving the attribute value of a target element.
-     * 
-     * @param locator       The By locator used to identify the target element on
-     *                      the page.
+     * Centralized method for retrieving the attribute value of a target
+     * element.
+     *
+     * @param locator The By locator used to identify the target element on the
+     * page.
      * @param attributeName The name of the attribute to retrieve.
      * @return The value of the specified attribute.
      */
@@ -198,18 +219,18 @@ public class BasePage {
 
     /**
      * Provides clean structural support for dynamic locators (e.g.: selecting
-     * collections dynamically)
-     * Accepts a locator template with placeholders and a replacement value to
-     * generate a specific locator instance at runtime, enabling flexible and
-     * reusable locator strategies for elements that share common patterns but
-     * differ in specific identifiers (e.g., product names, user IDs).
-     * 
-     * @param xPathTemplate    The By locator template containing placeholders for
-     *                         dynamic values.
-     * @param replacementValue The value to replace the placeholders in the locator
-     *                         template.
-     * @return A By locator instance with the placeholders replaced by the specified
-     *         value.
+     * collections dynamically) Accepts a locator template with placeholders and
+     * a replacement value to generate a specific locator instance at runtime,
+     * enabling flexible and reusable locator strategies for elements that share
+     * common patterns but differ in specific identifiers (e.g., product names,
+     * user IDs).
+     *
+     * @param xPathTemplate The By locator template containing placeholders for
+     * dynamic values.
+     * @param replacementValue The value to replace the placeholders in the
+     * locator template.
+     * @return A By locator instance with the placeholders replaced by the
+     * specified value.
      */
     protected By formatLocator(By xPathTemplate, String replacementValue) {
         return By.xpath(String.format(xPathTemplate.toString().replace("By.xpath: ", ""), replacementValue));
