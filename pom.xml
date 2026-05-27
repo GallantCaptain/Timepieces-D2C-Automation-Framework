@@ -22,6 +22,7 @@
         <allure.version>2.27.0</allure.version>
         <log4j.version>2.23.1</log4j.version>
         <aspectj.version>1.9.22</aspectj.version>
+        <monte.version>0.7.7.0</monte.version>
     </properties>
 
     <dependencies>
@@ -89,6 +90,12 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.stephenc.monte</groupId>
+            <artifactId>monte-screen-recorder</artifactId>
+            <version>${monte.version}</version>
         </dependency>
     </dependencies>
 
