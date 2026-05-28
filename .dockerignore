@@ -1,0 +1,13 @@
+target/
+**/target/
+.git/
+.idea/
+.vscode/
+*.iml
+allure-results/
+allure-report/
+test-output/
+screenshots/
+videos/
+**/*.log
+node_modules/

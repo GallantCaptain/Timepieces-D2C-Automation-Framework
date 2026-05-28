@@ -19,13 +19,14 @@ public class ConfigReader {
     private static synchronized void loadFrameworkConfiguration() {
         if (prop == null) {
             prop = new Properties();
-            
+
             // Step 1: Detect environment profile passed from Maven CLI (e.g., -Denv=staging). Defaults to staging.
             String env = System.getProperty("env", "staging").trim().toLowerCase();
             String configFile = "config/" + env + ".properties";
-            
+            String localOverrideFile = "config/" + env + ".local.properties";
+
             logger.info("Initializing framework configuration manager for environment target: [{}]", env);
-            
+
             // Step 2: Read target properties file from classpath once into memory
             try (InputStream fis = ConfigReader.class.getClassLoader().getResourceAsStream(configFile)) {
                 if (fis == null) {
@@ -37,6 +38,19 @@ public class ConfigReader {
             } catch (IOException e) {
                 logger.error("Failed to compile properties input stream for profile: {}", configFile, e);
                 throw new RuntimeException("Property memory hydration failed for: " + configFile, e);
+            }
+
+            // Step 3: If a gitignored <env>.local.properties exists on the classpath, layer its
+            // keys on top of the base file. Lets developers keep secrets (e.g., staging.password)
+            // out of source control without changing committed config.
+            try (InputStream local = ConfigReader.class.getClassLoader().getResourceAsStream(localOverrideFile)) {
+                if (local != null) {
+                    prop.load(local);
+                    logger.info("Merged local override profile: [{}]", localOverrideFile);
+                }
+            } catch (IOException e) {
+                logger.warn("Failed to load local override profile [{}]; continuing with base config only.",
+                        localOverrideFile, e);
             }
         }
     }

@@ -45,6 +45,7 @@ videos/
 *.env
 .env.local
 secrets.properties
+*.local.properties
 
 # Selenium / WebDriver
 chromedriver*

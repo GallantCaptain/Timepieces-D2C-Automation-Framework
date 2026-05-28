@@ -188,7 +188,7 @@ public class BasePage {
      * @return true if the element is displayed, false otherwise.
      */
     protected Boolean isDisplayed(By locator) {
-        log.debug("Verifying display status of [{}] target element: [{}]", locator);
+        log.debug("Verifying display status of target element: [{}]", locator);
         try {
             return getElement(locator).isDisplayed();
         } catch (Exception e) {

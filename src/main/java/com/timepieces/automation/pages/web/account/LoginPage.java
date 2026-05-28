@@ -1,10 +1,14 @@
 package com.timepieces.automation.pages.web.account;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.timepieces.automation.pages.BasePage;
 import com.timepieces.automation.utils.BrowserUtils;
@@ -103,34 +107,43 @@ public class LoginPage extends BasePage {
     private void openCountryDropdownAndSearch(String searchTerm) {
         log.debug("Opening country code dropdown and searching for: '{}'", searchTerm);
 
-        // Open the dropdown
         waitForVisibility(countryDropdownButton);
         clickElement(countryCodeDropdownBox);
         log.debug("Country code dropdown opened.");
 
-        // Wait for the scroll area to be visible (confirms the dropdown is fully open)
         waitForVisibility(countryDropdownScrollArea);
-
-        // Type the search term into the search field
         sendKeys(countrySearchField, searchTerm);
         log.debug("Search term '{}' entered into country search field.", searchTerm);
 
-        // Find all the visible options in the dropdown after searching, and click on
-        // the first match
-        List<WebElement> options = getElements(countryDropdownScrollArea);
-        boolean found = false;
-        for (WebElement option : options) {
-            if (option.getText().contains(searchTerm)) {
-                option.click();
-                found = true;
-                log.debug("Country option selected for search term: '{}'", searchTerm);
-                break;
-            }
+        // The previous loop iterated the scroll container itself and called .click() on it,
+        // which Chrome rejects with "element click intercepted" because the styled-jsx wrapper
+        // inside is the real hit target. Target the leaf-most descendant whose normalized text
+        // contains the search term — that's the actual option item.
+        String literal = xpathLiteral(searchTerm);
+        By countryOption = By.xpath(
+                "//div[contains(@class,'phone-dropdown-scroll')]" +
+                        "//*[contains(normalize-space(.), " + literal + ")]" +
+                        "[not(.//*[contains(normalize-space(.), " + literal + ")])]");
+        try {
+            clickElement(countryOption);
+            log.debug("Country option selected for search term: '{}'", searchTerm);
+        } catch (Exception e) {
+            log.error("No clickable country option matched search term: '{}'", searchTerm);
+            throw new RuntimeException("Country not found in dropdown for search term: " + searchTerm, e);
         }
-        if (!found) {
-            log.error("No country found matching the search term: '{}'", searchTerm);
-            throw new RuntimeException("Country not found in dropdow for search term: " + searchTerm);
+    }
+
+    private static String xpathLiteral(String value) {
+        if (!value.contains("'")) return "'" + value + "'";
+        if (!value.contains("\"")) return "\"" + value + "\"";
+        StringBuilder sb = new StringBuilder("concat(");
+        String[] parts = value.split("'", -1);
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) sb.append(", \"'\", ");
+            sb.append("'").append(parts[i]).append("'");
         }
+        sb.append(")");
+        return sb.toString();
     }
 
     // ==========================================
@@ -150,6 +163,13 @@ public class LoginPage extends BasePage {
         String loginUrl = baseUrl + loginPath;
         log.info("Navigating to login page: {}", loginUrl);
         BrowserUtils.navigateTo(driver, loginUrl, 15);
+
+        // Non-prod environments may sit behind a password gate. Unlock transparently
+        // and re-navigate so the welcome message wait below behaves identically across envs.
+        if (new StagingGatePage(driver).unlockIfPresent()) {
+            BrowserUtils.navigateTo(driver, loginUrl, 15);
+        }
+
         waitForVisibility(welcomeMessage);
         log.info("Login page loaded and welcome message confirmed visible.");
         return this;
@@ -252,7 +272,28 @@ public class LoginPage extends BasePage {
      * @return this LoginPage for method chaining.
      */
     public LoginPage clickSendOtpButton() {
-        log.info("Clicking Send OTP button.");
+        // Send OTP stays disabled until Cloudflare Turnstile resolves (managed challenges
+        // can take 5-30s). The default 15s wait is too short and asks the wrong question
+        // (clickable vs. enabled). Poll the disabled attribute with a CAPTCHA-aware budget.
+        int captchaWaitSeconds = Optional.ofNullable(ConfigReader.get("captcha.wait.timeout"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .orElse(45);
+        log.info("Waiting up to {}s for Send OTP button to become enabled (CAPTCHA resolution)...",
+                captchaWaitSeconds);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(captchaWaitSeconds))
+                    .until(d -> {
+                        WebElement btn = d.findElement(sendOtpButton);
+                        return btn.isEnabled() && btn.getAttribute("disabled") == null;
+                    });
+        } catch (TimeoutException e) {
+            log.error("Send OTP button did not become enabled within {}s — CAPTCHA likely unresolved "
+                    + "(headless detection or interactive challenge served).", captchaWaitSeconds);
+            throw e;
+        }
+        log.info("Send OTP button is enabled. Clicking.");
         clickElement(sendOtpButton);
         waitForVisibility(verifyAccessMessage);
         log.info("OTP dispatched. OTP entry screen is now visible.");
