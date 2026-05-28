@@ -119,11 +119,17 @@ public class LoginPage extends BasePage {
         // which Chrome rejects with "element click intercepted" because the styled-jsx wrapper
         // inside is the real hit target. Target the leaf-most descendant whose normalized text
         // contains the search term — that's the actual option item.
+        // Substring contains() picks up false positives: searching "India" also matched
+        // "British Indian Ocean Territory" and document order returned +246 first. Use a
+        // word-boundary check by wrapping both the haystack and the needle in spaces — so
+        // "India" only matches when surrounded by whitespace (start/end of string counts via
+        // the space-wrap), not when embedded inside "Indian" or similar.
         String literal = xpathLiteral(searchTerm);
+        String wordMatch = "contains(concat(' ', normalize-space(.), ' '), concat(' ', "
+                + literal + ", ' '))";
         By countryOption = By.xpath(
-                "//div[contains(@class,'phone-dropdown-scroll')]" +
-                        "//*[contains(normalize-space(.), " + literal + ")]" +
-                        "[not(.//*[contains(normalize-space(.), " + literal + ")])]");
+                "(//div[contains(@class,'phone-dropdown-scroll')]" +
+                        "//*[" + wordMatch + " and not(.//*[" + wordMatch + "])])[1]");
         try {
             clickElement(countryOption);
             log.debug("Country option selected for search term: '{}'", searchTerm);

@@ -20,6 +20,9 @@
         <appium.version>9.2.3</appium.version>
         <healenium.version>3.4.6</healenium.version>
         <allure.version>2.29.1</allure.version>
+        <!-- allure-commandline 2.29.1 was never published to Maven Central, so the report
+             generator's download fails. Pin the CLI separately to a version that exists. -->
+        <allure.cli.version>2.27.0</allure.cli.version>
         <log4j.version>2.23.1</log4j.version>
         <aspectj.version>1.9.24</aspectj.version>
         <monte.version>0.7.7.0</monte.version>
@@ -144,6 +147,12 @@
                     <parallel>methods</parallel>
                     <threadCount>4</threadCount>
                     <forkCount>1</forkCount>
+                    <!-- Cucumber's Allure plugin defaults to ./allure-results in the JVM working
+                         directory (project root). Redirect to target/ so `mvn clean` wipes stale
+                         results and `mvn allure:serve` reads from its default location. -->
+                    <systemPropertyVariables>
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                    </systemPropertyVariables>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -164,7 +173,7 @@
                 <artifactId>allure-maven</artifactId>
                 <version>2.12.0</version>
                 <configuration>
-                    <reportVersion>${allure.version}</reportVersion>
+                    <reportVersion>${allure.cli.version}</reportVersion>
                 </configuration>
             </plugin>
         </plugins>
