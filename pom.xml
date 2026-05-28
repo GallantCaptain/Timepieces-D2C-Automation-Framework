@@ -19,9 +19,9 @@
         <rest-assured.version>5.4.0</rest-assured.version>
         <appium.version>9.2.3</appium.version>
         <healenium.version>3.4.6</healenium.version>
-        <allure.version>2.27.0</allure.version>
+        <allure.version>2.29.1</allure.version>
         <log4j.version>2.23.1</log4j.version>
-        <aspectj.version>1.9.22</aspectj.version>
+        <aspectj.version>1.9.24</aspectj.version>
         <monte.version>0.7.7.0</monte.version>
     </properties>
 
@@ -81,6 +81,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>
+            <version>${allure.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
@@ -125,9 +131,6 @@
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
                     <parallel>methods</parallel>
                     <threadCount>4</threadCount>
                     <forkCount>1</forkCount>
@@ -137,6 +140,11 @@
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
                         <version>${aspectj.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-testng</artifactId>
+                        <version>3.3.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

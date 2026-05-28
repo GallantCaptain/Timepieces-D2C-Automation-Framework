@@ -15,7 +15,7 @@ import io.cucumber.testng.CucumberOptions;
  */
 @CucumberOptions(
     features = "src/test/resources/features",
-    glue = { "com.timepieces.automation.steps", 
+    glue = { "com.timepieces.automation.stepdefinitions",
     "com.timepieces.automation.hooks" },
 plugin = {
     "pretty",
