@@ -1,6 +1,10 @@
 package com.timepieces.automation.base;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 
 import com.timepieces.automation.utils.ConfigReader;
 import org.openqa.selenium.WebDriver;
@@ -27,6 +31,7 @@ public class DriverFactory {
     String browser = ConfigReader.get("browser");
     boolean isHeadless = Boolean.parseBoolean(ConfigReader.get("headless"));
     boolean disableChromeSandbox = Boolean.parseBoolean(ConfigReader.get("chrome.no.sandbox"));
+    writeAllureEnvironmentInfo(browser, System.getProperty("env", "staging"));
     WebDriver driver =
         switch (browser.toLowerCase()) {
           case "chrome" -> {
@@ -125,5 +130,34 @@ public class DriverFactory {
    */
   public static void removeDriver() {
     tlDriver.remove();
+  }
+
+  private static void writeAllureEnvironmentInfo(String browser, String env) {
+    try {
+      File resultsDir = new File("target/allure-results");
+      if (!resultsDir.exists()) {
+        resultsDir.mkdirs();
+      }
+      File envFile = new File(resultsDir, "environment.properties");
+      Properties props = new Properties();
+      if (envFile.exists()) {
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(envFile)) {
+          props.load(fis);
+        } catch (IOException e) {
+          // ignore
+        }
+      }
+      props.setProperty("Environment", env);
+      props.setProperty("OS.Name", System.getProperty("os.name"));
+      props.setProperty("OS.Version", System.getProperty("os.version"));
+      props.setProperty("OS.Arch", System.getProperty("os.arch"));
+      props.setProperty("Java.Version", System.getProperty("java.version"));
+      props.setProperty("Browser." + browser.toUpperCase(), "Active / Executed");
+      try (FileOutputStream fos = new FileOutputStream(envFile)) {
+        props.store(fos, "Allure Environment Properties");
+      }
+    } catch (Exception e) {
+      System.err.println("Failed to write Allure environment info: " + e.getMessage());
+    }
   }
 }

@@ -6,7 +6,7 @@ ENV DISPLAY=:99
 ENV BRAVE_PATH=/usr/bin/brave-browser
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl gnupg xz-utils wget bzip2 \
+        ca-certificates curl gnupg xz-utils wget bzip2 unzip \
         xvfb x11vnc fluxbox \
         fonts-liberation libnss3 libxss1 libasound2t64 libatk-bridge2.0-0 \
         libgtk-3-0 libgbm1 libdbus-glib-1-2 \
@@ -33,6 +33,14 @@ RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor
         > /etc/apt/sources.list.d/microsoft-edge.list \
     && apt-get update && apt-get install -y --no-install-recommends microsoft-edge-stable \
     && rm -rf /var/lib/apt/lists/*
+
+# Install msedgedriver manually to match the installed Edge version and bypass Selenium Manager download failures on Linux
+RUN EDGE_VERSION=$(microsoft-edge --version | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+") \
+    && curl -fsSL "https://msedgedriver.azureedge.net/${EDGE_VERSION}/edgedriver_linux64.zip" -o /tmp/edgedriver.zip \
+    && unzip -q /tmp/edgedriver.zip -d /tmp \
+    && mv /tmp/msedgedriver /usr/local/bin/msedgedriver \
+    && chmod +x /usr/local/bin/msedgedriver \
+    && rm /tmp/edgedriver.zip
 
 # Install Brave Browser
 RUN curl -fsSL https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg > /usr/share/keyrings/brave-browser-archive-keyring.gpg \
