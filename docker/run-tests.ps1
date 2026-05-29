@@ -36,40 +36,6 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = (Get-Item (Join-Path $PSScriptRoot "..")).FullName
 
-# Pre-download Linux msedgedriver on the Windows host to bypass Docker DNS/network failures
-$driversDir = Join-Path $PSScriptRoot "drivers"
-if (-not (Test-Path $driversDir)) {
-    New-Item -ItemType Directory -Path $driversDir | Out-Null
-}
-$driverPath = Join-Path $driversDir "msedgedriver"
-if (-not (Test-Path $driverPath)) {
-    Write-Host "[run-tests] msedgedriver not found locally. Pre-downloading Linux x64 msedgedriver on host..."
-    try {
-        # Fetch the latest stable release version from Microsoft's endpoint
-        $respBytes = Invoke-WebRequest -Uri "https://msedgedriver.azureedge.net/LATEST_STABLE" -UseBasicParsing
-        $version = [System.Text.Encoding]::Unicode.GetString($respBytes.Content).Trim()
-        Write-Host "[run-tests] Detected latest Edge stable version: $version"
-        
-        $url = "https://msedgedriver.azureedge.net/$version/edgedriver_linux64.zip"
-        $zipPath = Join-Path $env:TEMP "edgedriver_linux64.zip"
-        Write-Host "[run-tests] Downloading driver from: $url"
-        Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
-        
-        Write-Host "[run-tests] Extracting Linux msedgedriver..."
-        $tempExtractDir = Join-Path $env:TEMP "msedge_extract"
-        if (Test-Path $tempExtractDir) { Remove-Item -Recurse -Force $tempExtractDir }
-        Expand-Archive -Path $zipPath -DestinationPath $tempExtractDir -Force
-        
-        Copy-Item -Path (Join-Path $tempExtractDir "msedgedriver") -Destination $driverPath -Force
-        Remove-Item -Path $zipPath -Force
-        Remove-Item -Recurse -Force $tempExtractDir
-        Write-Host "[run-tests] msedgedriver successfully placed in docker/drivers/msedgedriver"
-    } catch {
-        Write-Error "Failed to download msedgedriver on host: $_"
-        exit 1
-    }
-}
-
 Write-Host "[run-tests] Building image timepieces-tests (first build can take several minutes)..."
 docker build -t timepieces-tests -f (Join-Path $PSScriptRoot "Dockerfile") $projectRoot
 if ($LASTEXITCODE -ne 0) {

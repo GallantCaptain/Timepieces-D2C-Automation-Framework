@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
-        <selenium.version>4.21.0</selenium.version>
+        <selenium.version>4.44.0</selenium.version>
         <testng.version>7.10.2</testng.version>
         <cucumber.version>7.18.0</cucumber.version>
         <rest-assured.version>5.4.0</rest-assured.version>

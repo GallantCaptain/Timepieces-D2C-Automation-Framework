@@ -27,16 +27,12 @@ RUN curl -fsSL -o /tmp/firefox.tar.xz "https://download.mozilla.org/?product=fir
     && rm /tmp/firefox.tar.xz \
     && ln -s /opt/firefox/firefox /usr/local/bin/firefox
 
-# Install Microsoft Edge
+# Install Microsoft Edge — driver is fetched at runtime by Selenium Manager (Selenium 4.44+).
 RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" \
         > /etc/apt/sources.list.d/microsoft-edge.list \
     && apt-get update && apt-get install -y --no-install-recommends microsoft-edge-stable \
     && rm -rf /var/lib/apt/lists/*
-
-# Copy msedgedriver pre-downloaded by the host script to bypass Docker DNS/network errors
-COPY docker/drivers/msedgedriver /usr/local/bin/msedgedriver
-RUN chmod +x /usr/local/bin/msedgedriver
 
 # Install Brave Browser
 RUN curl -fsSL https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg > /usr/share/keyrings/brave-browser-archive-keyring.gpg \
