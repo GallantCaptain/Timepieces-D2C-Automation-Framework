@@ -8,6 +8,6 @@ Feature: User Authentication and OTP Flow
   Scenario: Successful initialization of the Login and OTP prompt
     Given a user navigates to the Timepieces login page
     When the user selects the country "India" from the region dropdown
-    And the user enters the phone number "9876543210"
+    And the user enters the phone number "9000000001"
     And clicks the send OTP button
     Then the OTP verification screen should be displayed
