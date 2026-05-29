@@ -53,4 +53,14 @@ done
 
 echo
 echo "[entrypoint] overall exit=${OVERALL}"
+
+if [[ "${DEBUG_VNC:-false}" == "true" ]]; then
+    echo "=============================================================="
+    echo "[entrypoint] DEBUG_VNC is true. Keeping container alive for 30 minutes"
+    echo "[entrypoint] so you can connect via VNC, inspect the report or debug."
+    echo "[entrypoint] Press Ctrl+C in your terminal to stop the container."
+    echo "=============================================================="
+    sleep 1800
+fi
+
 exit $OVERALL

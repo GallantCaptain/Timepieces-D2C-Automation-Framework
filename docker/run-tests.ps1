@@ -28,6 +28,7 @@
 
 param(
     [switch]$Vnc,
+    [int]$VncPort = 5900,
     [string]$Env = "staging",
     [string]$Tags = "@Smoke and @Login"
 )
@@ -52,8 +53,15 @@ $dockerArgs = @(
 )
 
 if ($Vnc) {
-    Write-Host "[run-tests] VNC mode: connect a viewer to localhost:5900 once the container starts."
-    $dockerArgs += @("-e", "DEBUG_VNC=true", "-p", "5900:5900")
+    # Diagnostic: Check if VncPort is already bound on the host
+    $portActive = Get-NetTCPConnection -LocalPort $VncPort -ErrorAction SilentlyContinue
+    if ($portActive) {
+        Write-Error "Port $VncPort is already in use on your host machine (PID: $($portActive.OwningProcess[0])). VNC listener cannot start."
+        Write-Error "Please close the application using port $VncPort, or run with a custom port using: ./docker/run-tests.ps1 -Vnc -VncPort 5901"
+        exit 1
+    }
+    Write-Host "[run-tests] VNC mode: connect a viewer to localhost:$VncPort once the container starts."
+    $dockerArgs += @("-e", "DEBUG_VNC=true", "-p", "${VncPort}:5900")
 }
 
 $dockerArgs += "timepieces-tests"
