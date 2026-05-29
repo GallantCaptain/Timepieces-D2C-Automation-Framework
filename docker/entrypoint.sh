@@ -5,7 +5,7 @@
 #   ENV_TARGET   profile to run against (default: staging) — maps to -Denv=
 #   DEBUG_VNC    when "true", start Xvfb + x11vnc on :5900 and run headed
 #   TAGS         cucumber tag expression (default: "@Smoke and @Login")
-#   BROWSERS     space-separated browser list (default: "chrome firefox")
+#   BROWSERS     space-separated browser list (default: "chrome firefox edge brave")
 #
 # Exits non-zero if any browser run failed; runs both regardless of order.
 
@@ -13,7 +13,7 @@ set -uo pipefail
 
 ENV_TARGET="${ENV_TARGET:-staging}"
 TAGS="${TAGS:-@Smoke and @Login}"
-BROWSERS="${BROWSERS:-chrome firefox}"
+BROWSERS="${BROWSERS:-chrome firefox edge brave}"
 
 if [[ "${DEBUG_VNC:-false}" == "true" ]]; then
     echo "[entrypoint] DEBUG_VNC=true — starting Xvfb + x11vnc on display :99 / port 5900"
@@ -27,13 +27,16 @@ else
     HEADLESS=true
 fi
 
+echo "[entrypoint] Cleaning previous build artifacts..."
+mvn clean
+
 OVERALL=0
 for browser in $BROWSERS; do
     echo
     echo "=============================================================="
     echo "[entrypoint] env=${ENV_TARGET} browser=${browser} headless=${HEADLESS}"
     echo "=============================================================="
-    mvn clean test \
+    mvn test \
         -Denv="$ENV_TARGET" \
         -Dbrowser="$browser" \
         -Dheadless="$HEADLESS" \

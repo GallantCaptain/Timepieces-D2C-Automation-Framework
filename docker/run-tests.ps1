@@ -4,8 +4,8 @@
 
 .DESCRIPTION
   Mounts the project root into /workspace, persists Maven's ~/.m2 in a named
-  Docker volume so subsequent runs are fast, then chains Chrome and Firefox
-  smoke tests against the configured environment.
+  Docker volume so subsequent runs are fast, then chains Chrome, Firefox, Edge,
+  and Brave smoke tests against the configured environment.
 
 .PARAMETER Vnc
   Run the container with Xvfb + x11vnc on localhost:5900 so you can VNC in
@@ -19,7 +19,7 @@
 
 .EXAMPLE
   ./docker/run-tests.ps1
-  Headless run, env=staging, Chrome then Firefox sequentially.
+  Headless run, env=staging, Chrome, Firefox, Edge, and Brave sequentially.
 
 .EXAMPLE
   ./docker/run-tests.ps1 -Vnc

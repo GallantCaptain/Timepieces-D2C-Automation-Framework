@@ -50,8 +50,9 @@ public class DriverFactory {
           }
           case "edge" -> {
             EdgeOptions edgeOptions = new EdgeOptions();
+            applyChromiumStabilityFlags(edgeOptions, disableChromeSandbox);
             if (isHeadless) {
-              edgeOptions.addArguments("--headless");
+              edgeOptions.addArguments("--headless=new");
             }
             yield new EdgeDriver(edgeOptions);
           }
@@ -87,6 +88,17 @@ public class DriverFactory {
   //   This is not a CAPTCHA bypass — a properly hostile challenge still blocks us — but
   //   it gives managed challenges a fighting chance of auto-passing.
   private static void applyChromiumStabilityFlags(ChromeOptions options, boolean disableSandbox) {
+    options.addArguments("--disable-dev-shm-usage");
+    options.addArguments("--window-size=1920,1080");
+    options.addArguments("--disable-blink-features=AutomationControlled");
+    options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
+    options.setExperimentalOption("useAutomationExtension", false);
+    if (disableSandbox) {
+      options.addArguments("--no-sandbox");
+    }
+  }
+
+  private static void applyChromiumStabilityFlags(EdgeOptions options, boolean disableSandbox) {
     options.addArguments("--disable-dev-shm-usage");
     options.addArguments("--window-size=1920,1080");
     options.addArguments("--disable-blink-features=AutomationControlled");
