@@ -3,9 +3,9 @@ package com.timepieces.automation.stepdefinitions;
 import org.testng.Assert;
 
 import com.timepieces.automation.base.DriverFactory;
+import com.timepieces.automation.context.TestContext;
 import com.timepieces.automation.pages.web.account.LoginPage;
 
-import com.timepieces.automation.context.TestContext;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -44,7 +44,7 @@ public class LoginSteps {
         loginPage.enterPhoneNumber(phoneNumber);
     }
 
-    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key is active, otherwsie need to create one in test bed. 
+    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key is active, otherwise need to create one in test bed. 
     @And("clicks the send OTP button")
     public void clicks_the_send_otp_button() {
         loginPage.clickSendOtpButton();
