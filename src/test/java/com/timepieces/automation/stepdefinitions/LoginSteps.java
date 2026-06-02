@@ -5,6 +5,7 @@ import org.testng.Assert;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.pages.web.account.LoginPage;
 
+import com.timepieces.automation.context.TestContext;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -12,8 +13,13 @@ import io.cucumber.java.en.When;
 
 // Assertions belong in Step Definitions, NEVER in Page Objects
 public class LoginSteps {
-    // Declare the Page Object. We do not initialize it until the steps are called.
+    private TestContext testContext;
     private LoginPage loginPage;
+
+    // PicoContainer will inject the TestContext instance here
+    public LoginSteps(TestContext testContext) {
+        this.testContext = testContext;
+    }
 
     @Given("a user navigates to the Timepieces login page")
     public void a_user_navigates_to_the_timepieces_login_page() {
@@ -34,6 +40,7 @@ public class LoginSteps {
 
     @And("the user enters the phone number {string} in the phone number input field")
     public void the_user_enters_the_phone_number(String phoneNumber) {
+        testContext.setCurrentPhoneNumber(phoneNumber); // Save to context
         loginPage.enterPhoneNumber(phoneNumber);
     }
 
