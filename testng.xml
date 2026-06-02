@@ -1,1 +1,25 @@
-<!-- TestNG Configuration -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Timepieces Automation Suite" parallel="none">
+    
+    <!-- Global Parameter read by BaseRunner -->
+    <parameter name="environment" value="staging" />
+
+    <test name="Smoke Executions">
+        <classes>
+            <class name="com.timepieces.automation.runners.SmokeRunner" />
+        </classes>
+    </test>
+
+    <test name="Sanity Executions">
+        <classes>
+            <class name="com.timepieces.automation.runners.SanityRunner" />
+        </classes>
+    </test>
+
+    <test name="Regression Executions">
+        <classes>
+            <class name="com.timepieces.automation.runners.RegressionRunner" />
+        </classes>
+    </test>
+</suite>
