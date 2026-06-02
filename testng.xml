@@ -2,6 +2,10 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Timepieces Automation Suite" parallel="none">
     
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />
+    </listeners>
+    
     <!-- Global Parameter read by BaseRunner -->
     <parameter name="environment" value="staging" />
 
