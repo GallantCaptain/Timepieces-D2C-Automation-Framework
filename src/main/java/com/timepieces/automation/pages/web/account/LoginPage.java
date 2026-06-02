@@ -140,6 +140,8 @@ public class LoginPage extends BasePage {
         }
     }
 
+    /* This is to ensure proper XPath literalization. It works for strings containing single or double quotes.
+     */
     private static String xpathLiteral(String value) {
         if (!value.contains("'")) return "'" + value + "'";
         if (!value.contains("\"")) return "\"" + value + "\"";
