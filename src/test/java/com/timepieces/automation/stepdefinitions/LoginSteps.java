@@ -32,7 +32,7 @@ public class LoginSteps {
         loginPage.configureCountryCodeByName(country);
     }
 
-    @And("the user enters the phone number {string}")
+    @And("the user enters the phone number {string} in the phone number input field")
     public void the_user_enters_the_phone_number(String phoneNumber) {
         loginPage.enterPhoneNumber(phoneNumber);
     }

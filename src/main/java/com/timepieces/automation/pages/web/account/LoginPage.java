@@ -80,6 +80,7 @@ public class LoginPage extends BasePage {
             .xpath("//div[contains(text(), 'This country is not supported for OTP. Please contact support.')]");
     private final By captchaChallengeFailedMessage = By
             .xpath("//div[contains(text(),'CAPTCHA verification failed. Please try again.')]");
+    private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
 
     // --- Validation & Feedback: Post-OTP submission ---
     // XPath string containing an apostrophe must use double-quote delimiters to
@@ -468,4 +469,18 @@ public class LoginPage extends BasePage {
         return false;
     }
 
+    /**
+     * V.6 Verifies that the 'No countries found' message appears when searching for a
+     * non-existent country in the country code dropdown.
+     * Use in negative test cases to confirm correct feedback when dropdown search yields no results.
+     * @return true if the 'No countries found' message is displayed, false otherwise.
+     */
+    public boolean isNoCountriesFoundMessageDisplayed() {
+        if (isDisplayed(searchFieldCountryNotFoundMessage)) {
+            log.info("Verified: 'No countries found' message is displayed.");
+            return true;
+        }
+        log.warn("'No countries found' message not displayed.");
+        return false;
+    }
 }
