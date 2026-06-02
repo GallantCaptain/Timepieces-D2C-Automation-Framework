@@ -81,6 +81,8 @@ public class LoginPage extends BasePage {
     private final By captchaChallengeFailedMessage = By
             .xpath("//div[contains(text(),'CAPTCHA verification failed. Please try again.')]");
     private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
+    //Too many attempts message happens after user changes their phone number after submitting the otp
+    private final By tooManyAttemptsMessageLockout = By.xpath("//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
 
     // --- Validation & Feedback: Post-OTP submission ---
     // XPath string containing an apostrophe must use double-quote delimiters to
@@ -485,4 +487,21 @@ public class LoginPage extends BasePage {
         log.warn("'No countries found' message not displayed.");
         return false;
     }
+
+    /**
+     * V.7 Verifies that the 'Too many attempts' lockout message is displayed after multiple failed OTP submissions.
+     * Use in negative test cases to confirm correct feedback when user is temporarily locked out due to too many failed attempts.
+     * For now, the Too Many Attempts triggers after the user changes their phone with or without submitting the OTP, 
+     * but this may evolve to also trigger after a certain number of failed OTP entries. This method can be used to verify the message in either scenario.
+     * @return true if the 'Too many attempts' lockout message is displayed, false otherwise.
+     */
+    public boolean isTooManyAttemptsLockoutMessageDisplayed() {
+        if (isDisplayed(tooManyAttemptsMessageLockout)) {
+            log.info("Verified: 'Too many attempts' lockout message is displayed.");
+            return true;
+        }
+        log.warn("'Too many attempts' lockout message not displayed.");
+        return false;
+    }
+
 }
