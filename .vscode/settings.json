@@ -1,5 +1,7 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.format.settings.url": "eclipse-formatter.xml"
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.format.settings.url": "eclipse-formatter.xml",
+    "github.copilot.chat.localIndex.enabled": true,
+    "workbench.browser.experimentalUserTools.enabled": true
 }

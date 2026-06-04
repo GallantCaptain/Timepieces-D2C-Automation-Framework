@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Properties;
 
 import com.timepieces.automation.utils.ConfigReader;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -17,6 +20,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.safari.SafariDriver;
 
+@Log4j2
 public class DriverFactory {
 
   private static final ThreadLocal<WebDriver> tlDriver = new ThreadLocal<>();
@@ -41,8 +45,10 @@ public class DriverFactory {
             if (isHeadless) {
               chromeOptions.addArguments("--headless=new");
             }
+            log.info("Initialized ChromeDriver with headless={} and no-sandbox={}", isHeadless, disableChromeSandbox);
             yield new ChromeDriver(chromeOptions);
           }
+
           case "firefox" -> {
             FirefoxOptions firefoxOptions = new FirefoxOptions();
             // Removes navigator.webdriver=true — masks the most obvious webdriver fingerprint
@@ -52,22 +58,28 @@ public class DriverFactory {
             if (isHeadless) {
               firefoxOptions.addArguments("--headless");
             }
+            log.info("Initialized FirefoxDriver with headless={}", isHeadless);
             yield new FirefoxDriver(firefoxOptions);
           }
+
           case "edge" -> {
             EdgeOptions edgeOptions = new EdgeOptions();
             applyChromiumStabilityFlags(edgeOptions, disableChromeSandbox);
             if (isHeadless) {
               edgeOptions.addArguments("--headless=new");
             }
+            log.info("Initialized EdgeDriver with headless={}", isHeadless);
             yield new EdgeDriver(edgeOptions);
           }
+           
           case "safari" -> {
             if (isHeadless) {
               System.out.println("Safari browser is being used. Headless mode is not supported.");
             }
+            log.info("Initialized SafariDriver");
             yield new SafariDriver();
           }
+
           case "brave" -> {
             ChromeOptions braveOptions = new ChromeOptions();
             String bravePath = System.getenv("BRAVE_PATH");
@@ -76,6 +88,7 @@ public class DriverFactory {
                   "Environment variable BRAVE_PATH is not set or empty.");
             }
             braveOptions.setBinary(bravePath);
+            log.info("Initialized BraveDriver with headless={}", isHeadless);
             applyChromiumStabilityFlags(braveOptions, disableChromeSandbox);
             if (isHeadless) braveOptions.addArguments("--headless=new");
             yield new ChromeDriver(braveOptions);
@@ -148,7 +161,7 @@ public class DriverFactory {
         props.store(fos, "Allure Environment Properties");
       }
     } catch (Exception e) {
-      System.err.println("Failed to write Allure environment info: " + e.getMessage());
+      log.warn("Failed to write Allure environment info: {}", e.getMessage());
     }
   }
 }

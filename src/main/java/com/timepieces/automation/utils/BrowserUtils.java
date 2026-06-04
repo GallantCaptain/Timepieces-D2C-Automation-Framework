@@ -148,9 +148,12 @@ public class BrowserUtils {
     // 2. JAVASCRIPT INTERACTION UTILITIES
     // ==========================================
     /**
-     * 2.1 Clicks an element via JavaScript, bypassing potential issues with WebDriver's native click method (e.g.,
+     * 2.1 Clicks an element via JavaScript, bypassing potential issues with
+     * WebDriver's native click method (e.g.,
      * elements that are not in view or obscured by other elements).
-     * Useful when an element is obscured by an overlay or not reachable by a standard click.
+     * Useful when an element is obscured by an overlay or not reachable by a
+     * standard click.
+     * 
      * @param driver  The WebDriver instance to use for executing JavaScript.
      * @param element The WebElement to click.
      */
@@ -160,43 +163,56 @@ public class BrowserUtils {
         log.info("Clicked element via JavaScript: {}", element);
     }
 
-    /** 
-     * 2.2 Scrolls the page to bring the specified element into view using JavaScript, ensuring that the element is visible and interactable.
-     * Scrolls the page until the given element is in the viewport. Prevents ElementNotInteractableException caused by elements outside the visible area.
+    /**
+     * 2.2 Scrolls the page to bring the specified element into view using
+     * JavaScript, ensuring that the element is visible and interactable.
+     * Scrolls the page until the given element is in the viewport. Prevents
+     * ElementNotInteractableException caused by elements outside the visible area.
+     * 
      * @param driver  The WebDriver instance to use for executing JavaScript.
      * @param element The WebElement to scroll into view.
      */
     public static void scrollToElement(WebDriver driver, WebElement element) {
         log.debug("Scrolling to WebElement: {}", element);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element);
+        ((JavascriptExecutor) driver)
+                .executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element);
         log.info("Scrolled to element: {}", element);
     }
 
-    /** 
-     * 2.3 Scrolls the page to the top using JavaScript, ensuring that the top of the page is visible and interactable.
-     * Scrolls the page to the top. Useful for resetting the scroll position before performing actions that require the top of the page to be visible.
+    /**
+     * 2.3 Scrolls the page to the top using JavaScript, ensuring that the top of
+     * the page is visible and interactable.
+     * Scrolls the page to the top. Useful for resetting the scroll position before
+     * performing actions that require the top of the page to be visible.
+     * 
      * @param driver The WebDriver instance to use for executing JavaScript.
      */
-    public static void scrollToTop (WebDriver driver) { 
+    public static void scrollToTop(WebDriver driver) {
         log.debug("Scrolling to the top of the page.");
-        ((JavascriptExecutor)driver).executeScript("window.scrollTo({top: 0, behavior: 'smooth'});");
+        ((JavascriptExecutor) driver).executeScript("window.scrollTo({top: 0, behavior: 'smooth'});");
         log.info("Scrolled to the top of the page.");
     }
-    
-    /** 
-     * 2.4 Scrolls the page to the bottom using JavaScript, ensuring that the bottom of the page is visible and interactable.
-     * Scrolls the page to the bottom. Useful for loading dynamic content that appears as you scroll or for interacting with elements located at the bottom of the page.
+
+    /**
+     * 2.4 Scrolls the page to the bottom using JavaScript, ensuring that the bottom
+     * of the page is visible and interactable.
+     * Scrolls the page to the bottom. Useful for loading dynamic content that
+     * appears as you scroll or for interacting with elements located at the bottom
+     * of the page.
+     * 
      * @param driver The WebDriver instance to use for executing JavaScript.
      */
-    public static void scrollToBottom (WebDriver driver) {
+    public static void scrollToBottom(WebDriver driver) {
         log.debug("Scrolling to the bottom of the page");
-        ((JavascriptExecutor)driver).executeScript("window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});");
+        ((JavascriptExecutor) driver)
+                .executeScript("window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});");
         log.info("Scrolled to the bottom of the page.");
     }
 
     /**
      * 2.5 Sets the value of an input field directly via JavaScript.
      * Useful when sendKeys() is intercepted or blocked (e.g., date/time pickers).
+     * 
      * @param driver  The WebDriver instance to use for executing JavaScript.
      * @param element The WebElement representing the input field.
      * @param value   The value to set.
@@ -209,7 +225,9 @@ public class BrowserUtils {
 
     /**
      * 2.6 Retrieves the value of an input field directly via JavaScript.
-     * Useful when getText() does not return the expected value (e.g., for certain input types).
+     * Useful when getText() does not return the expected value (e.g., for certain
+     * input types).
+     * 
      * @param driver  The WebDriver instance to use for executing JavaScript.
      * @param element The WebElement representing the input field.
      * @return The value of the input field as retrieved via JavaScript.
@@ -223,9 +241,13 @@ public class BrowserUtils {
 
     /**
      * 2.7 Highlights an element by applying a temporary CSS style via JavaScript.
-     * Useful for debugging purposes to visually identify elements during test execution.
-     * Applies a red border to the element for a short duration to make it stand out on the page.
-     * Intended for debugging and visual test reporting only; do not use in production runs.
+     * Useful for debugging purposes to visually identify elements during test
+     * execution.
+     * Applies a red border to the element for a short duration to make it stand out
+     * on the page.
+     * Intended for debugging and visual test reporting only; do not use in
+     * production runs.
+     * 
      * @param driver  The WebDriver instance to use for executing JavaScript.
      * @param element The WebElement to highlight.
      */
@@ -249,14 +271,17 @@ public class BrowserUtils {
             }
         }).start();
         log.info("Highlighted element: {}", element);
-    } 
+    }
 
     // ==========================================
     // 3. BROWSER NAVIGATION UTILITIES
     // ==========================================
-    /** 
-     * 3.1 Navigates to a specified URL and waits for the page to fully load using the waitForPageLoad utility.
-     * Combines navigation and synchronization into a single method for convenience and reliability.
+    /**
+     * 3.1 Navigates to a specified URL and waits for the page to fully load using
+     * the waitForPageLoad utility.
+     * Combines navigation and synchronization into a single method for convenience
+     * and reliability.
+     * 
      * @param driver The WebDriver instance to use for navigating.
      * @param url    The URL to navigate to.
      */
@@ -267,10 +292,13 @@ public class BrowserUtils {
         log.info("Navigated to: {}", url);
     }
 
-    /** 
-     * 3.2 Refreshes the current page and waits for it to fully load using the waitForPageLoad utility.
-     * Combines refresh and synchronization into a single method for convenience and reliability.
-     * @param driver The WebDriver instance to use for refreshing.
+    /**
+     * 3.2 Refreshes the current page and waits for it to fully load using the
+     * waitForPageLoad utility.
+     * Combines refresh and synchronization into a single method for convenience and
+     * reliability.
+     * 
+     * @param driver           The WebDriver instance to use for refreshing.
      * @param timeoutInSeconds The maximum time to wait for the page to load.
      */
     public static void refreshPage(WebDriver driver, int timeoutInSeconds) {
@@ -280,11 +308,14 @@ public class BrowserUtils {
         log.info("Page refreshed successfully.");
     }
 
-    /** 
-     * 3.3 Navigates back in the browser history and waits for the page to fully load using the waitForPageLoad utility.
-     * Combines back navigation and synchronization into a single method for convenience and reliability.
-     * @param driver The WebDriver instance to use for navigating back.
-     * @param expectedUrl The expected URL to assert against.
+    /**
+     * 3.3 Navigates back in the browser history and waits for the page to fully
+     * load using the waitForPageLoad utility.
+     * Combines back navigation and synchronization into a single method for
+     * convenience and reliability.
+     * 
+     * @param driver           The WebDriver instance to use for navigating back.
+     * @param expectedUrl      The expected URL to assert against.
      * @param timeoutInSeconds The maximum time to wait for the page to load.
      */
     public static void navigateBack(WebDriver driver, String expectedUrl, int timeoutInSeconds) {
@@ -294,10 +325,13 @@ public class BrowserUtils {
         log.info("Navigated back successfully. Current URL: {}", driver.getCurrentUrl());
     }
 
-    /** 
-     * 3.4 Navigates forward in the browser history and waits for the page to fully load using the waitForPageLoad utility.
-     * Combines forward navigation and synchronization into a single method for convenience and reliability.
-     * @param driver The WebDriver instance to use for navigating forward.
+    /**
+     * 3.4 Navigates forward in the browser history and waits for the page to fully
+     * load using the waitForPageLoad utility.
+     * Combines forward navigation and synchronization into a single method for
+     * convenience and reliability.
+     * 
+     * @param driver           The WebDriver instance to use for navigating forward.
      * @param timeoutInSeconds The maximum time to wait for the page to load.
      */
     public static void navigateForward(WebDriver driver, String expectedUrl, int timeoutInSeconds) {
@@ -307,25 +341,33 @@ public class BrowserUtils {
         log.info("Navigated forward successfully. Current URL: {}", driver.getCurrentUrl());
     }
 
-    /** 
+    /**
      * 3.5 Returns the current URL of the page to assert against the expected URL.
-     * Useful for assertions in tests to verify that navigation has occurred as expected.
+     * Useful for assertions in tests to verify that navigation has occurred as
+     * expected.
+     * 
      * @param driver The WebDriver instance to use for retrieving the URL.
      * @return The current URL of the page.
      */
     public static String getExpectedCurrentUrl(String expectedUrl, WebDriver driver) {
         String currentUrl = driver.getCurrentUrl();
-        log.debug("Current URL: {}", currentUrl);
-        if (currentUrl.equals(expectedUrl)) {
-            log.info("Current URL matches expected URL: {}", expectedUrl);
-        } else {
-            log.warn("Current URL does not match expected URL. Expected: {}, Actual: {}", expectedUrl, currentUrl);
+        try {
+            log.debug("Current URL: {}", currentUrl);
+            if (currentUrl.equals(expectedUrl)) {
+                log.info("Current URL matches expected URL: {}", expectedUrl);
+            } else {
+                log.warn("Current URL does not match expected URL. Expected: {}, Actual: {}", expectedUrl, currentUrl);
+            }
+            return currentUrl;
+        } catch (Exception e) {
+            log.error("Error occurred while retrieving current URL.", e);
+            return null;
         }
-        return currentUrl;
     }
 
     /**
      * 3.6 Only returns the URL of the currently loaded page.
+     * 
      * @param driver The WebDriver instance.
      * @return The current URL as a String.
      */
@@ -335,9 +377,10 @@ public class BrowserUtils {
         return url;
     }
 
-    /** 
+    /**
      * 3.7 Retrieves the page title to assert against the expected title.
      * Useful for assertions in tests to verify that the correct page has loaded.
+     * 
      * @param driver The WebDriver instance.
      * @return The title of the current page.
      */
@@ -351,12 +394,18 @@ public class BrowserUtils {
     // 4. SCREENSHOT UTILITIES
     // ==========================================
     /**
-     * 4.1 Captures a screenshot of the current browser window and saves it to a specified directory with a timestamped filename.
-     * Useful for debugging and reporting purposes to visually capture the state of the application at specific points during test execution.
-     * The file is named using the provided label and a timestamp to avoid overwrites.
-     * @param driver The WebDriver instance to use for taking the screenshot.
-     * @param label  A descriptive label to include in the screenshot filename for easier identification.
-     * @param directory The directory where the screenshot will be saved. If the directory does not exist, it will be created.
+     * 4.1 Captures a screenshot of the current browser window and saves it to a
+     * specified directory with a timestamped filename.
+     * Useful for debugging and reporting purposes to visually capture the state of
+     * the application at specific points during test execution.
+     * The file is named using the provided label and a timestamp to avoid
+     * overwrites.
+     * 
+     * @param driver    The WebDriver instance to use for taking the screenshot.
+     * @param label     A descriptive label to include in the screenshot filename
+     *                  for easier identification.
+     * @param directory The directory where the screenshot will be saved. If the
+     *                  directory does not exist, it will be created.
      * @return The file path of the saved screenshot.
      */
     public static String takeScreenshot(WebDriver driver, String label, String directory) {
