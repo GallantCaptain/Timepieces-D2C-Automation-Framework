@@ -6,10 +6,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
-import com.timepieces.automation.utils.ConfigReader;
-
-import lombok.extern.log4j.Log4j2;
-
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,6 +15,10 @@ import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.safari.SafariDriver;
+
+import com.timepieces.automation.utils.ConfigReader;
+
+import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class DriverFactory {
