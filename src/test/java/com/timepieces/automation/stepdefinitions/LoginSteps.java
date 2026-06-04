@@ -13,7 +13,7 @@ import io.cucumber.java.en.When;
 
 // Assertions belong in Step Definitions, NEVER in Page Objects
 public class LoginSteps {
-    private TestContext testContext;
+    private final TestContext testContext;
     private LoginPage loginPage;
 
     // PicoContainer will inject the TestContext instance here
