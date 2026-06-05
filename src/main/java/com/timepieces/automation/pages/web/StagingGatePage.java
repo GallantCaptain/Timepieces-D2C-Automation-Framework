@@ -1,4 +1,4 @@
-package com.timepieces.automation.pages.web.account;
+package com.timepieces.automation.pages.web;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
  *   - staging.password                  (required when the gate is present)
  *   - staging.gate.passwordField        (defaults to input[type='password'])
  *   - staging.gate.submitButton         (defaults to button[type='submit'])
- *   - staging.gate.detection.timeout    (seconds; defaults to 4)
+ *   - staging.gate.detection.timeout    (defaults to 4 seconds; should be long enough to allow the gate to appear but short enough to fail fast if it's not there)
  *
  * Detection is intentionally fast and non-fatal: unlockIfPresent() probes for
  * the password input with a short wait; if absent (cookie already set, or env

@@ -10,13 +10,13 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.timepieces.automation.pages.BasePage;
+import com.timepieces.automation.pages.HeaderOnlyBasePage;
+import com.timepieces.automation.pages.web.StagingGatePage;
 import com.timepieces.automation.utils.BrowserUtils;
 import com.timepieces.automation.utils.ConfigReader;
 import com.timepieces.automation.utils.WindowUtils;
 
 import lombok.extern.log4j.Log4j2;
-
 /**
  * LoginPage — Page Object Repository for the Timepieces Login Page.
  *
@@ -41,7 +41,7 @@ import lombok.extern.log4j.Log4j2;
  * the next page object once navigation is confirmed.
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class LoginPage extends BasePage {
+public class LoginPage extends HeaderOnlyBasePage {
     // ==========================================
     // CONSTRUCTOR
     // ==========================================
@@ -52,46 +52,96 @@ public class LoginPage extends BasePage {
     // ==========================================
     // LOCATORS
     // ==========================================
-    // Identity Entry & Region Configuration Elements
-    private final By phoneNumberField = By.cssSelector("input[placeholder='Enter your phone number']");
+    // Already Created Profile & Welcome Message Elements for Login Page
+
+    // Timepieces Image - Before/After Entering Phone Number
+    private final By timepiecesLoginPageImage = By.cssSelector("img[alt='Timepieces']");
+
+    // --- Validation & Feedback: Pre-OTP submission After Entering Phone Number ---
+    // Access Your Timepieces Message:
+    private final By timepiecesWelcomeMessage = By.xpath("//h1[normalize-space()='Access your Timepieces']");
+    // Access your profile, application status, and timepieces message
+    private final By timepiecesWelcomeMessageDetails = By
+            .xpath("//h1[normalize-space()='Access your Timepieces']/following-sibling::p");
+
+    // --- Labels and Fields for Identity Entry & Region Configuration - Pre-OTP submission ---
+    /* Phone Label [For Ui Assertion Only, Not For Element Interaction - The actual input field doesn't have a label element, so we will use the label text as an anchor for locating the input field]: */
+    private final By phoneNumberLabel = By.xpath("//label[contains(normalize-space(),'Phone')]");
+
+    // Identity Entry & Region Configuration Elements - Before Entering Phone Number
+    // Country Dropdown Box Container (Clickable):
     private final By countryCodeDropdownBox = By.xpath(
-            "(//button[@class='flex items-center gap-1 py-3 pr-2 text-[14px] hover:bg-white/10 transition-colors rounded'])");
+            "(//label[contains(normalize-space(),'Phone')]/parent::div/descendant::button)");
+    // Country Dropdown Button Icon (Clickable):
     private final By countryDropdownButton = By.xpath("//button[@type='button']//*[name()='svg']");
+    // Country Dropdown List: [Only after opening]
     private final By countryDropdownScrollArea = By.cssSelector("div.phone-dropdown-scroll");
+    // Search Input Field: [Only after opening]
     private final By countrySearchField = By.cssSelector("input[placeholder='Search country...']");
+    // No countries found message when searching in country code dropdown:
+    private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
+    // The Phone Number field accepts only digits, so we can use a placeholder-based
+    // locator that is consistent across locales:
+    private final By phoneNumberField = By.cssSelector("input[placeholder='Enter your phone number']");
 
-    // Process Dispatch & Phase States
-    private final By sendOtpButton = By.cssSelector("button[type='submit']"); // Disabled before country & number
-                                                                              // selected, captcha verified
-    private final By otpInputFields = By.cssSelector("input.otp-input");
-    private final By continueButton = By.cssSelector("button.continue-button");
+    // Process Dispatch & Phase States - Disabled before country & number selected,
+    /* captcha verified, Then Submit button is Enabled & Clickable after all conditions met: */
+    private final By sendOtpButton = By.xpath("//button[@type='submit' and normalize-space()='Send OTP']");
 
-    // Security Constraints & Security Firewalls (CloudFlare) - Before OTP
-    // submission
+    /* After submitting any otp (valid/invalid) as long as all the input fields are filled. */
+    private final By continueButton = By.xpath("//button[@type='submit' and normalize-space()='Continue']");
+
+    /* Security Constraints & Security Firewalls (CloudFlare) - Before OTP ubmission To verify bots and prevent abuse */
+    /*
+     * Cloudflare CAPTCHA iframe [shadow-root='closed' - WebDriver cannot access its
+     * internals, but we can wait for the iframe element itself to confirm it has
+     * loaded.
+     */
     private final By cloudflareChallengeFrame = By
             .cssSelector("iframe[title*='Widget containing a Cloudflare security challenge']");
-
-    // --- Validation & Feedback: Pre-OTP submission ---
-    private final By welcomeMessage = By.xpath("//h1[normalize-space()='Access your Timepieces']");
-    private final By welcomeMessageDetails = By.xpath("//p[contains(@class,'text-gray-400 text-[16px]')]");
-    private final By additionalWhatsAppMessage = By
-            .xpath("//p[contains(text(),'Your OTP will also be delivered on WhatsApp for faster access.')]");
-    private final By unsupportedCountryMessage = By
-            .xpath("//div[contains(text(), 'This country is not supported for OTP. Please contact support.')]");
+    // Captcha Failed Message:
     private final By captchaChallengeFailedMessage = By
             .xpath("//div[contains(text(),'CAPTCHA verification failed. Please try again.')]");
-    private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
-    //Too many attempts message happens after user changes their phone number after submitting the otp
-    private final By tooManyAttemptsMessageLockout = By.xpath("//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
+
+    /* Additional Messages & Feedback - Pre and Post OTP submission Before Phone Number Submission */
+    private final By additionalWhatsAppMessage = By
+            .xpath("//p[contains(text(),'Your OTP will also be delivered on WhatsApp for faster access.')]");
+    // Unsupported Country Message when selecting a country not enabled for OTP:
+    private final By unsupportedCountryMessage = By
+            .xpath("//div[contains(text(), 'This country is not supported for OTP. Please contact support.')]");
+
+    /* Too many attempts message happens after user changes their phone number after submitting the otp */
+    private final By tooManyAttemptsMessageLockout = By.xpath(
+            "//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
+    // Timepieces Data Secure Message [Ui Assertion Only, Always Visible on Login Page]:
+    private final By timepiecesSecureAssuranceMessage = By.xpath(
+            "//p[contains(normalize-space(), 'Your details are secure and used only for your Timepieces experience.')]");
 
     // --- Validation & Feedback: Post-OTP submission ---
-    // XPath string containing an apostrophe must use double-quote delimiters to
-    // avoid malformed XPath (the apostrophe in "Didn't" would close a single-quoted
-    // string early).
+    // Verify Access Heading on OTP entry screen:
     private final By verifyAccessMessage = By
             .cssSelector("h1[class='text-white text-[24px] md:text-[24px] font-bold ']");
+    /* The text label under the "Verify Access" heading that says "Enter the 6-digit code sent to +{Country Code} {First 2 digits}******{Last 2 digits}" */
     private final By enterCodeMessageUnderVerifyAccess = By.cssSelector("p[class='text-gray-400 text-[16px] ']");
+    /* Resend OTP link: [Only visible after submitting phone number and landing on OTP entry screen] */
     private final By resendOtpLink = By.xpath("//button[contains(text(),\"Didn't receive it? Resend code\")]");
+
+    /* Otp Input Fields Container and Individual Fields (Only visible after clicking
+     * Send OTP and navigating to OTP entry screen):*/
+    //OTP Input Field Container: 
+    private final By otpInputFieldContainer = By.xpath("//input[@inputmode='numeric']/parent::div");
+
+    // OTP input field [0 - 5]:
+    /* In case we want to target individual fields instead of the container, We can use these locators to interact with each individual OTP field. It can be used for more granular control over the OTP input fields. For verifcation and validation purposes */
+    private final By otpInputFieldIndex0 = By.xpath("//input[inputmode='numeric' and value='0']");
+    private final By otpInputFieldIndex1 = By.xpath("//input[inputmode='numeric' and value='1']");
+    private final By otpInputFieldIndex2 = By.xpath("//input[inputmode='numeric' and value='2']");
+    private final By otpInputFieldIndex3 = By.xpath("//input[inputmode='numeric' and value='3']");
+    private final By otpInputFieldIndex4 = By.xpath("//input[inputmode='numeric' and value='4']");
+    private final By otpInputFieldIndex5 = By.xpath("//input[inputmode='numeric' and value='5']");
+
+    // Change Phone Number Link on OTP entry screen (In case user wants to change
+    // the phone number after submitting and before entering the OTP):
     private final By changePhoneNumber = By.xpath("//button[contains(text(),'Change phone number')]");
 
     // ==========================================
@@ -118,15 +168,17 @@ public class LoginPage extends BasePage {
         sendKeys(countrySearchField, searchTerm);
         log.debug("Search term '{}' entered into country search field.", searchTerm);
 
-        // The previous loop iterated the scroll container itself and called .click() on it,
-        // which Chrome rejects with "element click intercepted" because the styled-jsx wrapper
-        // inside is the real hit target. Target the leaf-most descendant whose normalized text
-        // contains the search term — that's the actual option item.
-        // Substring contains() picks up false positives: searching "India" also matched
-        // "British Indian Ocean Territory" and document order returned +246 first. Use a
-        // word-boundary check by wrapping both the haystack and the needle in spaces — so
-        // "India" only matches when surrounded by whitespace (start/end of string counts via
-        // the space-wrap), not when embedded inside "Indian" or similar.
+        /*
+         * The previous loop iterated the scroll container itself and called .click() on
+         * it, which Chrome rejects with "element click intercepted" because the
+         * styled-jsx wrapper inside is the real hit target. Target the leaf-most descendant
+         * whose normalized text contains the search term — that's the actual option item.
+         * Substring contains() picks up false positives: searching "India" also matched
+         * "British Indian Ocean Territory" and document order returned +246 first. Use
+         * a word-boundary check by wrapping both the haystack and the needle in spaces —
+         * so "India" only matches when surrounded by whitespace (start/end of string
+         * counts via the space-wrap), not when embedded inside "Indian" or similar.
+         */
         String literal = xpathLiteral(searchTerm);
         String wordMatch = "contains(concat(' ', normalize-space(.), ' '), concat(' ', "
                 + literal + ", ' '))";
@@ -142,15 +194,20 @@ public class LoginPage extends BasePage {
         }
     }
 
-    /* This is to ensure proper XPath literalization. It works for strings containing single or double quotes.
+    /*
+     * This is to ensure proper XPath literalization. It works for strings
+     * containing single or double quotes.
      */
     private static String xpathLiteral(String value) {
-        if (!value.contains("'")) return "'" + value + "'";
-        if (!value.contains("\"")) return "\"" + value + "\"";
+        if (!value.contains("'"))
+            return "'" + value + "'";
+        if (!value.contains("\""))
+            return "\"" + value + "\"";
         StringBuilder sb = new StringBuilder("concat(");
         String[] parts = value.split("'", -1);
         for (int i = 0; i < parts.length; i++) {
-            if (i > 0) sb.append(", \"'\", ");
+            if (i > 0)
+                sb.append(", \"'\", ");
             sb.append("'").append(parts[i]).append("'");
         }
         sb.append(")");
@@ -176,12 +233,13 @@ public class LoginPage extends BasePage {
         BrowserUtils.navigateTo(driver, loginUrl, 15);
 
         // Non-prod environments may sit behind a password gate. Unlock transparently
-        // and re-navigate so the welcome message wait below behaves identically across envs.
+        // and re-navigate so the welcome message wait below behaves identically across
+        // envs.
         if (new StagingGatePage(driver).unlockIfPresent()) {
             BrowserUtils.navigateTo(driver, loginUrl, 15);
         }
 
-        waitForVisibility(welcomeMessage);
+        waitForVisibility(timepiecesWelcomeMessage);
         log.info("Login page loaded and welcome message confirmed visible.");
         return this;
     }
@@ -283,9 +341,12 @@ public class LoginPage extends BasePage {
      * @return this LoginPage for method chaining.
      */
     public LoginPage clickSendOtpButton() {
-        // Send OTP stays disabled until Cloudflare Turnstile resolves (managed challenges
-        // can take 5-30s). The default 15s wait is too short and asks the wrong question
-        // (clickable vs. enabled). Poll the disabled attribute with a CAPTCHA-aware budget.
+        // Send OTP stays disabled until Cloudflare Turnstile resolves (managed
+        // challenges
+        // can take 5-30s). The default 15s wait is too short and asks the wrong
+        // question
+        // (clickable vs. enabled). Poll the disabled attribute with a CAPTCHA-aware
+        // budget.
         int captchaWaitSeconds = Optional.ofNullable(ConfigReader.get("captcha.wait.timeout"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -313,7 +374,7 @@ public class LoginPage extends BasePage {
 
     /**
      * B.8 Enters the OTP across the individual digit input fields.
-     * The OTP page renders one input per digit (input.otp-input). This method
+     * The OTP page renders one input per digit (otpInputField). This method
      * distributes each character of the OTP string to its corresponding field.
      * Assumes the OTP length matches the number of input fields on the page.
      *
@@ -324,7 +385,9 @@ public class LoginPage extends BasePage {
      */
     public LoginPage enterOtp(String otp) {
         log.info("Entering OTP (length: {} digits).", otp.length());
-        List<WebElement> fields = getElements(otpInputFields);
+        List<WebElement> fields = getElements(otpInputFieldContainer).stream()
+                .flatMap(container -> container.findElements(By.cssSelector("input.otp-input")).stream())
+                .toList();
 
         if (otp.length() != fields.size()) {
             throw new IllegalArgumentException(
@@ -399,7 +462,7 @@ public class LoginPage extends BasePage {
      * @return true if the welcome message is displayed, false otherwise.
      */
     public boolean isWelcomeMessageDisplayed() {
-        if (isDisplayed(welcomeMessage) && isDisplayed(welcomeMessageDetails)) {
+        if (isDisplayed(timepiecesWelcomeMessage) && isDisplayed(timepiecesWelcomeMessageDetails)) {
             log.info("verified: Welcome message and details are displayed");
             return true;
         }
@@ -474,10 +537,14 @@ public class LoginPage extends BasePage {
     }
 
     /**
-     * V.6 Verifies that the 'No countries found' message appears when searching for a
+     * V.6 Verifies that the 'No countries found' message appears when searching for
+     * a
      * non-existent country in the country code dropdown.
-     * Use in negative test cases to confirm correct feedback when dropdown search yields no results.
-     * @return true if the 'No countries found' message is displayed, false otherwise.
+     * Use in negative test cases to confirm correct feedback when dropdown search
+     * yields no results.
+     * 
+     * @return true if the 'No countries found' message is displayed, false
+     *         otherwise.
      */
     public boolean isNoCountriesFoundMessageDisplayed() {
         if (isDisplayed(searchFieldCountryNotFoundMessage)) {
@@ -489,11 +556,17 @@ public class LoginPage extends BasePage {
     }
 
     /**
-     * V.7 Verifies that the 'Too many attempts' lockout message is displayed after multiple failed OTP submissions.
-     * Use in negative test cases to confirm correct feedback when user is temporarily locked out due to too many failed attempts.
-     * For now, the Too Many Attempts triggers after the user changes their phone with or without submitting the OTP, 
-     * but this may evolve to also trigger after a certain number of failed OTP entries. This method can be used to verify the message in either scenario.
-     * @return true if the 'Too many attempts' lockout message is displayed, false otherwise.
+     * V.7 Verifies that the 'Too many attempts' lockout message is displayed after
+     * multiple failed OTP submissions.
+     * Use in negative test cases to confirm correct feedback when user is
+     * temporarily locked out due to too many failed attempts.
+     * For now, the Too Many Attempts triggers after the user changes their phone
+     * with or without submitting the OTP,
+     * but this may evolve to also trigger after a certain number of failed OTP
+     * entries. This method can be used to verify the message in either scenario.
+     * 
+     * @return true if the 'Too many attempts' lockout message is displayed, false
+     *         otherwise.
      */
     public boolean isTooManyAttemptsLockoutMessageDisplayed() {
         if (isDisplayed(tooManyAttemptsMessageLockout)) {
@@ -503,5 +576,4 @@ public class LoginPage extends BasePage {
         log.warn("'Too many attempts' lockout message not displayed.");
         return false;
     }
-
 }

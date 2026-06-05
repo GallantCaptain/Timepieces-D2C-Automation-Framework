@@ -12,7 +12,7 @@ import lombok.extern.log4j.Log4j2;
  * This way, we can avoid code duplication and maintain a cleaner codebase.
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class HeaderOnlyBasePage extends BasePage {
+public abstract class HeaderOnlyBasePage extends BasePage {
 
     public final HeaderComponent header;
     
