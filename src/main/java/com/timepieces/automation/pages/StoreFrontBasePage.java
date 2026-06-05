@@ -2,7 +2,6 @@ package com.timepieces.automation.pages;
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.components.HeaderComponent;
 import com.timepieces.automation.pages.components.FooterComponent;
 
 import lombok.extern.log4j.Log4j2;
@@ -13,15 +12,13 @@ import lombok.extern.log4j.Log4j2;
  * This way, we can avoid code duplication and maintain a cleaner codebase.
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class StoreFrontBasePage extends BasePage {
+public abstract class StoreFrontBasePage extends HeaderOnlyBasePage {
 
-    public final HeaderComponent header;
     public final FooterComponent footer;
 
     //Constructor
     public StoreFrontBasePage (WebDriver driver) {
         super(driver);
-        this.header = new HeaderComponent(driver);
         this.footer = new FooterComponent(driver);        
     }
 

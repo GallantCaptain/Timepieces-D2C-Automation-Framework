@@ -52,6 +52,7 @@ public class LoginPage extends BasePage {
     // ==========================================
     // LOCATORS
     // ==========================================
+    // Already Created Profile & Welcome Message Elements for Login Page
     // Identity Entry & Region Configuration Elements
     private final By phoneNumberField = By.cssSelector("input[placeholder='Enter your phone number']");
     private final By countryCodeDropdownBox = By.xpath(
@@ -81,8 +82,10 @@ public class LoginPage extends BasePage {
     private final By captchaChallengeFailedMessage = By
             .xpath("//div[contains(text(),'CAPTCHA verification failed. Please try again.')]");
     private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
-    //Too many attempts message happens after user changes their phone number after submitting the otp
-    private final By tooManyAttemptsMessageLockout = By.xpath("//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
+    // Too many attempts message happens after user changes their phone number after
+    // submitting the otp
+    private final By tooManyAttemptsMessageLockout = By.xpath(
+            "//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
 
     // --- Validation & Feedback: Post-OTP submission ---
     // XPath string containing an apostrophe must use double-quote delimiters to
@@ -93,6 +96,118 @@ public class LoginPage extends BasePage {
     private final By enterCodeMessageUnderVerifyAccess = By.cssSelector("p[class='text-gray-400 text-[16px] ']");
     private final By resendOtpLink = By.xpath("//button[contains(text(),\"Didn't receive it? Resend code\")]");
     private final By changePhoneNumber = By.xpath("//button[contains(text(),'Change phone number')]");
+
+    /* 
+    * Login Page {First Time Setup}: https://www.timepieces-d2c.example/login
+    * This page is only there for the first time. For profile edits after account creation, the user is taken to the Account Details page which has a different URL and UI.
+    * The profile edit page is not gated behind OTP verification, so it does not have the phone number, country code dropdown, or OTP submission elements that are present on the login page. Hence, this LoginPage class only models the first-time profile completion page that is gated behind OTP verification.
+    */ 
+    // Timepieces Image
+    private final By timepiecesImage = By.cssSelector("img[alt='Timepieces']");
+
+    // Complete your profile Message: (Unique for this viewport)
+    private final By completeYourProfileMessage = By.xpath(
+            "//p[contains(normalize-space(),'Add your details to begin your Timepieces journey.')]/parent::div/h1[@class='text-white text-[24px] font-bold mb-2']");
+
+    // Add your details to begin your Timepieces journey Message:
+    private final By addYourDetailsMessage = By.xpath(
+            "//p[contains(normalize-space(), 'Add your details to begin your Timepieces journey.')]/parent::div/p[@class='text-gray-400 text-[16px]']");
+
+    // First Name Label: [English]
+    private final By firstNameLabel = By.xpath("//label[contains(normalize-space(.), 'First Name')]");
+
+    // First Name Field:
+    private final By firstNameField = By
+            .xpath("//label[contains(normalize-space(), 'First Name')]/following-sibling::input");
+
+    // First Name Field Placeholder [English]:
+    private final By firstNamePlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'First Name')]/following-sibling::input[@placeholder='Eg. John']");
+
+    // Last Name Label: [English]
+    private final By lastNameLabel = By.xpath("//label[contains(normalize-space(.), 'Last Name')]");
+
+    // Last Name Field:
+    private final By lastNameField = By
+            .xpath("//label[contains(normalize-space(), 'Last Name')]/following-sibling::input");
+
+    // Last Name Field Placeholder: [English]
+    private final By lastNamePlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'Last Name')]/following-sibling::input[@placeholder='Eg. Doe']");
+
+    // Email Label: [English]
+    private final By emailLabel = By.xpath("//label[text()='Email']");
+
+    // Email Field:
+    private final By emailField = By.xpath("//label[contains(normalize-space(), 'Email')]/following-sibling::input");
+
+    // Email Field Placeholder: [English]
+    private final By emailPlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'Email')]/following-sibling::input[@placeholder='Enter your email']");
+
+    // Phone Label:
+    private final By phoneLabel = By.xpath("//label[text()='Phone']");
+
+    // Phone Country Code Dropdown Menu:
+    private final By phoneCountryCodeDropdown = By.xpath("//div[@class='relative']//button[@type='button']");
+
+    // Phone Number Field:
+    private final By phone_numberField = By.xpath("//input[@inputmode='numeric']");
+
+    // Gender Label: [English]
+    private final By genderLabel = By.xpath("//label[contains(normalize-space(.), 'Gender')]");
+
+    // Gender Dropdown Field: Use List to fetch
+    private final By genderDropdown = By.xpath("//div[@class='relative']/child::select");
+
+    // Gender List: [Male, Female, Other, Prefer Not To Say]
+    private final By maleOption = By.xpath("//option[contains(@value,'Male')]");
+    private final By femaleOption = By.xpath("//option[contains(@value,'Female')]");
+    private final By otherOption = By.xpath("//option[contains(@value,'Other')]");
+    private final By preferNotToSayOption = By.xpath("//option[contains(normalize-space(@value),'Prefer not to say')]");
+
+    // DOB Label: [English]
+    private final By dobLabel = By.xpath("//label[contains(normalize-space(), 'Date of Birth')]");
+
+    // DOB Field [mm/dd/yyyy]:
+    private final By dobField = By.cssSelector("input[type='date']");
+
+    // DOB field placeholder:
+    private final By dobPlaceholder = By.cssSelector("input[placeholder='DD/MM/YYYY']");
+
+    // Profession Label: [English]
+    private final By professionLabel = By.xpath("//label[contains(normalize-space(), 'Profession (optional)')]");
+
+    // Profession Field: [Text Field]
+    private final By professionField = By
+            .xpath("//label[contains(normalize-space(), 'Profession (optional)')]/following-sibling::input");
+    // Profession Field Placeholder: [Same as above/ Assert the placeholder]
+
+    // Description Label: [English]
+    private final By descriptionLabel = By.xpath("//label[text()='Email']");
+
+    // Description Field:
+    private final By descriptionField = By.cssSelector("textarea[placeholder='Write something about yourself']");
+    // Description Field Placeholder: [Same as above/ Assert the placeholder]
+
+    // Agreement Checkbox:
+    private final By agreementCheckbox = By.cssSelector("input[type='checkbox']");
+
+    // Agreement Message Assertion: [English]
+    private final By agreementMessage = By.xpath("//span[contains(normalize-space(.), 'By creating an account')]");
+
+    // Agreement Message Privacy Policy Link:
+    private final By privacyPolicyLink = By.cssSelector("a[href='/policies/privacy-policy']");
+
+    // Privacy Policy Link:
+    private final By termsOfServiceLink = By.cssSelector("a[href='/policies/terms-of-service']");
+
+    // Enter Timepieces Button (Disabled until form filled and checkbox selected):
+    private final By enterTimepiecesButton = By.cssSelector("button[type='submit']");
+
+    // Timepieces Data Secure Message:
+    private final By secureMessage = By.xpath(
+            "//p[contains(normalize-space(), 'Your details are secure and used only for your Timepieces experience.')]");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -118,14 +233,20 @@ public class LoginPage extends BasePage {
         sendKeys(countrySearchField, searchTerm);
         log.debug("Search term '{}' entered into country search field.", searchTerm);
 
-        // The previous loop iterated the scroll container itself and called .click() on it,
-        // which Chrome rejects with "element click intercepted" because the styled-jsx wrapper
-        // inside is the real hit target. Target the leaf-most descendant whose normalized text
+        // The previous loop iterated the scroll container itself and called .click() on
+        // it,
+        // which Chrome rejects with "element click intercepted" because the styled-jsx
+        // wrapper
+        // inside is the real hit target. Target the leaf-most descendant whose
+        // normalized text
         // contains the search term — that's the actual option item.
         // Substring contains() picks up false positives: searching "India" also matched
-        // "British Indian Ocean Territory" and document order returned +246 first. Use a
-        // word-boundary check by wrapping both the haystack and the needle in spaces — so
-        // "India" only matches when surrounded by whitespace (start/end of string counts via
+        // "British Indian Ocean Territory" and document order returned +246 first. Use
+        // a
+        // word-boundary check by wrapping both the haystack and the needle in spaces —
+        // so
+        // "India" only matches when surrounded by whitespace (start/end of string
+        // counts via
         // the space-wrap), not when embedded inside "Indian" or similar.
         String literal = xpathLiteral(searchTerm);
         String wordMatch = "contains(concat(' ', normalize-space(.), ' '), concat(' ', "
@@ -142,15 +263,20 @@ public class LoginPage extends BasePage {
         }
     }
 
-    /* This is to ensure proper XPath literalization. It works for strings containing single or double quotes.
+    /*
+     * This is to ensure proper XPath literalization. It works for strings
+     * containing single or double quotes.
      */
     private static String xpathLiteral(String value) {
-        if (!value.contains("'")) return "'" + value + "'";
-        if (!value.contains("\"")) return "\"" + value + "\"";
+        if (!value.contains("'"))
+            return "'" + value + "'";
+        if (!value.contains("\""))
+            return "\"" + value + "\"";
         StringBuilder sb = new StringBuilder("concat(");
         String[] parts = value.split("'", -1);
         for (int i = 0; i < parts.length; i++) {
-            if (i > 0) sb.append(", \"'\", ");
+            if (i > 0)
+                sb.append(", \"'\", ");
             sb.append("'").append(parts[i]).append("'");
         }
         sb.append(")");
@@ -176,7 +302,8 @@ public class LoginPage extends BasePage {
         BrowserUtils.navigateTo(driver, loginUrl, 15);
 
         // Non-prod environments may sit behind a password gate. Unlock transparently
-        // and re-navigate so the welcome message wait below behaves identically across envs.
+        // and re-navigate so the welcome message wait below behaves identically across
+        // envs.
         if (new StagingGatePage(driver).unlockIfPresent()) {
             BrowserUtils.navigateTo(driver, loginUrl, 15);
         }
@@ -283,9 +410,12 @@ public class LoginPage extends BasePage {
      * @return this LoginPage for method chaining.
      */
     public LoginPage clickSendOtpButton() {
-        // Send OTP stays disabled until Cloudflare Turnstile resolves (managed challenges
-        // can take 5-30s). The default 15s wait is too short and asks the wrong question
-        // (clickable vs. enabled). Poll the disabled attribute with a CAPTCHA-aware budget.
+        // Send OTP stays disabled until Cloudflare Turnstile resolves (managed
+        // challenges
+        // can take 5-30s). The default 15s wait is too short and asks the wrong
+        // question
+        // (clickable vs. enabled). Poll the disabled attribute with a CAPTCHA-aware
+        // budget.
         int captchaWaitSeconds = Optional.ofNullable(ConfigReader.get("captcha.wait.timeout"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -474,10 +604,14 @@ public class LoginPage extends BasePage {
     }
 
     /**
-     * V.6 Verifies that the 'No countries found' message appears when searching for a
+     * V.6 Verifies that the 'No countries found' message appears when searching for
+     * a
      * non-existent country in the country code dropdown.
-     * Use in negative test cases to confirm correct feedback when dropdown search yields no results.
-     * @return true if the 'No countries found' message is displayed, false otherwise.
+     * Use in negative test cases to confirm correct feedback when dropdown search
+     * yields no results.
+     * 
+     * @return true if the 'No countries found' message is displayed, false
+     *         otherwise.
      */
     public boolean isNoCountriesFoundMessageDisplayed() {
         if (isDisplayed(searchFieldCountryNotFoundMessage)) {
@@ -489,11 +623,17 @@ public class LoginPage extends BasePage {
     }
 
     /**
-     * V.7 Verifies that the 'Too many attempts' lockout message is displayed after multiple failed OTP submissions.
-     * Use in negative test cases to confirm correct feedback when user is temporarily locked out due to too many failed attempts.
-     * For now, the Too Many Attempts triggers after the user changes their phone with or without submitting the OTP, 
-     * but this may evolve to also trigger after a certain number of failed OTP entries. This method can be used to verify the message in either scenario.
-     * @return true if the 'Too many attempts' lockout message is displayed, false otherwise.
+     * V.7 Verifies that the 'Too many attempts' lockout message is displayed after
+     * multiple failed OTP submissions.
+     * Use in negative test cases to confirm correct feedback when user is
+     * temporarily locked out due to too many failed attempts.
+     * For now, the Too Many Attempts triggers after the user changes their phone
+     * with or without submitting the OTP,
+     * but this may evolve to also trigger after a certain number of failed OTP
+     * entries. This method can be used to verify the message in either scenario.
+     * 
+     * @return true if the 'Too many attempts' lockout message is displayed, false
+     *         otherwise.
      */
     public boolean isTooManyAttemptsLockoutMessageDisplayed() {
         if (isDisplayed(tooManyAttemptsMessageLockout)) {

@@ -32,7 +32,7 @@ import lombok.extern.log4j.Log4j2;
  * initialisation or teardown (belongs in DriverFactory + Hooks)
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class BasePage {
+public abstract class BasePage {
 
     protected final WebDriver driver;
     protected final WebDriverWait wait;
