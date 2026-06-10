@@ -143,6 +143,118 @@ public class LoginPage extends HeaderOnlyBasePage {
     // the phone number after submitting and before entering the OTP):
     private final By changePhoneNumber = By.xpath("//button[contains(text(),'Change phone number')]");
 
+    /* 
+    * Login Page {First Time Setup}: https://www.timepieces-d2c.example/login
+    * This page is only there for the first time. For profile edits after account creation, the user is taken to the Account Details page which has a different URL and UI.
+    * The profile edit page is not gated behind OTP verification, so it does not have the phone number, country code dropdown, or OTP submission elements that are present on the login page. Hence, this LoginPage class only models the first-time profile completion page that is gated behind OTP verification.
+    */ 
+    // Timepieces Image
+    private final By timepiecesImage = By.cssSelector("img[alt='Timepieces']");
+
+    // Complete your profile Message: (Unique for this viewport)
+    private final By completeYourProfileMessage = By.xpath(
+            "//p[contains(normalize-space(),'Add your details to begin your Timepieces journey.')]/parent::div/h1[@class='text-white text-[24px] font-bold mb-2']");
+
+    // Add your details to begin your Timepieces journey Message:
+    private final By addYourDetailsMessage = By.xpath(
+            "//p[contains(normalize-space(), 'Add your details to begin your Timepieces journey.')]/parent::div/p[@class='text-gray-400 text-[16px]']");
+
+    // First Name Label: [English]
+    private final By firstNameLabel = By.xpath("//label[contains(normalize-space(.), 'First Name')]");
+
+    // First Name Field:
+    private final By firstNameField = By
+            .xpath("//label[contains(normalize-space(), 'First Name')]/following-sibling::input");
+
+    // First Name Field Placeholder [English]:
+    private final By firstNamePlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'First Name')]/following-sibling::input[@placeholder='Eg. John']");
+
+    // Last Name Label: [English]
+    private final By lastNameLabel = By.xpath("//label[contains(normalize-space(.), 'Last Name')]");
+
+    // Last Name Field:
+    private final By lastNameField = By
+            .xpath("//label[contains(normalize-space(), 'Last Name')]/following-sibling::input");
+
+    // Last Name Field Placeholder: [English]
+    private final By lastNamePlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'Last Name')]/following-sibling::input[@placeholder='Eg. Doe']");
+
+    // Email Label: [English]
+    private final By emailLabel = By.xpath("//label[text()='Email']");
+
+    // Email Field:
+    private final By emailField = By.xpath("//label[contains(normalize-space(), 'Email')]/following-sibling::input");
+
+    // Email Field Placeholder: [English]
+    private final By emailPlaceholder = By.xpath(
+            "//label[contains(normalize-space(), 'Email')]/following-sibling::input[@placeholder='Enter your email']");
+
+    // Phone Label:
+    private final By phoneLabel = By.xpath("//label[text()='Phone']");
+
+    // Phone Country Code Dropdown Menu:
+    private final By phoneCountryCodeDropdown = By.xpath("//div[@class='relative']//button[@type='button']");
+
+    // Phone Number Field:
+    private final By phone_numberField = By.xpath("//input[@inputmode='numeric']");
+
+    // Gender Label: [English]
+    private final By genderLabel = By.xpath("//label[contains(normalize-space(.), 'Gender')]");
+
+    // Gender Dropdown Field: Use List to fetch
+    private final By genderDropdown = By.xpath("//div[@class='relative']/child::select");
+
+    // Gender List: [Male, Female, Other, Prefer Not To Say]
+    private final By maleOption = By.xpath("//option[contains(@value,'Male')]");
+    private final By femaleOption = By.xpath("//option[contains(@value,'Female')]");
+    private final By otherOption = By.xpath("//option[contains(@value,'Other')]");
+    private final By preferNotToSayOption = By.xpath("//option[contains(normalize-space(@value),'Prefer not to say')]");
+
+    // DOB Label: [English]
+    private final By dobLabel = By.xpath("//label[contains(normalize-space(), 'Date of Birth')]");
+
+    // DOB Field [mm/dd/yyyy]:
+    private final By dobField = By.cssSelector("input[type='date']");
+
+    // DOB field placeholder:
+    private final By dobPlaceholder = By.cssSelector("input[placeholder='DD/MM/YYYY']");
+
+    // Profession Label: [English]
+    private final By professionLabel = By.xpath("//label[contains(normalize-space(), 'Profession (optional)')]");
+
+    // Profession Field: [Text Field]
+    private final By professionField = By
+            .xpath("//label[contains(normalize-space(), 'Profession (optional)')]/following-sibling::input");
+    // Profession Field Placeholder: [Same as above/ Assert the placeholder]
+
+    // Description Label: [English]
+    private final By descriptionLabel = By.xpath("//label[text()='Email']");
+
+    // Description Field:
+    private final By descriptionField = By.cssSelector("textarea[placeholder='Write something about yourself']");
+    // Description Field Placeholder: [Same as above/ Assert the placeholder]
+
+    // Agreement Checkbox:
+    private final By agreementCheckbox = By.cssSelector("input[type='checkbox']");
+
+    // Agreement Message Assertion: [English]
+    private final By agreementMessage = By.xpath("//span[contains(normalize-space(.), 'By creating an account')]");
+
+    // Agreement Message Privacy Policy Link:
+    private final By privacyPolicyLink = By.cssSelector("a[href='/policies/privacy-policy']");
+
+    // Privacy Policy Link:
+    private final By termsOfServiceLink = By.cssSelector("a[href='/policies/terms-of-service']");
+
+    // Enter Timepieces Button (Disabled until form filled and checkbox selected):
+    private final By enterTimepiecesButton = By.cssSelector("button[type='submit']");
+
+    // Timepieces Data Secure Message:
+    private final By secureMessage = By.xpath(
+            "//p[contains(normalize-space(), 'Your details are secure and used only for your Timepieces experience.')]");
+
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
