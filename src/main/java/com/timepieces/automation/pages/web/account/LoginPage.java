@@ -53,7 +53,6 @@ public class LoginPage extends HeaderOnlyBasePage {
     // LOCATORS
     // ==========================================
     // Already Created Profile & Welcome Message Elements for Login Page
-
     // Timepieces Image - Before/After Entering Phone Number
     private final By timepiecesLoginPageImage = By.cssSelector("img[alt='Timepieces']");
 
@@ -326,7 +325,7 @@ public class LoginPage extends HeaderOnlyBasePage {
                 getElementPresence(cloudflareChallengeFrame),
                 timeoutInSeconds);
         WindowUtils.switchToDefaultContent(driver);
-        log.info("CloudFlare CAPTCHA ifrae loaded. Switched back to default content.");
+        log.info("CloudFlare CAPTCHA iframe loaded. Switched back to default content.");
         return this;
     }
 
@@ -405,11 +404,10 @@ public class LoginPage extends HeaderOnlyBasePage {
     /**
      * B.9 Clicks the Continue button to submit the entered OTP and complete login.
      * This is the final action on the LoginPage. After a successful login,
-     * the application navigates away from this page to the dashboard or home.
-     * Return type is void here — replace with `return new DashboardPage(driver)`
-     * once the DashboardPage POM is created.
+     * the application redirects to the homepage (new users see OnboardingPage first).
      *
-     * @return this LoginPage (update to DashboardPage once that POM is ready).
+     * @return this LoginPage for now. Return type will be updated once the
+     *         full E2E login-to-account flow is wired and tested.
      */
     public LoginPage clickContinueButton() {
         log.info("Clicking Continue button to submit OTP.");
@@ -574,6 +572,66 @@ public class LoginPage extends HeaderOnlyBasePage {
             return true;
         }
         log.warn("'Too many attempts' lockout message not displayed.");
+        return false;
+    }
+
+    /**
+     * V.8 Verifies that the 'Your details are secure' assurance message is visible.
+     * This message is always present on the login page as a trust signal.
+     *
+     * @return true if the secure assurance message is displayed, false otherwise.
+     */
+    public boolean isSecureAssuranceMessageDisplayed() {
+        if (isDisplayed(timepiecesSecureAssuranceMessage)) {
+            log.info("Verified: Secure assurance message is displayed.");
+            return true;
+        }
+        log.warn("Secure assurance message not displayed.");
+        return false;
+    }
+
+    /**
+     * V.9 Verifies that the Timepieces brand image is visible on the login page.
+     * Use in smoke tests to confirm visual branding elements loaded correctly.
+     *
+     * @return true if the Timepieces image is displayed, false otherwise.
+     */
+    public boolean isLoginPageImageDisplayed() {
+        if (isDisplayed(timepiecesLoginPageImage)) {
+            log.info("Verified: Timepieces login page image is displayed.");
+            return true;
+        }
+        log.warn("Timepieces login page image not displayed.");
+        return false;
+    }
+
+    /**
+     * V.10 Verifies that the phone number label is visible on the login page.
+     * Use for UI assertion to confirm the form label rendered correctly.
+     *
+     * @return true if the phone label is displayed, false otherwise.
+     */
+    public boolean isPhoneLabelDisplayed() {
+        if (isDisplayed(phoneNumberLabel)) {
+            log.info("Verified: Phone number label is displayed.");
+            return true;
+        }
+        log.warn("Phone number label not displayed.");
+        return false;
+    }
+
+    /**
+     * V.11 Verifies that the 'Resend OTP' link is visible on the OTP entry screen.
+     * Use to confirm the resend option is available before attempting to click it.
+     *
+     * @return true if the resend OTP link is displayed, false otherwise.
+     */
+    public boolean isResendOtpLinkDisplayed() {
+        if (isDisplayed(resendOtpLink)) {
+            log.info("Verified: Resend OTP link is displayed.");
+            return true;
+        }
+        log.warn("Resend OTP link not displayed.");
         return false;
     }
 }
