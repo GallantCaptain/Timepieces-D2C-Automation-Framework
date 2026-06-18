@@ -1,0 +1,109 @@
+name: Test Suite Runner & Metrics Publisher
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Target Execution Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      browser:
+        description: 'Browser Target'
+        required: true
+        default: 'chrome'
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - edge
+          - brave
+      tags:
+        description: 'Cucumber Tags Expression'
+        required: true
+        default: '@Smoke'
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'oracle'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Install Browser Binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+
+      - name: Fetch Allure History
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Try fetching gh-pages branch to pull previous allure history
+          git fetch origin gh-pages || true
+          git checkout origin/gh-pages -- allure-history || true
+          if [ -d "allure-history" ]; then
+            mkdir -p target/allure-results/history
+            cp -r allure-history/* target/allure-results/history/ || true
+            echo "Successfully loaded previous allure history."
+          else
+            echo "No previous allure history found."
+          fi
+
+      - name: Execute Automation Tests
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          AUTOMATION_TOKEN: ${{ secrets.DEV_AUTOMATION_TOKEN }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          mvn test \
+            -Denv="${{ inputs.env || 'staging' }}" \
+            -Dbrowser="${{ inputs.browser || 'chrome' }}" \
+            -Dheadless=true \
+            "-Dcucumber.filter.tags=${{ inputs.tags || '@Smoke' }}" \
+            -Dchrome.no.sandbox=true
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          mvn allure:report
+
+      - name: Organize Reports for Deployment
+        if: always()
+        run: |
+          mkdir -p deploy/runs/${{ github.run_number }}
+          cp -r target/site/allure-maven-plugin/* deploy/runs/${{ github.run_number }}/
+          cp -r target/site/allure-maven-plugin/* deploy/
+          
+          # Maintain history directory for next runs
+          mkdir -p allure-history
+          cp -r target/site/allure-maven-plugin/history/* allure-history/ || true
+          cp -r allure-history deploy/
+
+      - name: Deploy Allure Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy
+          keep_files: true

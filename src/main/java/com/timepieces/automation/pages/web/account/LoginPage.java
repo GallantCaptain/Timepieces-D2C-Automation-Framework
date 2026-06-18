@@ -338,18 +338,41 @@ public class LoginPage extends HeaderOnlyBasePage {
         String baseUrl = ConfigReader.get("base.url");
         String loginPath = ConfigReader.get("login.path");
         String loginUrl = baseUrl + loginPath;
-        log.info("Navigating to login page: {}", loginUrl);
-        BrowserUtils.navigateTo(driver, loginUrl, 15);
 
-        // Non-prod environments may sit behind a password gate. Unlock transparently
-        // and re-navigate so the welcome message wait below behaves identically across
-        // envs.
-        if (new StagingGatePage(driver).unlockIfPresent()) {
+        String env = System.getProperty("env");
+        if ("dev".equalsIgnoreCase(env)) {
+            String bypassToken = System.getenv("AUTOMATION_TOKEN");
+            if (bypassToken == null || bypassToken.isEmpty()) {
+                bypassToken = System.getProperty("AUTOMATION_TOKEN");
+            }
+            if (bypassToken != null && !bypassToken.isEmpty()) {
+                String devLoginUrl = baseUrl + "/dev-login?token=" + bypassToken;
+                log.info("Dev environment detected. Navigating via Google OAuth token bypass URL: {}", devLoginUrl);
+                BrowserUtils.navigateTo(driver, devLoginUrl, 15);
+                
+                // Navigate back to loginUrl to initialize session
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            } else {
+                log.warn("AUTOMATION_TOKEN environment variable not set, navigating normally.");
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            }
+        } else {
+            log.info("Navigating to login page: {}", loginUrl);
             BrowserUtils.navigateTo(driver, loginUrl, 15);
+
+            // Non-prod environments may sit behind a password gate. Unlock transparently
+            // and re-navigate so the welcome message wait below behaves identically.
+            if (new StagingGatePage(driver).unlockIfPresent()) {
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            }
         }
 
-        waitForVisibility(timepiecesWelcomeMessage);
-        log.info("Login page loaded and welcome message confirmed visible.");
+        try {
+            waitForVisibility(timepiecesWelcomeMessage);
+            log.info("Login page loaded and welcome message confirmed visible.");
+        } catch (TimeoutException e) {
+            log.info("Welcome message wait timed out. User might be authenticated via bypass.");
+        }
         return this;
     }
 

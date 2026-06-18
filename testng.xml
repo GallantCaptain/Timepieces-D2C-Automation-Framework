@@ -4,6 +4,7 @@
     
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
     </listeners>
     
     <!-- Global Parameter read by BaseRunner -->
