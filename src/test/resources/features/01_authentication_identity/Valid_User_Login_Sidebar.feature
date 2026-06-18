@@ -9,12 +9,15 @@ So that I can access my personalized account features and information seamlessly
     Given the user has opened the global responsive sidebar menu
     When the user clicks on the "Sign In" interaction link
     Then the application should display the user authentication interface
-    When the user inputs a valid identifier "<user_phone>"
-    And inputs the corresponding secret access key "<pass_otp>"
-    And clicks the authentication submission element
+    When the user selects the country "<country>" from the region dropdown
+    And the user enters the phone number "<phone_number>" in the phone number input field
+    And clicks the send OTP button
+    Then the OTP verification screen should be displayed
+    When the user enters the OTP "<otp>"
+    And clicks the continue button
     Then the session context should update to the authenticated state
     And the sidebar element should display the personalized element "<account_marker>"
 
     Examples:
-      | user_phone          | pass_otp             | account_marker                |
-      | qa_test@timepieces-d2c.example | ${TEST_ACCOUNT_PASS} | My Account {Name/Designation} |
+      | country | phone_number | otp    | account_marker |
+      | India   | 9000000001   | 123456 | My Account     |

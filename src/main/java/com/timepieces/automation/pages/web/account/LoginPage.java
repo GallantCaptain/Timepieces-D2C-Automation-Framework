@@ -67,10 +67,9 @@ public class LoginPage extends HeaderOnlyBasePage {
     /* Phone Label [For Ui Assertion Only, Not For Element Interaction - The actual input field doesn't have a label element, so we will use the label text as an anchor for locating the input field]: */
     private final By phoneNumberLabel = By.xpath("//label[contains(normalize-space(),'Phone')]");
 
-    // Identity Entry & Region Configuration Elements - Before Entering Phone Number
-    // Country Dropdown Box Container (Clickable):
-    private final By countryCodeDropdownBox = By.xpath(
-            "(//label[contains(normalize-space(),'Phone')]/parent::div/descendant::button)");
+    // Identity Entry & Region Configuration Elements - Before Entering Phone Number    // Country Dropdown Box Container (Clickable):
+    private final By countryCodeDropdownBox = By.cssSelector(
+            "button[data-testid='login-phone-input-country-button']");
     // Country Dropdown Button Icon (Clickable):
     private final By countryDropdownButton = By.xpath("//button[@type='button']//*[name()='svg']");
     // Country Dropdown List: [Only after opening]
@@ -79,13 +78,12 @@ public class LoginPage extends HeaderOnlyBasePage {
     private final By countrySearchField = By.cssSelector("input[placeholder='Search country...']");
     // No countries found message when searching in country code dropdown:
     private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
-    // The Phone Number field accepts only digits, so we can use a placeholder-based
-    // locator that is consistent across locales:
-    private final By phoneNumberField = By.cssSelector("input[placeholder='Enter your phone number']");
-
+    // The Phone Number field is located using data-testid:
+    private final By phoneNumberField = By.cssSelector("input[data-testid='login-phone-input']");
+ 
     // Process Dispatch & Phase States - Disabled before country & number selected,
     /* captcha verified, Then Submit button is Enabled & Clickable after all conditions met: */
-    private final By sendOtpButton = By.xpath("//button[@type='submit' and normalize-space()='Send OTP']");
+    private final By sendOtpButton = By.cssSelector("button[data-testid='login-send-otp']");
 
     /* After submitting any otp (valid/invalid) as long as all the input fields are filled. */
     private final By continueButton = By.xpath("//button[@type='submit' and normalize-space()='Continue']");
@@ -478,7 +476,12 @@ public class LoginPage extends HeaderOnlyBasePage {
         }
         log.info("Send OTP button is enabled. Clicking.");
         clickElement(sendOtpButton);
-        waitForVisibility(verifyAccessMessage);
+        try {
+            waitForVisibility(verifyAccessMessage);
+        } catch (TimeoutException e) {
+            log.error("Timeout waiting for verifyAccessMessage. Page source: \n{}", driver.getPageSource());
+            throw e;
+        }
         log.info("OTP dispatched. OTP entry screen is now visible.");
         return this;
     }

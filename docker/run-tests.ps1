@@ -30,7 +30,7 @@ param(
     [switch]$Vnc,
     [int]$VncPort = 5900,
     [string]$Env = "staging",
-    [string]$Tags = "@Smoke and @Login"
+    [string]$Tags = "@Smoke"
 )
 
 $ErrorActionPreference = "Stop"

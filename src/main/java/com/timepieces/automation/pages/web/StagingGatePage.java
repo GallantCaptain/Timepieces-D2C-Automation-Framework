@@ -92,4 +92,59 @@ public class StagingGatePage extends BasePage {
             throw e;
         }
     }
+
+    /**
+     * Checks if the password gate field is present on the page.
+     *
+     * @return true if the password field is visible, false otherwise.
+     */
+    public boolean isPasswordGatePresent() {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(detectionTimeoutSeconds))
+                    .until(ExpectedConditions.visibilityOfElementLocated(passwordField));
+            return true;
+        } catch (TimeoutException | NoSuchElementException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Enters the password into the gate password field.
+     *
+     * @param password The gatekeeper password to enter.
+     * @return this StagingGatePage for method chaining.
+     */
+    public StagingGatePage enterPassword(String password) {
+        log.info("Entering staging gate password.");
+        sendKeys(passwordField, password);
+        return this;
+    }
+
+    /**
+     * Clicks the submit button on the password gate.
+     *
+     * @return this StagingGatePage for method chaining.
+     */
+    public StagingGatePage clickSubmitButton() {
+        log.info("Clicking staging gate submit button.");
+        clickElement(submitButton);
+        return this;
+    }
+
+    /**
+     * Verifies if the password wall has cleared successfully by checking for
+     * the invisibility of the password field.
+     *
+     * @return true if cleared, false if still visible.
+     */
+    public boolean isPasswordWallCleared() {
+        log.info("Verifying if staging gate is cleared.");
+        try {
+            waitForInvisibility(passwordField);
+            return true;
+        } catch (TimeoutException e) {
+            log.warn("Staging gate password field is still visible.");
+            return false;
+        }
+    }
 }
