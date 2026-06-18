@@ -37,12 +37,14 @@ public abstract class BasePage {
     protected final WebDriver driver;
     protected final WebDriverWait wait;
 
+    // ==========================================
+    // CONSTRUCTORS
+    // ==========================================
     /**
      * Constructs a BasePage, wiring up the driver, the explicit wait, and
      * PageFactory element proxies for the concrete subclass.
      *
-     * @param driver The WebDriver instance managed by DriverFactory
-     * (ThreadLocal).
+     * @param driver The WebDriver instance managed by DriverFactory (ThreadLocal).
      */
     public BasePage(WebDriver driver) {
         this.driver = driver;
@@ -83,15 +85,15 @@ public abstract class BasePage {
     }
 
     /**
-     * * Synchronizes and isolates element retrieval using explicit visibility
+     * Synchronizes and isolates element retrieval using explicit visibility
      * constraints. Guardrails agains lazy loading elements on heavy animated
      * matrices and ensures that interactions are performed on elements that are
      * present and visible in the DOM.
      *
      * @param locator The By locator used to identify the target element on the
-     * page.
+     *                page.
      * @return The WebElement that matches the locator and is visible on the
-     * page.
+     *         page.
      */
     protected WebElement getElement(By locator) {
         log.debug("Synchronizing element visibility tracking for locator target: [{}]", locator);
@@ -107,9 +109,9 @@ public abstract class BasePage {
      * batch operations on those elements.
      *
      * @param locator The By locator used to identify the target elements on the
-     * page.
+     *                page.
      * @return A List of WebElement objects that match the locator and are
-     * visible on the page.
+     *         visible on the page.
      */
     protected List<WebElement> getElements(By locator) {
         log.debug("Synchronizing multiple element visibility tracking for locator target: [{}]", locator);
@@ -124,7 +126,7 @@ public abstract class BasePage {
      * stability.
      *
      * @param locator The By locator used to identify the target element on the
-     * page.
+     *                page.
      */
     protected void clickElement(By locator) {
         log.info("Executing safe click transaction on target element: [{}]", locator);
@@ -142,8 +144,8 @@ public abstract class BasePage {
      * anomalies.
      *
      * @param locator The By locator used to identify the target element on the
-     * page.
-     * @param value The text value to be injected into the target element.
+     *                page.
+     * @param value   The text value to be injected into the target element.
      */
     protected void sendKeys(By locator, String value) {
         if (value == null) {
@@ -167,7 +169,7 @@ public abstract class BasePage {
      * accurately captured from the current state of the page.
      *
      * @param locator The By locator used to identify the target element on the
-     * page.
+     *                page.
      * @return The text content of the target element.
      */
     protected String getText(By locator) {
@@ -184,7 +186,7 @@ public abstract class BasePage {
      * Boolean Verification wrapper asserting active component status
      *
      * @param locator The By locator used to identify the target element on the
-     * page.
+     *                page.
      * @return true if the element is displayed, false otherwise.
      */
     protected Boolean isDisplayed(By locator) {
@@ -202,8 +204,8 @@ public abstract class BasePage {
      * Centralized method for retrieving the attribute value of a target
      * element.
      *
-     * @param locator The By locator used to identify the target element on the
-     * page.
+     * @param locator       The By locator used to identify the target element the
+     *                      page.
      * @param attributeName The name of the attribute to retrieve.
      * @return The value of the specified attribute.
      */
@@ -225,12 +227,12 @@ public abstract class BasePage {
      * common patterns but differ in specific identifiers (e.g., product names,
      * user IDs).
      *
-     * @param xPathTemplate The By locator template containing placeholders for
-     * dynamic values.
+     * @param xPathTemplate    The By locator template containing placeholders for
+     *                         dynamic values.
      * @param replacementValue The value to replace the placeholders in the
-     * locator template.
+     *                         locator template.
      * @return A By locator instance with the placeholders replaced by the
-     * specified value.
+     *         specified value.
      */
     protected By formatLocator(By xPathTemplate, String replacementValue) {
         return By.xpath(String.format(xPathTemplate.toString().replace("By.xpath: ", ""), replacementValue));

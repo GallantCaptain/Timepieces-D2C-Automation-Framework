@@ -1,6 +1,6 @@
 package com.timepieces.automation.stepdefinitions;
 
-import org.testng.Assert;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
@@ -23,14 +23,15 @@ public class LoginSteps {
 
     @Given("a user navigates to the Timepieces login page")
     public void a_user_navigates_to_the_timepieces_login_page() {
-        // Initialize the page object using the ThreadLocal driver instantiated by
-        // Hooks.java
+        /* Initialize the page object using the ThreadLocal driver instantiated by Hooks.java */
         loginPage = new LoginPage(DriverFactory.getDriver());
 
         // Use the fluent POM to navigate
         loginPage.open();
 
-        Assert.assertTrue(loginPage.isWelcomeMessageDisplayed(), "Welcome message was not displayed upon loading.");
+        assertThat(loginPage.isWelcomeMessageDisplayed())
+                .as("Welcome message was not displayed upon loading.")
+                .isTrue();
     }
 
     @When("the user selects the country {string} from the region dropdown")
@@ -52,6 +53,8 @@ public class LoginSteps {
 
     @Then("the OTP verification screen should be displayed")
     public void the_otp_verification_screen_should_be_displayed() {
-        Assert.assertTrue(loginPage.isOtpEntryScreenDisplayed(), "OTP entry screen was not displayed.");
+        assertThat(loginPage.isOtpEntryScreenDisplayed())
+                .as("OTP entry screen was not displayed.")
+                .isTrue();
     }
 }

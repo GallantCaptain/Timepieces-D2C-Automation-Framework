@@ -159,5 +159,4 @@ public class AccountPage extends HeaderOnlyBasePage {
         }
         return uploaded;
     }
-
 }
