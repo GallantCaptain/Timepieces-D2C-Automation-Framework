@@ -1,0 +1,393 @@
+:root {
+  --bg: #0f1419;
+  --panel: #171d26;
+  --panel-2: #1d2530;
+  --border: #2a3340;
+  --text: #e6edf3;
+  --muted: #8b98a9;
+  --accent: #4f8cff;
+  --good: #2ec27e;
+  --good-bg: rgba(46, 194, 126, 0.14);
+  --bad: #f0506e;
+  --bad-bg: rgba(240, 80, 110, 0.14);
+  --warn: #f7b955;
+  --warn-bg: rgba(247, 185, 85, 0.14);
+  --radius: 10px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted);
+}
+.pad {
+  padding: 16px;
+}
+.center {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* ---- App shell ---- */
+.app-shell {
+  min-height: 100vh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+}
+.brand.large {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 10px;
+  box-shadow: 0 0 12px var(--accent);
+}
+.nav {
+  display: flex;
+  gap: 6px;
+}
+.nav a {
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: var(--muted);
+}
+.nav a:hover {
+  background: var(--panel-2);
+  text-decoration: none;
+}
+.nav a.active {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.user-box {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+/* ---- Generic ---- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+h1 {
+  font-size: 22px;
+  margin: 0;
+}
+h2 {
+  font-size: 16px;
+  margin: 0;
+}
+h3 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card.no-pad {
+  padding: 0;
+  overflow: hidden;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-head.pad-head {
+  padding: 16px 18px 0;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn.ghost {
+  background: transparent;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+input,
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.alert.error {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.alert.ok {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.alert.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* ---- Login ---- */
+.login-card {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- KPIs ---- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kpi-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+.kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+}
+.kpi-value.sm {
+  font-size: 15px;
+  font-weight: 500;
+}
+.tone-good .kpi-value {
+  color: var(--good);
+}
+.tone-bad .kpi-value {
+  color: var(--bad);
+}
+.tone-warn .kpi-value {
+  color: var(--warn);
+}
+
+/* ---- Trend chart ---- */
+.trend-chart {
+  width: 100%;
+  height: auto;
+}
+.trend-chart .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.trend-chart .axis {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.trend-chart .bar-pass {
+  fill: var(--good);
+  opacity: 0.85;
+}
+.trend-chart .bar-fail {
+  fill: var(--bad);
+  opacity: 0.85;
+}
+.trend-chart .rate-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.swatch.pass {
+  background: var(--good);
+}
+.swatch.fail {
+  background: var(--bad);
+}
+.swatch.line {
+  background: var(--accent);
+}
+
+/* ---- Tables ---- */
+.filters {
+  display: flex;
+  gap: 16px;
+}
+.runs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.runs-table th,
+.runs-table td {
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.runs-table th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.runs-table tbody tr:hover,
+.runs-table tbody tr:hover {
+  background: var(--panel-2);
+}
+.runs-table .num {
+  text-align: right;
+}
+.runs-table td.pass {
+  color: var(--good);
+}
+.runs-table td.fail {
+  color: var(--bad);
+}
+.center-cell {
+  text-align: center;
+  padding: 28px;
+}
+
+.pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill.tone-good {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.pill.tone-bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.pill.tone-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* ---- Flows ---- */
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.flow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.flow-card .tags {
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.flow-card .btn {
+  margin-top: auto;
+}
