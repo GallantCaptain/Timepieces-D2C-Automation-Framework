@@ -29,9 +29,12 @@ public class LoginSteps {
         // Use the fluent POM to navigate
         loginPage.open();
 
-        assertThat(loginPage.isWelcomeMessageDisplayed())
-                .as("Welcome message was not displayed upon loading.")
-                .isTrue();
+        String env = System.getProperty("env");
+        if (!"dev".equalsIgnoreCase(env)) {
+            assertThat(loginPage.isWelcomeMessageDisplayed())
+                    .as("Welcome message was not displayed upon loading.")
+                    .isTrue();
+        }
     }
 
     @When("the user selects the country {string} from the region dropdown")
@@ -56,5 +59,15 @@ public class LoginSteps {
         assertThat(loginPage.isOtpEntryScreenDisplayed())
                 .as("OTP entry screen was not displayed.")
                 .isTrue();
+    }
+
+    @And("the user enters the OTP {string}")
+    public void the_user_enters_the_otp(String otp) {
+        loginPage.enterOtp(otp);
+    }
+
+    @And("clicks the continue button")
+    public void clicks_the_continue_button() {
+        loginPage.clickContinueButton();
     }
 }

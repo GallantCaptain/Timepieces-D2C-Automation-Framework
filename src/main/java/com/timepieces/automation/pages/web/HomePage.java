@@ -25,4 +25,21 @@ public class HomePage extends BasePage {
     }
 
     /********* Locators *********/
+
+    /**
+     * Checks if the brand logo is visible on the homepage/storefront.
+     *
+     * @param logoSelector The CSS selector for the logo element.
+     * @return true if visible, false otherwise.
+     */
+    public boolean isLogoVisible(String logoSelector) {
+        log.info("Checking visibility of logo using selector: {}", logoSelector);
+        try {
+            By locator = By.cssSelector(logoSelector);
+            return isDisplayed(locator);
+        } catch (Exception e) {
+            log.error("Logo with selector {} was not visible", logoSelector, e);
+            return false;
+        }
+    }
 }

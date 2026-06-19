@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Timepieces Automation Suite" parallel="none">
+<suite name="Timepieces Automation Suite" parallel="none" data-provider-thread-count="2">
     
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
     </listeners>
     
     <!-- Global Parameter read by BaseRunner -->

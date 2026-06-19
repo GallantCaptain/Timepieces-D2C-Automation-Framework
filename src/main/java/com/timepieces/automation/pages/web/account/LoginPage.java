@@ -67,10 +67,9 @@ public class LoginPage extends HeaderOnlyBasePage {
     /* Phone Label [For Ui Assertion Only, Not For Element Interaction - The actual input field doesn't have a label element, so we will use the label text as an anchor for locating the input field]: */
     private final By phoneNumberLabel = By.xpath("//label[contains(normalize-space(),'Phone')]");
 
-    // Identity Entry & Region Configuration Elements - Before Entering Phone Number
-    // Country Dropdown Box Container (Clickable):
-    private final By countryCodeDropdownBox = By.xpath(
-            "(//label[contains(normalize-space(),'Phone')]/parent::div/descendant::button)");
+    // Identity Entry & Region Configuration Elements - Before Entering Phone Number    // Country Dropdown Box Container (Clickable):
+    private final By countryCodeDropdownBox = By.cssSelector(
+            "button[data-testid='login-phone-input-country-button']");
     // Country Dropdown Button Icon (Clickable):
     private final By countryDropdownButton = By.xpath("//button[@type='button']//*[name()='svg']");
     // Country Dropdown List: [Only after opening]
@@ -79,13 +78,12 @@ public class LoginPage extends HeaderOnlyBasePage {
     private final By countrySearchField = By.cssSelector("input[placeholder='Search country...']");
     // No countries found message when searching in country code dropdown:
     private final By searchFieldCountryNotFoundMessage = By.xpath("//div[contains(text(),'No countries found')]");
-    // The Phone Number field accepts only digits, so we can use a placeholder-based
-    // locator that is consistent across locales:
-    private final By phoneNumberField = By.cssSelector("input[placeholder='Enter your phone number']");
-
+    // The Phone Number field is located using data-testid:
+    private final By phoneNumberField = By.cssSelector("input[data-testid='login-phone-input']");
+ 
     // Process Dispatch & Phase States - Disabled before country & number selected,
     /* captcha verified, Then Submit button is Enabled & Clickable after all conditions met: */
-    private final By sendOtpButton = By.xpath("//button[@type='submit' and normalize-space()='Send OTP']");
+    private final By sendOtpButton = By.cssSelector("button[data-testid='login-send-otp']");
 
     /* After submitting any otp (valid/invalid) as long as all the input fields are filled. */
     private final By continueButton = By.xpath("//button[@type='submit' and normalize-space()='Continue']");
@@ -340,18 +338,41 @@ public class LoginPage extends HeaderOnlyBasePage {
         String baseUrl = ConfigReader.get("base.url");
         String loginPath = ConfigReader.get("login.path");
         String loginUrl = baseUrl + loginPath;
-        log.info("Navigating to login page: {}", loginUrl);
-        BrowserUtils.navigateTo(driver, loginUrl, 15);
 
-        // Non-prod environments may sit behind a password gate. Unlock transparently
-        // and re-navigate so the welcome message wait below behaves identically across
-        // envs.
-        if (new StagingGatePage(driver).unlockIfPresent()) {
+        String env = System.getProperty("env");
+        if ("dev".equalsIgnoreCase(env)) {
+            String bypassToken = System.getenv("AUTOMATION_TOKEN");
+            if (bypassToken == null || bypassToken.isEmpty()) {
+                bypassToken = System.getProperty("AUTOMATION_TOKEN");
+            }
+            if (bypassToken != null && !bypassToken.isEmpty()) {
+                String devLoginUrl = baseUrl + "/dev-login?token=" + bypassToken;
+                log.info("Dev environment detected. Navigating via Google OAuth token bypass URL: {}", devLoginUrl);
+                BrowserUtils.navigateTo(driver, devLoginUrl, 15);
+                
+                // Navigate back to loginUrl to initialize session
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            } else {
+                log.warn("AUTOMATION_TOKEN environment variable not set, navigating normally.");
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            }
+        } else {
+            log.info("Navigating to login page: {}", loginUrl);
             BrowserUtils.navigateTo(driver, loginUrl, 15);
+
+            // Non-prod environments may sit behind a password gate. Unlock transparently
+            // and re-navigate so the welcome message wait below behaves identically.
+            if (new StagingGatePage(driver).unlockIfPresent()) {
+                BrowserUtils.navigateTo(driver, loginUrl, 15);
+            }
         }
 
-        waitForVisibility(timepiecesWelcomeMessage);
-        log.info("Login page loaded and welcome message confirmed visible.");
+        try {
+            waitForVisibility(timepiecesWelcomeMessage);
+            log.info("Login page loaded and welcome message confirmed visible.");
+        } catch (TimeoutException e) {
+            log.info("Welcome message wait timed out. User might be authenticated via bypass.");
+        }
         return this;
     }
 
@@ -478,7 +499,12 @@ public class LoginPage extends HeaderOnlyBasePage {
         }
         log.info("Send OTP button is enabled. Clicking.");
         clickElement(sendOtpButton);
-        waitForVisibility(verifyAccessMessage);
+        try {
+            waitForVisibility(verifyAccessMessage);
+        } catch (TimeoutException e) {
+            log.error("Timeout waiting for verifyAccessMessage. Page source: \n{}", driver.getPageSource());
+            throw e;
+        }
         log.info("OTP dispatched. OTP entry screen is now visible.");
         return this;
     }

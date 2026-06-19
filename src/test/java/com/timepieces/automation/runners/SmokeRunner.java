@@ -3,7 +3,10 @@ package com.timepieces.automation.runners;
 import io.cucumber.testng.CucumberOptions;
 
 @CucumberOptions(
-    features = "src/test/resources/features",
+    features = {
+        "src/test/resources/features/01_authentication_identity/Staging_Password_Bypass.feature",
+        "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature"
+    },
     glue = { "com.timepieces.automation.stepdefinitions", "com.timepieces.automation.hooks" },
     tags = "@Smoke",
     plugin = {

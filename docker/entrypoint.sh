@@ -12,7 +12,7 @@
 set -uo pipefail
 
 ENV_TARGET="${ENV_TARGET:-staging}"
-TAGS="${TAGS:-@Smoke and @Login}"
+TAGS="${TAGS:-@Smoke}"
 BROWSERS="${BROWSERS:-chrome firefox edge brave}"
 
 if [[ "${DEBUG_VNC:-false}" == "true" ]]; then
