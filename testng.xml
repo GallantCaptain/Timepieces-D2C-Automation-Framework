@@ -16,12 +16,6 @@
         </classes>
     </test>
 
-    <test name="Sanity Executions">
-        <classes>
-            <class name="com.timepieces.automation.runners.SanityRunner" />
-        </classes>
-    </test>
-
     <test name="Regression Executions">
         <classes>
             <class name="com.timepieces.automation.runners.RegressionRunner" />

@@ -19,10 +19,9 @@ on:
       env:
         description: 'Target Execution Environment'
         required: true
-        default: 'dev'
+        default: 'staging'
         type: choice
         options:
-          - dev
           - staging
           - prod
       browser:
@@ -88,10 +87,10 @@ jobs:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           mvn test \
-            -Denv="${{ inputs.env || 'dev' }}" \
+            -Denv="${{ inputs.env || 'staging' }}" \
             -Dbrowser="${{ inputs.browser || 'chrome' }}" \
             -Dheadless=true \
-            "-Dcucumber.filter.tags=${{ inputs.tags || '@Smoke and not @Staging' }}" \
+            "-Dcucumber.filter.tags=${{ inputs.tags || '@Smoke' }}" \
             -Dchrome.no.sandbox=true
 
       - name: Generate Allure Report
