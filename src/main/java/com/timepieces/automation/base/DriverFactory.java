@@ -17,6 +17,9 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.safari.SafariDriver;
 
 import com.timepieces.automation.utils.ConfigReader;
+import org.openqa.selenium.chromium.ChromiumDriver;
+import java.util.HashMap;
+import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -96,7 +99,38 @@ public class DriverFactory {
           default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
         };
     tlDriver.set(driver);
+    applyCloudflareBypassHeader(driver);
     return getDriver();
+  }
+
+  private static void applyCloudflareBypassHeader(WebDriver driver) {
+    String token = System.getenv("CF_BYPASS_TOKEN");
+    if (token == null || token.isBlank()) {
+      token = System.getProperty("CF_BYPASS_TOKEN");
+    }
+    if (token == null || token.isBlank()) {
+      token = ConfigReader.get("cf.bypass.token");
+    }
+    if (token == null || token.isBlank()) {
+      log.debug("No CF_BYPASS_TOKEN environment variable, system property, or config property set. Cloudflare bypass header will not be applied.");
+      return;
+    }
+
+    if (driver instanceof ChromiumDriver chromiumDriver) {
+      log.info("Applying Cloudflare bypass header X-Automation-Bypass to Chromium session.");
+      try {
+        Map<String, Object> params = new HashMap<>();
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("X-Automation-Bypass", token);
+        params.put("headers", headers);
+        chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
+        log.info("Cloudflare bypass header successfully applied.");
+      } catch (Exception e) {
+        log.error("Failed to apply Cloudflare bypass header via CDP: {}", e.getMessage(), e);
+      }
+    } else {
+      log.debug("Driver is not an instance of ChromiumDriver; skipping CDP Cloudflare bypass header.");
+    }
   }
 
   // Shared by Chrome, Edge, and Brave — all of which extend ChromiumOptions.
