@@ -4,6 +4,14 @@ on:
   pull_request:
     branches:
       - main
+    # The browser smoke suite exercises the Java app under src/. Skip it for PRs
+    # that only touch non-test assets (e.g. the dashboard app, docs, dashboards),
+    # so an unrelated change isn't gated on an 11-minute Selenium run.
+    paths-ignore:
+      - 'dashboard/**'
+      - 'docs/**'
+      - 'grafana-dashboards/**'
+      - '**/*.md'
   repository_dispatch:
     types: [run-smoke-tests]
   workflow_dispatch:
