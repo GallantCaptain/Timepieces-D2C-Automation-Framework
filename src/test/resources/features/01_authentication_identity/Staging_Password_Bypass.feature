@@ -13,5 +13,5 @@ As a premium test user of Timepieces
     And the active storefront landing page initializes with the visible logo tracking element "<logo_locator>"
 
     Examples:
-      | env_url                     | password_secret      | logo_locator          |
-      | https://staging.timepieces-d2c.example | ${STAGING_GATE_PASS} | header a[href='/'] svg |
+      | env_url                     | password_secret      | logo_locator                 |
+      | https://staging.timepieces-d2c.example | ${STAGING_GATE_PASS} | a[data-testid='header-logo'] |
