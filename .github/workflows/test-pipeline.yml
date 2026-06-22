@@ -82,7 +82,6 @@ jobs:
       - name: Execute Automation Tests
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          AUTOMATION_TOKEN: ${{ secrets.DEV_AUTOMATION_TOKEN }}
           STAGING_GATE_PASS: ${{ secrets.STAGING_PASSWORD }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |

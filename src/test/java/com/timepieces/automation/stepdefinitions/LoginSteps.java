@@ -29,12 +29,9 @@ public class LoginSteps {
         // Use the fluent POM to navigate
         loginPage.open();
 
-        String env = System.getProperty("env");
-        if (!"dev".equalsIgnoreCase(env)) {
-            assertThat(loginPage.isWelcomeMessageDisplayed())
-                    .as("Welcome message was not displayed upon loading.")
-                    .isTrue();
-        }
+        assertThat(loginPage.isWelcomeMessageDisplayed())
+                .as("Welcome message was not displayed upon loading.")
+                .isTrue();
     }
 
     @When("the user selects the country {string} from the region dropdown")

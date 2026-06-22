@@ -120,7 +120,7 @@ dispatching the CI workflow. Setup and API details are in
 - **CI staging access (known blocker).** The smoke suite currently fails *in CI*
   because `staging.timepieces-d2c.example` serves a Cloudflare "verify you are human"
   challenge to the GitHub-hosted runner (datacenter IP + headless Chrome) — the
-  app is never reached, so this is **not** a test-code issue. Planned fixes under
-  evaluation: a Cloudflare WAF skip rule keyed on an automation header, pointing
-  CI at the `dev` environment (which has the login bypass), or a self-hosted
-  runner with an allowlisted IP.
+  app is never reached, so this is **not** a test-code issue. Planned fix: a
+  Cloudflare WAF skip rule keyed on an automation header (or, as a fallback, a
+  self-hosted runner with an allowlisted IP). Targeting `dev` instead was ruled
+  out — dev is not a test target.
