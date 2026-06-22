@@ -11,7 +11,7 @@ const needsSsl = /sslmode=require|neon\.tech|render\.com|amazonaws\.com/.test(
 
 export const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+  ssl: needsSsl ? { rejectUnauthorized: true } : undefined,
   max: 10,
   idleTimeoutMillis: 30_000,
 });
