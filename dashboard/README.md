@@ -57,7 +57,7 @@ npm run dev                   # SPA on http://localhost:5173, proxies /api → :
 
 Build for production: `npm run build` (outputs `web/dist/`). Serve `dist/` behind
 the same origin as the API (or point a reverse proxy `/api` → the Node server).
-Hosting at `dev.timepieces-d2c.example` is handled separately.
+Hosting at `dev.timepieces-world.example` is handled separately.
 
 ## Flows → tags
 

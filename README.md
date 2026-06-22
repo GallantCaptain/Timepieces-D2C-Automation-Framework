@@ -112,9 +112,11 @@ dispatching the CI workflow. Setup and API details are in
   across the page objects (Header, Footer, SidebarMenu, Login [to refactor],
   Cart, OrderHistory, AstoniaCard; OrderDetails + SupportSheetModal already done)
   to remove flaky failures.
-- **Dashboard rollout.** Hosting at `dev.timepieces-d2c.example` (handled by the dev team).
-  On-demand flow execution activates once a `GITHUB_TOKEN` (scope `actions:write`)
-  is configured on the server.
+- **Dashboard rollout.** Hosting at `dev.timepieces-world.example` (handled by the dev team) —
+  strictly test analytics + Allure reports, a **separate** system from the existing
+  production analytics/admin console at `dashboard.timepieces-world.example` (future
+  cross-navigation between the two). On-demand flow execution activates once a
+  `GITHUB_TOKEN` (scope `actions:write`) is configured on the server.
 - **CI staging access (known blocker).** The smoke suite currently fails *in CI*
   because `staging.timepieces-d2c.example` serves a Cloudflare "verify you are human"
   challenge to the GitHub-hosted runner (datacenter IP + headless Chrome) — the

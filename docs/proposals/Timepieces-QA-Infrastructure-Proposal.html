@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Timepieces QA — Test Infrastructure & Reliability Proposals</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#555; --line:#d8dee6;
+    --blue:#1f4e79; --blue-2:#2b6cb0; --bg:#eef3f8;
+    --green:#2e7d32; --green-bg:#e6f4ea;
+    --red:#c62828; --red-bg:#fdecea;
+    --amber:#ef6c00; --amber-bg:#fff4e5;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    color:var(--ink); margin:0; font-size:13px; line-height:1.5;
+  }
+  .page{max-width:820px; margin:0 auto; padding:36px 44px;}
+  h1{font-size:26px; color:var(--blue); margin:0 0 4px;}
+  h2{font-size:19px; color:var(--blue); border-bottom:2px solid var(--blue); padding-bottom:5px; margin:34px 0 12px;}
+  h3{font-size:15px; color:var(--blue-2); margin:18px 0 6px;}
+  h4{font-size:13px; margin:14px 0 4px; color:#333; text-transform:uppercase; letter-spacing:.04em;}
+  p{margin:8px 0;}
+  code{background:#f2f4f7; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-family:Consolas,"Courier New",monospace; font-size:12px;}
+  pre{background:#0f1419; color:#e6edf3; border-radius:8px; padding:14px 16px; overflow:auto; font-size:11.5px; line-height:1.45; font-family:Consolas,"Courier New",monospace;}
+  pre .c{color:#8b98a9;} pre .k{color:#7aa2f7;} pre .s{color:#9ece6a;}
+  table{border-collapse:collapse; width:100%; margin:12px 0; font-size:12px;}
+  th,td{border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top;}
+  th{background:var(--bg); color:var(--blue); font-weight:600;}
+  ul,ol{margin:8px 0; padding-left:22px;} li{margin:4px 0;}
+  .tag{display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:600;}
+  .t-green{background:var(--green-bg); color:var(--green);}
+  .t-red{background:var(--red-bg); color:var(--red);}
+  .t-amber{background:var(--amber-bg); color:var(--amber);}
+  .t-blue{background:var(--bg); color:var(--blue);}
+  .callout{border-left:4px solid var(--blue-2); background:#f6f9fc; padding:10px 14px; border-radius:0 6px 6px 0; margin:12px 0;}
+  .callout.warn{border-color:var(--amber); background:var(--amber-bg);}
+  .callout.why{border-color:var(--green); background:var(--green-bg);}
+  .fig{margin:16px 0; text-align:center;}
+  .fig figcaption{font-size:11px; color:var(--muted); margin-top:6px; font-style:italic;}
+  .cover{height:0;}
+  .cover-wrap{padding:120px 44px 0; max-width:820px; margin:0 auto;}
+  .cover-wrap .sub{font-size:15px; color:var(--muted); margin-top:8px;}
+  .meta-box{margin-top:40px; border:1px solid var(--line); border-radius:8px; padding:16px 18px; background:var(--bg);}
+  .meta-box td{border:none; padding:3px 8px;}
+  .toc li{margin:5px 0;}
+  .pill-row{display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 0;}
+  .num{color:var(--blue); font-weight:700;}
+  @page{size:A4; margin:14mm 0;}
+  .break{page-break-before:always;}
+  svg{max-width:100%; height:auto;}
+  .small{font-size:11px; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover-wrap">
+  <div style="font-size:12px; letter-spacing:.18em; color:var(--blue-2); text-transform:uppercase;">Timepieces · Quality Engineering</div>
+  <h1 style="font-size:34px; margin-top:10px;">Test Infrastructure &amp; Reliability Proposals</h1>
+  <div class="sub">Five proposals for the development team — reliable automation, safe test data, clean production analytics, scheduled coverage, and a stakeholder-friendly dashboard.</div>
+  <div class="meta-box">
+    <table>
+      <tr><td><strong>Prepared for</strong></td><td>Timepieces Development Team</td></tr>
+      <tr><td><strong>Prepared by</strong></td><td>QA Automation</td></tr>
+      <tr><td><strong>Date</strong></td><td>19 June 2026</td></tr>
+      <tr><td><strong>Status</strong></td><td>Proposal — for review &amp; implementation</td></tr>
+      <tr><td><strong>Scope</strong></td><td>qa-automation repo, product app repo, Cloudflare, analytics, CI/CD</td></tr>
+    </table>
+  </div>
+  <p class="small" style="margin-top:28px;">This document explains the <em>why</em> and the <em>how</em> for each item, with diagrams, concrete configuration, and the secrets each one needs.</p>
+</div>
+
+<div class="page break">
+
+<!-- ============ EXEC SUMMARY ============ -->
+<h2 style="margin-top:0;">Executive summary</h2>
+<p>Our automated tests are currently unreliable in CI and risk contaminating production data once they run at scale. These five proposals make the test suite <strong>deterministic, safe, and self-service</strong>. They are ordered by priority.</p>
+
+<table>
+  <tr>
+    <th style="width:26px;">#</th><th>Proposal</th><th>Problem it solves</th><th>Primary owner</th><th>Priority</th>
+  </tr>
+  <tr>
+    <td class="num">1</td>
+    <td><strong>Bypass Cloudflare Turnstile</strong> for the test runner</td>
+    <td>Tests are flaky / fully blocked — the bot challenge stops the browser before the app loads</td>
+    <td>Dev + Cloudflare admin</td>
+    <td><span class="tag t-red">Critical</span></td>
+  </tr>
+  <tr>
+    <td class="num">2</td>
+    <td><strong>Dedicated whitelisted test accounts</strong> (4 roles)</td>
+    <td>OTP/SMS dependence, dirty onboarding state, unsafe payment testing</td>
+    <td>Dev (backend)</td>
+    <td><span class="tag t-red">Critical</span></td>
+  </tr>
+  <tr>
+    <td class="num">3</td>
+    <td><strong>Exclude test accounts from analytics</strong></td>
+    <td>Automated runs pollute production metrics (funnels, conversion, revenue)</td>
+    <td>Dev + Analytics owner</td>
+    <td><span class="tag t-amber">High</span></td>
+  </tr>
+  <tr>
+    <td class="num">4</td>
+    <td><strong>Scheduled (cron) test strategy</strong> + <code>QA_TRIGGER_TOKEN</code></td>
+    <td>No nightly safety net; no reliable cross-repo trigger after deploys</td>
+    <td>Dev (CI)</td>
+    <td><span class="tag t-amber">High</span></td>
+  </tr>
+  <tr>
+    <td class="num">5</td>
+    <td><strong>Dashboard enhancements</strong> (post-hosting)</td>
+    <td>Non-technical stakeholders can't run or understand tests</td>
+    <td>QA + Dev</td>
+    <td><span class="tag t-blue">Planned</span></td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>One-line dependency map:</strong> Proposal&nbsp;1 unblocks everything · Proposals&nbsp;2&nbsp;&amp;&nbsp;3 are paired (a test account is only safe once it is also excluded from analytics) · Proposal&nbsp;4 needs 1&nbsp;&amp;&nbsp;2 to be green nightly · Proposal&nbsp;5 builds on the hosted dashboard.
+</div>
+
+<!-- ============ TOC ============ -->
+<h3>Contents</h3>
+<ol class="toc">
+  <li>Bypass Cloudflare Turnstile to stop flaky test runs</li>
+  <li>Whitelisted test user accounts (OTP-bypass, ephemeral, standard, payment)</li>
+  <li>Exclude test accounts from production analytics</li>
+  <li>Scheduled testing (cron) &amp; the <code>QA_TRIGGER_TOKEN</code></li>
+  <li>Future dashboard features (force-run, LLM explainer, run configuration)</li>
+  <li>Appendix A — Secrets &amp; configuration summary</li>
+  <li>Appendix B — Suggested rollout order</li>
+</ol>
+
+</div>
+
+<!-- ============ PROPOSAL 1 ============ -->
+<div class="page break">
+<h2><span class="num">1.</span> Bypass Cloudflare Turnstile to stop flaky test runs</h2>
+
+<h3>The problem</h3>
+<p>When CI runs against <code>staging.timepieces-d2c.example</code>, the GitHub-hosted runner is served a Cloudflare <em>“Verify you are human”</em> challenge. The runner uses a datacenter IP and headless Chrome — the two strongest bot signals — so Cloudflare interposes its challenge <strong>before the app ever loads</strong>. Every downstream step then fails with “element not visible,” which looks like flaky locators but is not: the application is simply never reached.</p>
+
+<div class="callout warn">
+  <strong>We have already tried evasion.</strong> The driver setup masks the most obvious webdriver fingerprints (<code>--disable-blink-features=AutomationControlled</code>, <code>excludeSwitches</code>, Firefox <code>dom.webdriver.enabled=false</code>). It is not enough — a determined managed challenge still blocks. Evasion is an arms race we will keep losing. The reliable fix is an <strong>explicit allowlist</strong> for our own automation.
+</div>
+
+<div class="fig">
+<svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="12">
+  <!-- lane labels -->
+  <text x="10" y="40" font-weight="700" fill="#c62828">Today</text>
+  <text x="10" y="170" font-weight="700" fill="#2e7d32">With WAF skip rule</text>
+
+  <!-- TODAY lane -->
+  <rect x="70" y="20" width="120" height="42" rx="8" fill="#eef3f8" stroke="#1f4e79"/>
+  <text x="130" y="46" text-anchor="middle">CI runner<tspan x="130" dy="-13" font-size="10" fill="#555">headless Chrome</tspan></text>
+  <line x1="190" y1="41" x2="250" y2="41" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="250" y="20" width="130" height="42" rx="8" fill="#fdecea" stroke="#c62828"/>
+  <text x="315" y="46" text-anchor="middle">Cloudflare edge<tspan x="315" dy="-13" font-size="10" fill="#555">bot challenge</tspan></text>
+  <line x1="380" y1="41" x2="440" y2="41" stroke="#c62828" stroke-width="1.5" marker-end="url(#ar)"/>
+  <rect x="440" y="20" width="150" height="42" rx="8" fill="#fff" stroke="#c62828" stroke-dasharray="4 3"/>
+  <text x="515" y="40" text-anchor="middle" fill="#c62828">CAPTCHA wall</text>
+  <text x="515" y="55" text-anchor="middle" fill="#c62828" font-size="10">app never reached ✕</text>
+
+  <!-- WITH RULE lane -->
+  <rect x="70" y="150" width="120" height="42" rx="8" fill="#eef3f8" stroke="#1f4e79"/>
+  <text x="130" y="170" text-anchor="middle">CI runner</text>
+  <text x="130" y="184" text-anchor="middle" font-size="10" fill="#2e7d32">+ X-Automation-Bypass</text>
+  <line x1="190" y1="171" x2="250" y2="171" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="250" y="150" width="130" height="42" rx="8" fill="#e6f4ea" stroke="#2e7d32"/>
+  <text x="315" y="170" text-anchor="middle">Cloudflare edge</text>
+  <text x="315" y="184" text-anchor="middle" font-size="10" fill="#2e7d32">header matches → Skip</text>
+  <line x1="380" y1="171" x2="440" y2="171" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#ag)"/>
+  <rect x="440" y="150" width="150" height="42" rx="8" fill="#e6f4ea" stroke="#2e7d32"/>
+  <text x="515" y="170" text-anchor="middle">Timepieces app</text>
+  <text x="515" y="184" text-anchor="middle" font-size="10" fill="#2e7d32">tests run ✓</text>
+
+  <!-- real user note -->
+  <rect x="620" y="85" width="125" height="80" rx="8" fill="#f6f9fc" stroke="#2b6cb0"/>
+  <text x="682" y="105" text-anchor="middle" font-size="10.5" fill="#1f4e79" font-weight="700">Real users</text>
+  <text x="682" y="123" text-anchor="middle" font-size="10">no header →</text>
+  <text x="682" y="137" text-anchor="middle" font-size="10">challenge stays</text>
+  <text x="682" y="155" text-anchor="middle" font-size="10" fill="#2e7d32">protection intact</text>
+
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#555"/></marker>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c62828"/></marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2e7d32"/></marker>
+  </defs>
+</svg>
+<figcaption>Figure 1 — A secret request header lets only our automation skip the challenge; everyone else is still protected.</figcaption>
+</div>
+
+<h3>The proposal — a secret-header WAF “skip” rule</h3>
+<p>The test browser sends a secret HTTP header on every request. A Cloudflare WAF rule skips the bot challenge <strong>only</strong> for requests carrying that header. This is an allowlist for our own traffic against non-production environments — not challenge-solving.</p>
+
+<h4>Step A — Cloudflare configuration (Cloudflare admin)</h4>
+<ol>
+  <li>In <strong>Security → Events</strong>, filter by host <code>staging.timepieces-d2c.example</code> to confirm which service issues the challenge (Super Bot Fight Mode vs WAF Managed Challenge). This decides the exact “skip” target.</li>
+  <li>Create a <strong>WAF custom rule</strong> (Security → WAF → Custom rules), placed at the top:
+    <pre><span class="c"># Expression</span>
+(http.host in {"staging.timepieces-d2c.example" "dev.timepieces-world.example"})
+and any(http.request.headers["x-automation-bypass"][*] == "&lt;SECRET&gt;")
+
+<span class="c"># Action</span>: Skip  →  Super Bot Fight Mode (+ "All managed rules" if applicable)</pre>
+  </li>
+  <li>Scope to <strong>non-production only</strong>. Optionally also require the GitHub Actions IP ranges (<code>ip.src in {…}</code>) as defence-in-depth.</li>
+</ol>
+<p class="small"><strong>Plan note:</strong> exception rules require <em>Super</em> Bot Fight Mode (Pro+). On free Bot Fight Mode there are no exceptions — then either upgrade, disable BFM on the test host, or use a self-hosted runner with an allowlisted IP (fallback).</p>
+
+<h4>Step B — Test framework (send the header)</h4>
+<p>Inject the header via Chrome DevTools Protocol right after the Chromium driver is created in <code>DriverFactory.initDriver()</code>. It is a <strong>no-op when the secret is unset</strong>, so local runs are unaffected.</p>
+<pre><span class="k">private static void</span> applyCloudflareBypassHeader(WebDriver driver) {
+  String token = System.getenv(<span class="s">"CF_BYPASS_TOKEN"</span>);
+  <span class="k">if</span> (token == <span class="k">null</span> || token.isBlank() || !(driver <span class="k">instanceof</span> HasDevTools)) <span class="k">return</span>;
+  DevTools dt = ((HasDevTools) driver).getDevTools();
+  dt.createSession();
+  dt.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+  dt.send(Network.setExtraHTTPHeaders(<span class="k">new</span> Headers(Map.of(<span class="s">"X-Automation-Bypass"</span>, token))));
+}</pre>
+<p class="small">Chromium only (Chrome/Edge/Brave). Firefox would need a proxy; since CI defaults to Chrome this covers it.</p>
+
+<h4>Step C — CI workflow</h4>
+<pre><span class="c"># .github/workflows/test-pipeline.yml — Execute step env</span>
+CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}</pre>
+
+<div class="callout why">
+  <strong>Why this matters:</strong> Until this lands, <em>no</em> CI run against staging can pass — the whole pipeline is red for an environmental reason, which erodes trust in the suite and hides real regressions. This single rule restores a reliable signal without weakening protection for real visitors.
+</div>
+</div>
+
+<!-- ============ PROPOSAL 2 ============ -->
+<div class="page break">
+<h2><span class="num">2.</span> Whitelisted test user accounts</h2>
+<p>Automated tests need <strong>deterministic, disposable identities</strong>. Using real or ad-hoc accounts makes tests slow, flaky, and dangerous (real SMS costs, real charges, dirty state). We propose four purpose-built, server-whitelisted accounts.</p>
+
+<table>
+  <tr><th>Account</th><th>Purpose</th><th>What it verifies</th><th>Special handling</th></tr>
+  <tr>
+    <td><strong>OTP-bypass user</strong><br><span class="small">qa+otp@…</span></td>
+    <td>Log in without a real SMS one-time code</td>
+    <td>Auth, session, all logged-in journeys</td>
+    <td>Backend accepts a fixed OTP (e.g. <code>000000</code>) <em>for this account only</em></td>
+  </tr>
+  <tr>
+    <td><strong>Ephemeral onboarding user</strong><br><span class="small">qa+new@…</span></td>
+    <td>Always a brand-new user</td>
+    <td>Sign-up, onboarding, profile creation, empty-state pages</td>
+    <td>Account &amp; data <strong>auto-deleted/reset</strong> before or after each run</td>
+  </tr>
+  <tr>
+    <td><strong>Standard user</strong><br><span class="small">qa+user@…</span></td>
+    <td>Established account with normal data</td>
+    <td>Catalog, cart, order history, returning-user flows</td>
+    <td>Stable seeded data; not reset</td>
+  </tr>
+  <tr>
+    <td><strong>Payment user</strong><br><span class="small">qa+pay@…</span></td>
+    <td>Exercise checkout &amp; payment</td>
+    <td>Cart → pay → confirmation, receipts, payment states</td>
+    <td>Gateway <strong>test mode</strong> + test cards; payments always succeed</td>
+  </tr>
+</table>
+
+<div class="fig">
+<svg viewBox="0 0 740 220" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="11.5">
+  <!-- accounts -->
+  <g>
+    <rect x="20" y="20" width="150" height="34" rx="7" fill="#eef3f8" stroke="#1f4e79"/><text x="95" y="41" text-anchor="middle">OTP-bypass</text>
+    <rect x="20" y="68" width="150" height="34" rx="7" fill="#eef3f8" stroke="#1f4e79"/><text x="95" y="89" text-anchor="middle">Ephemeral (new)</text>
+    <rect x="20" y="116" width="150" height="34" rx="7" fill="#eef3f8" stroke="#1f4e79"/><text x="95" y="137" text-anchor="middle">Standard user</text>
+    <rect x="20" y="164" width="150" height="34" rx="7" fill="#eef3f8" stroke="#1f4e79"/><text x="95" y="185" text-anchor="middle">Payment user</text>
+  </g>
+  <!-- suites -->
+  <g>
+    <rect x="430" y="14" width="200" height="30" rx="7" fill="#e6f4ea" stroke="#2e7d32"/><text x="530" y="34" text-anchor="middle">Login / session suite</text>
+    <rect x="430" y="58" width="200" height="30" rx="7" fill="#e6f4ea" stroke="#2e7d32"/><text x="530" y="78" text-anchor="middle">Onboarding / profile suite</text>
+    <rect x="430" y="102" width="200" height="30" rx="7" fill="#e6f4ea" stroke="#2e7d32"/><text x="530" y="122" text-anchor="middle">Catalog / cart / orders</text>
+    <rect x="430" y="146" width="200" height="30" rx="7" fill="#e6f4ea" stroke="#2e7d32"/><text x="530" y="166" text-anchor="middle">Checkout / payment suite</text>
+    <rect x="430" y="186" width="200" height="26" rx="7" fill="#fff4e5" stroke="#ef6c00"/><text x="530" y="204" text-anchor="middle" fill="#ef6c00">All → excluded from analytics (Proposal 3)</text>
+  </g>
+  <!-- links -->
+  <line x1="170" y1="37" x2="430" y2="29"  stroke="#999" marker-end="url(#a2)"/>
+  <line x1="170" y1="85" x2="430" y2="73"  stroke="#999" marker-end="url(#a2)"/>
+  <line x1="170" y1="133" x2="430" y2="117" stroke="#999" marker-end="url(#a2)"/>
+  <line x1="170" y1="181" x2="430" y2="161" stroke="#999" marker-end="url(#a2)"/>
+  <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#999"/></marker></defs>
+</svg>
+<figcaption>Figure 2 — Each account maps to the suite it makes deterministic; all are flagged as test traffic.</figcaption>
+</div>
+
+<h3>Why each account is required</h3>
+<ul>
+  <li><strong>OTP-bypass</strong> — Real OTP delivery depends on an SMS provider: it is slow, costs money per message, and is the single biggest source of auth-test flakiness. A fixed code for one whitelisted account removes that dependency while keeping the real flow intact for everyone else.</li>
+  <li><strong>Ephemeral onboarding</strong> — Onboarding, “complete your profile,” and empty-state screens can only be tested from a truly fresh account. If the account persists, the second run sees a returning user and the test silently stops covering onboarding. Auto-deletion guarantees a clean slate every time (idempotent tests).</li>
+  <li><strong>Standard user</strong> — Returning-user journeys (saved data, order history) need stable, seeded data that is <em>not</em> reset, so assertions are predictable run to run.</li>
+  <li><strong>Payment user</strong> — Lets us verify the full money path continuously without real charges or chargebacks (see below). Payment regressions are the most expensive to ship; this makes them catchable nightly.</li>
+</ul>
+
+<div class="callout warn">
+  <strong>Payment testing — do it safely.</strong> Use the payment gateway’s <strong>test/sandbox mode</strong> with official test cards, where any test card succeeds regardless of amount — so “real-looking price values” still complete deterministically with <em>zero</em> real money moving. Only if a true production-gateway smoke is required, use a dedicated live test account with a minimal amount and an <strong>automatic refund</strong> step, and exclude it from revenue analytics (Proposal 3). Never run payment tests against real customer-facing revenue reporting.
+</div>
+</div>
+
+<!-- ============ PROPOSAL 3 ============ -->
+<div class="page break">
+<h2><span class="num">3.</span> Exclude test accounts from production analytics</h2>
+<p>Once the accounts in Proposal&nbsp;2 run nightly across prod and staging, they will generate hundreds of sessions, sign-ups, add-to-carts, and purchases. If those land in the production analytics at <code>dashboard.timepieces-world.example/dashboard</code>, they <strong>corrupt the numbers the business depends on</strong>.</p>
+
+<div class="callout">
+  <strong>What this dashboard is.</strong> <code>dashboard.timepieces-world.example/dashboard</code> is the <em>existing production</em> analytics &amp; admin console. It records real customer actions and traffic source/origin, and stores customer <strong>names, emails, and watch-purchase history</strong> — and it is wired to the backend with the ability to <strong>edit live website data</strong>. It is a completely separate system from the test dashboard (<code>dev.timepieces-world.example</code>). Because it holds PII and can mutate production, keeping synthetic test identities out of it is both a data-quality <em>and</em> a data-integrity concern.
+</div>
+
+<div class="fig">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="11.5">
+  <rect x="20" y="80" width="120" height="48" rx="8" fill="#fff4e5" stroke="#ef6c00"/><text x="80" y="100" text-anchor="middle" fill="#ef6c00">Test traffic</text><text x="80" y="116" text-anchor="middle" font-size="10" fill="#ef6c00">is_test = true</text>
+  <rect x="180" y="20" width="120" height="48" rx="8" fill="#eef3f8" stroke="#1f4e79"/><text x="240" y="40" text-anchor="middle">Real user</text><text x="240" y="56" text-anchor="middle" font-size="10" fill="#555">traffic</text>
+
+  <rect x="330" y="50" width="130" height="48" rx="8" fill="#eef3f8" stroke="#1f4e79"/><text x="395" y="70" text-anchor="middle">Analytics</text><text x="395" y="86" text-anchor="middle" font-size="10" fill="#555">ingestion + filter</text>
+
+  <rect x="520" y="20" width="170" height="48" rx="8" fill="#e6f4ea" stroke="#2e7d32"/><text x="605" y="40" text-anchor="middle">Production dashboard</text><text x="605" y="56" text-anchor="middle" font-size="10" fill="#2e7d32">real KPIs only</text>
+  <rect x="520" y="118" width="170" height="44" rx="8" fill="#f6f9fc" stroke="#2b6cb0"/><text x="605" y="138" text-anchor="middle" font-size="10.5">Optional “QA” view</text><text x="605" y="153" text-anchor="middle" font-size="10" fill="#555">test traffic only</text>
+
+  <line x1="300" y1="44" x2="330" y2="64" stroke="#555" marker-end="url(#a3)"/>
+  <line x1="140" y1="104" x2="330" y2="84" stroke="#ef6c00" marker-end="url(#a3o)"/>
+  <line x1="460" y1="64" x2="520" y2="46" stroke="#2e7d32" marker-end="url(#a3g)"/>
+  <line x1="460" y1="84" x2="520" y2="135" stroke="#2b6cb0" stroke-dasharray="4 3" marker-end="url(#a3b)"/>
+  <text x="470" y="120" font-size="9.5" fill="#c62828">test events dropped/segmented ✕→</text>
+  <defs>
+    <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#555"/></marker>
+    <marker id="a3o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ef6c00"/></marker>
+    <marker id="a3g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2e7d32"/></marker>
+    <marker id="a3b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2b6cb0"/></marker>
+  </defs>
+</svg>
+<figcaption>Figure 3 — Test traffic is tagged at the source and filtered out of production reporting (and optionally kept in a separate QA segment).</figcaption>
+</div>
+
+<h3>The proposal</h3>
+<ul>
+  <li><strong>Tag at the source.</strong> Flag the test accounts/sessions with a durable marker — a user property <code>is_test = true</code>, and/or a request header/cookie the framework sets (it already sets <code>X-Automation-Bypass</code> from Proposal&nbsp;1, which can double as the analytics signal).</li>
+  <li><strong>Filter in the pipeline.</strong> Drop or segment those events at ingestion, or apply a default exclusion filter on every production report/segment in the analytics tool.</li>
+  <li><strong>Keep a QA segment (optional).</strong> Route test events to a separate “QA” view so we can still confirm tests fired, without touching real KPIs.</li>
+</ul>
+
+<div class="callout why">
+  <strong>Why this matters:</strong> This console drives product and business decisions — conversion, funnel drop-off, revenue, DAU/MAU — and is also where staff view real customers. Nightly bots that sign up, add to cart, and “pay” would inject <strong>fake customers (with fake names/emails) and fake purchase records</strong> into that real dataset, inflate traffic, fabricate conversions, and distort revenue — leading to wrong decisions, noisy alerts, and test data sitting next to real PII. Proposals&nbsp;2 and&nbsp;3 must ship together: <strong>a test account is only safe once it is also invisible to this dashboard.</strong>
+</div>
+</div>
+
+<!-- ============ PROPOSAL 4 ============ -->
+<div class="page break">
+<h2><span class="num">4.</span> Scheduled testing (cron) &amp; the <code>QA_TRIGGER_TOKEN</code></h2>
+
+<h3>Coverage model</h3>
+<table>
+  <tr><th>Environment</th><th>Nightly (cron)</th><th>On every PR</th><th>On-demand</th><th>Suite</th></tr>
+  <tr><td><strong>Production</strong></td><td><span class="tag t-green">Yes</span> smoke + regression</td><td>No</td><td>No</td><td>Safety net for live</td></tr>
+  <tr><td><strong>Staging</strong></td><td><span class="tag t-green">Yes</span> smoke + regression</td><td><span class="tag t-green">Yes</span></td><td>Yes</td><td>Pre-release gate</td></tr>
+  <tr><td><strong>Dev</strong></td><td>No</td><td>No</td><td><span class="tag t-blue">Devs choose</span> (mostly smoke)</td><td>Build verification</td></tr>
+</table>
+
+<div class="fig">
+<svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="11">
+  <line x1="60" y1="40" x2="700" y2="40" stroke="#ccc"/><text x="20" y="44" fill="#1f4e79" font-weight="700">PROD</text>
+  <line x1="60" y1="85" x2="700" y2="85" stroke="#ccc"/><text x="20" y="89" fill="#1f4e79" font-weight="700">STG</text>
+  <line x1="60" y1="130" x2="700" y2="130" stroke="#ccc"/><text x="20" y="134" fill="#1f4e79" font-weight="700">DEV</text>
+  <!-- night markers -->
+  <circle cx="150" cy="40" r="7" fill="#2e7d32"/><circle cx="380" cy="40" r="7" fill="#2e7d32"/><circle cx="610" cy="40" r="7" fill="#2e7d32"/>
+  <circle cx="150" cy="85" r="7" fill="#2e7d32"/><circle cx="380" cy="85" r="7" fill="#2e7d32"/><circle cx="610" cy="85" r="7" fill="#2e7d32"/>
+  <!-- PR markers (staging) -->
+  <rect x="220" y="79" width="8" height="12" fill="#2b6cb0"/><rect x="300" y="79" width="8" height="12" fill="#2b6cb0"/><rect x="470" y="79" width="8" height="12" fill="#2b6cb0"/><rect x="540" y="79" width="8" height="12" fill="#2b6cb0"/>
+  <!-- dev on-demand -->
+  <polygon points="300,124 308,138 292,138" fill="#ef6c00"/><polygon points="520,124 528,138 512,138" fill="#ef6c00"/>
+  <!-- legend -->
+  <circle cx="80" cy="158" r="6" fill="#2e7d32"/><text x="92" y="162">nightly cron</text>
+  <rect x="200" y="152" width="8" height="12" fill="#2b6cb0"/><text x="214" y="162">per-PR</text>
+  <polygon points="300,152 308,166 292,166" fill="#ef6c00"/><text x="314" y="162">dev on-demand</text>
+  <text x="150" y="26" text-anchor="middle" font-size="9" fill="#555">night 1</text>
+  <text x="380" y="26" text-anchor="middle" font-size="9" fill="#555">night 2</text>
+  <text x="610" y="26" text-anchor="middle" font-size="9" fill="#555">night 3</text>
+</svg>
+<figcaption>Figure 4 — Prod &amp; staging get a nightly safety net; staging additionally gates every PR; dev is on-demand.</figcaption>
+</div>
+
+<h3>Cron setup (GitHub Actions)</h3>
+<p>Cron is in <strong>UTC</strong> — convert to IST (UTC&nbsp;+5:30) when reasoning about local time. Use <code>github.event.schedule</code> to pick the environment/suite per schedule line.</p>
+<pre><span class="k">on</span>:
+  <span class="k">schedule</span>:
+    - cron: <span class="s">'30 19 * * *'</span>   <span class="c"># 01:00 IST — STAGING smoke+regression</span>
+    - cron: <span class="s">'30 20 * * *'</span>   <span class="c"># 02:00 IST — PROD smoke+regression</span>
+  <span class="k">pull_request</span>:            <span class="c"># STAGING on every PR (existing)</span>
+  <span class="k">workflow_dispatch</span>:        <span class="c"># DEV / manual (devs choose env, tags)</span>
+
+<span class="k">jobs</span>:
+  test:
+    steps:
+      - name: Resolve target
+        run: |
+          <span class="k">if</span> [ "${{ github.event.schedule }}" = "30 20 * * *" ]; <span class="k">then</span>
+            echo "ENV=prod"    &gt;&gt; $GITHUB_ENV; echo "TAGS=@Smoke or @Regression" &gt;&gt; $GITHUB_ENV
+          <span class="k">elif</span> [ "${{ github.event.schedule }}" = "30 19 * * *" ]; <span class="k">then</span>
+            echo "ENV=staging" &gt;&gt; $GITHUB_ENV; echo "TAGS=@Smoke or @Regression" &gt;&gt; $GITHUB_ENV
+          <span class="k">fi</span></pre>
+
+<h3>Why the dev team must add <code>QA_TRIGGER_TOKEN</code></h3>
+<p>The most valuable trigger is <strong>“run QA after every deploy.”</strong> That trigger originates in the <em>product application repo</em> (or the deploy job) and must start a workflow in the <em>qa-automation</em> repo. This is a <strong>cross-repository</strong> trigger, and GitHub deliberately does not allow it with the default token:</p>
+<ul>
+  <li>The built-in <code>secrets.GITHUB_TOKEN</code> is scoped to <em>its own</em> repository only. It <strong>cannot</strong> dispatch workflows in another repo, and events it raises <strong>cannot</strong> start further workflow runs (GitHub’s loop-prevention).</li>
+  <li>Therefore the product repo needs a dedicated token — <code>QA_TRIGGER_TOKEN</code> — a PAT (fine-grained: <em>Actions: Read &amp; write</em> on <code>qa-automation</code>) stored in <strong>that repo’s</strong> GitHub Secrets.</li>
+</ul>
+<pre><span class="c"># product repo → after a successful deploy → trigger QA</span>
+curl -X POST \
+  -H "Authorization: Bearer ${{ secrets.QA_TRIGGER_TOKEN }}" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/TimepiecesTech/qa-automation/dispatches \
+  -d '{"event_type":"run-smoke-tests"}'</pre>
+<div class="callout why">
+  <strong>Why this matters:</strong> Without <code>QA_TRIGGER_TOKEN</code>, post-deploy and dashboard-initiated runs fail silently with <code>401/403</code> — “the tests just didn’t trigger.” A dedicated, least-privilege, revocable token makes every job’s trigger <strong>authenticated, reliable, and auditable</strong>, and is the same mechanism the hosted dashboard uses to launch runs.
+</div>
+</div>
+
+<!-- ============ PROPOSAL 5 ============ -->
+<div class="page break">
+<h2><span class="num">5.</span> Future dashboard features (after hosting at dev.timepieces-world.example)</h2>
+<p>Once the test dashboard is hosted, we can make it genuinely useful to <strong>non-technical stakeholders</strong>, not just engineers. Three additions:</p>
+
+<div class="fig">
+<svg viewBox="0 0 730 250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="11">
+  <!-- browser frame -->
+  <rect x="20" y="14" width="690" height="222" rx="10" fill="#fff" stroke="#1f4e79"/>
+  <rect x="20" y="14" width="690" height="26" rx="10" fill="#eef3f8" stroke="#1f4e79"/>
+  <circle cx="38" cy="27" r="4" fill="#c62828"/><circle cx="52" cy="27" r="4" fill="#ef6c00"/><circle cx="66" cy="27" r="4" fill="#2e7d32"/>
+  <text x="360" y="31" text-anchor="middle" font-size="10" fill="#1f4e79">dev.timepieces-world.example  ·  Test Dashboard</text>
+
+  <!-- (a) buttons -->
+  <text x="38" y="64" font-weight="700" fill="#1f4e79">(a) One-click runs</text>
+  <rect x="38" y="74" width="120" height="30" rx="6" fill="#2e7d32"/><text x="98" y="93" text-anchor="middle" fill="#fff">▶ Run Smoke</text>
+  <rect x="168" y="74" width="135" height="30" rx="6" fill="#2b6cb0"/><text x="235" y="93" text-anchor="middle" fill="#fff">▶ Run Regression</text>
+
+  <!-- (c) filters -->
+  <text x="38" y="132" font-weight="700" fill="#1f4e79">(c) Run configuration</text>
+  <rect x="38" y="142" width="120" height="26" rx="6" fill="#eef3f8" stroke="#1f4e79"/><text x="98" y="159" text-anchor="middle">Mode: Parallel ▾</text>
+  <rect x="168" y="142" width="150" height="26" rx="6" fill="#eef3f8" stroke="#1f4e79"/><text x="243" y="159" text-anchor="middle">Browsers: Chrome+Safari ▾</text>
+  <rect x="328" y="142" width="120" height="26" rx="6" fill="#eef3f8" stroke="#1f4e79"/><text x="388" y="159" text-anchor="middle">Platform: macOS ▾</text>
+
+  <!-- (b) LLM -->
+  <text x="38" y="196" font-weight="700" fill="#1f4e79">(b) Plain-language summary</text>
+  <rect x="38" y="204" width="410" height="22" rx="6" fill="#f6f9fc" stroke="#2b6cb0"/><text x="48" y="219" font-size="10" fill="#333">“18/20 passed. The 2 failures were the checkout page not loading on Safari…”</text>
+
+  <!-- LLM data flow -->
+  <rect x="480" y="74" width="100" height="34" rx="7" fill="#eef3f8" stroke="#1f4e79"/><text x="530" y="95" text-anchor="middle" font-size="10">Test results</text>
+  <line x1="580" y1="91" x2="610" y2="91" stroke="#555" marker-end="url(#a5)"/>
+  <rect x="610" y="74" width="90" height="34" rx="7" fill="#e6f4ea" stroke="#2e7d32"/><text x="655" y="91" text-anchor="middle" font-size="10">Claude</text><text x="655" y="103" text-anchor="middle" font-size="9" fill="#2e7d32">Anthropic API</text>
+  <line x1="655" y1="108" x2="655" y2="150" stroke="#555" marker-end="url(#a5)"/>
+  <rect x="600" y="150" width="110" height="44" rx="7" fill="#f6f9fc" stroke="#2b6cb0"/><text x="655" y="168" text-anchor="middle" font-size="10">Plain-language</text><text x="655" y="182" text-anchor="middle" font-size="10">summary</text>
+  <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#555"/></marker></defs>
+</svg>
+<figcaption>Figure 5 — The enhanced dashboard: one-click runs, an LLM summary, and run-configuration controls.</figcaption>
+</div>
+
+<h3>(a) One-click runs for non-technical stakeholders</h3>
+<p>Prominent, role-gated “Run Smoke” / “Run Regression” buttons with a confirmation step. Behind the scenes this is the dispatch mechanism the dashboard already uses (Proposals&nbsp;1&nbsp;&amp;&nbsp;4). Add lightweight roles so stakeholders can <em>run and read</em> without seeing engineering controls.</p>
+
+<h3>(b) LLM explanation of results in plain language</h3>
+<p>After a run, the backend sends the structured results (Allure/JSON summary — counts, failed scenarios, error snippets) to <strong>Claude (Anthropic API)</strong> and returns a short, non-technical summary cached per run. Recommended models: <strong>Claude Haiku 4.5</strong> for cheap high-volume summaries, or <strong>Claude Sonnet 4.6</strong> for richer narratives. Example output: <em>“18 of 20 checks passed. Checkout failed on Safari because the payment button didn’t appear — likely a layout issue on that browser.”</em></p>
+<p class="small">Keep it read-only and grounded: feed only the run’s own results, label it AI-generated, and link to the underlying Allure report.</p>
+
+<h3>(c) Run configuration: execution mode &amp; browser/platform matrix</h3>
+<ul>
+  <li><strong>Execution mode</strong> — Parallel / Sequential / Batch, mapped to TestNG thread settings (e.g. <code>-Dthreads</code>, suite <code>parallel</code>).</li>
+  <li><strong>Browser/platform matrix</strong> — “Chrome only”, “Chrome + Safari”, “macOS only”, etc., expressed as a GitHub Actions <code>matrix</code>.</li>
+</ul>
+<div class="callout warn">
+  <strong>Safari/macOS needs the right runner.</strong> Safari only runs on macOS. To offer “Chrome + Safari” or “mac only”, use GitHub-hosted macOS runners or a cloud grid (e.g. BrowserStack/Sauce Labs/Selenium Grid). Worth scoping cost before enabling broad matrices from the UI.
+</div>
+
+<h3>(d) Cross-navigation to the analytics dashboard (future)</h3>
+<p>A button to move between the test dashboard (<code>dev.timepieces-world.example</code>) and the production analytics console (<code>dashboard.timepieces-world.example/dashboard</code>), and back. The two stay <strong>separate systems</strong> — the link is for convenience only.</p>
+<div class="callout warn">
+  <strong>Guard the crossing.</strong> Because <code>dashboard.timepieces-world.example</code> exposes customer PII and can edit live website data, the navigation link must respect each system’s own authentication/roles — landing on the analytics console must <em>not</em> inherit test-dashboard access. Keep <code>dev.timepieces-world.example</code> read-only with respect to production: it shows test analytics and Allure reports, it does not write to the product backend.
+</div>
+</div>
+
+<!-- ============ APPENDICES ============ -->
+<div class="page break">
+<h2>Appendix A — Secrets &amp; configuration summary</h2>
+<table>
+  <tr><th>Secret / setting</th><th>Where it lives</th><th>Purpose</th><th>Proposal</th></tr>
+  <tr><td><code>CF_BYPASS_TOKEN</code></td><td>qa-automation repo secrets + Cloudflare rule</td><td>Skip the bot challenge for test traffic</td><td>1</td></tr>
+  <tr><td>Cloudflare WAF custom rule</td><td>Cloudflare dashboard</td><td>Header-matched “Skip” for non-prod hosts</td><td>1</td></tr>
+  <tr><td>Test account credentials (×4)</td><td>repo secrets / secret manager</td><td>Deterministic identities for the suites</td><td>2</td></tr>
+  <tr><td>Fixed-OTP allowlist + auto-delete job</td><td>application backend</td><td>OTP bypass &amp; ephemeral-user reset</td><td>2</td></tr>
+  <tr><td>Payment gateway <em>test</em> keys + test cards</td><td>repo secrets</td><td>Safe, always-successful payment tests</td><td>2</td></tr>
+  <tr><td><code>is_test</code> flag / analytics exclusion filter</td><td>app + analytics tool</td><td>Keep test traffic out of production KPIs</td><td>3</td></tr>
+  <tr><td><code>QA_TRIGGER_TOKEN</code></td><td><strong>product app repo</strong> secrets</td><td>Cross-repo trigger of QA workflows</td><td>4</td></tr>
+  <tr><td><code>ANTHROPIC_API_KEY</code></td><td>dashboard server env</td><td>LLM result summaries (Claude)</td><td>5</td></tr>
+</table>
+
+<h2>Appendix B — Suggested rollout order</h2>
+<ol>
+  <li><span class="tag t-red">Now</span> &nbsp;<strong>Proposal 1</strong> — Cloudflare skip rule + header. Nothing else can be green until this lands.</li>
+  <li><span class="tag t-red">Now</span> &nbsp;<strong>Proposal 2 + 3 together</strong> — test accounts <em>and</em> their analytics exclusion (never ship one without the other).</li>
+  <li><span class="tag t-amber">Next</span> &nbsp;<strong>Proposal 4</strong> — nightly cron for prod/staging + <code>QA_TRIGGER_TOKEN</code> in the product repo for post-deploy triggers.</li>
+  <li><span class="tag t-blue">Then</span> &nbsp;<strong>Proposal 5</strong> — dashboard features, after it is hosted at dev.timepieces-world.example.</li>
+</ol>
+
+<div class="callout">
+  <strong>Net effect:</strong> a test suite that is <em>reliable</em> (1), <em>deterministic and safe</em> (2), <em>analytics-clean</em> (3), <em>always-on</em> (4), and <em>usable by the whole team</em> (5).
+</div>
+
+<p class="small" style="margin-top:30px; text-align:center; color:#888;">Timepieces QA Automation · Test Infrastructure &amp; Reliability Proposals · 19 June 2026</p>
+</div>
+
+</body>
+</html>
