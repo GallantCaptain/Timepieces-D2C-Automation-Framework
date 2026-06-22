@@ -19,6 +19,7 @@ public class LoginSteps {
     // PicoContainer will inject the TestContext instance here
     public LoginSteps(TestContext testContext) {
         this.testContext = testContext;
+        this.loginPage = new LoginPage(DriverFactory.getDriver());
     }
 
     @Given("a user navigates to the Timepieces login page")

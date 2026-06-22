@@ -92,7 +92,7 @@ public class LoginPage extends HeaderOnlyBasePage {
     private final By sendOtpButton = By.cssSelector("button[data-testid='login-send-otp']");
 
     /* After submitting any otp (valid/invalid) as long as all the input fields are filled. */
-    private final By continueButton = By.xpath("//button[@type='submit' and normalize-space()='Continue']");
+    private final By continueButton = By.cssSelector("[data-testid='login-verify-otp']");
 
     /* Security Constraints & Security Firewalls (CloudFlare) - Before OTP ubmission To verify bots and prevent abuse */
     /*
@@ -127,25 +127,25 @@ public class LoginPage extends HeaderOnlyBasePage {
     /* The text label under the "Verify Access" heading that says "Enter the 6-digit code sent to +{Country Code} {First 2 digits}******{Last 2 digits}" */
     private final By enterCodeMessageUnderVerifyAccess = By.cssSelector("p[class='text-gray-400 text-[16px] ']");
     /* Resend OTP link: [Only visible after submitting phone number and landing on OTP entry screen] */
-    private final By resendOtpLink = By.xpath("//button[contains(text(),\"Didn't receive it? Resend code\")]");
+    private final By resendOtpLink = By.cssSelector("[data-testid='login-resend-otp']");
 
     /* Otp Input Fields Container and Individual Fields (Only visible after clicking
      * Send OTP and navigating to OTP entry screen):*/
     //OTP Input Field Container: 
-    private final By otpInputFieldContainer = By.xpath("//input[@inputmode='numeric']/parent::div");
+    private final By otpInputFieldContainer = By.cssSelector("[data-testid^='login-otp-input-']");
 
     // OTP input field [0 - 5]:
     /* In case we want to target individual fields instead of the container, We can use these locators to interact with each individual OTP field. It can be used for more granular control over the OTP input fields. For verifcation and validation purposes */
-    private final By otpInputFieldIndex0 = By.xpath("//input[inputmode='numeric' and value='0']");
-    private final By otpInputFieldIndex1 = By.xpath("//input[inputmode='numeric' and value='1']");
-    private final By otpInputFieldIndex2 = By.xpath("//input[inputmode='numeric' and value='2']");
-    private final By otpInputFieldIndex3 = By.xpath("//input[inputmode='numeric' and value='3']");
-    private final By otpInputFieldIndex4 = By.xpath("//input[inputmode='numeric' and value='4']");
-    private final By otpInputFieldIndex5 = By.xpath("//input[inputmode='numeric' and value='5']");
+    private final By otpInputFieldIndex0 = By.cssSelector("[data-testid='login-otp-input-0']");
+    private final By otpInputFieldIndex1 = By.cssSelector("[data-testid='login-otp-input-1']");
+    private final By otpInputFieldIndex2 = By.cssSelector("[data-testid='login-otp-input-2']");
+    private final By otpInputFieldIndex3 = By.cssSelector("[data-testid='login-otp-input-3']");
+    private final By otpInputFieldIndex4 = By.cssSelector("[data-testid='login-otp-input-4']");
+    private final By otpInputFieldIndex5 = By.cssSelector("[data-testid='login-otp-input-5']");
 
     // Change Phone Number Link on OTP entry screen (In case user wants to change
     // the phone number after submitting and before entering the OTP):
-    private final By changePhoneNumber = By.xpath("//button[contains(text(),'Change phone number')]");
+    private final By changePhoneNumber = By.cssSelector("[data-testid='login-change-phone']");
 
     /* 
     * Login Page {First Time Setup}: https://www.timepieces-d2c.example/login
@@ -509,20 +509,25 @@ public class LoginPage extends HeaderOnlyBasePage {
      */
     public LoginPage enterOtp(String otp) {
         log.info("Entering OTP (length: {} digits).", otp.length());
-        List<WebElement> fields = getElements(otpInputFieldContainer).stream()
-                .flatMap(container -> container.findElements(By.cssSelector("input.otp-input")).stream())
-                .toList();
+        By[] fieldsLocators = {
+            otpInputFieldIndex0,
+            otpInputFieldIndex1,
+            otpInputFieldIndex2,
+            otpInputFieldIndex3,
+            otpInputFieldIndex4,
+            otpInputFieldIndex5
+        };
 
-        if (otp.length() != fields.size()) {
+        if (otp.length() != fieldsLocators.length) {
             throw new IllegalArgumentException(
                     String.format("OTP length mismatch: provided OTP has %d digits but page has %d input fields.",
-                            otp.length(), fields.size()));
+                            otp.length(), fieldsLocators.length));
         }
 
-        for (int i = 0; i < fields.size(); i++) {
-            fields.get(i).sendKeys(String.valueOf(otp.charAt(i)));
+        for (int i = 0; i < fieldsLocators.length; i++) {
+            sendKeys(fieldsLocators[i], String.valueOf(otp.charAt(i)));
         }
-        log.info("OTP entered across {} digit fields", fields.size());
+        log.info("OTP entered across {} digit fields", fieldsLocators.length);
         return this;
     }
 
