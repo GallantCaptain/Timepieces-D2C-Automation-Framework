@@ -1,5 +1,6 @@
 package com.timepieces.automation.listeners;
 
+import com.timepieces.automation.exceptions.OtpRateLimitException;
 import com.timepieces.automation.utils.ConfigReader;
 import lombok.extern.log4j.Log4j2;
 import org.testng.IRetryAnalyzer;
@@ -20,6 +21,14 @@ public class RetryAnalyzer implements IRetryAnalyzer {
      */
     @Override
     public boolean retry(ITestResult result) {
+        // Never retry an OTP rate-limit failure: the backoff is keyed on the phone number and
+        // ESCALATES with each request (≈9s → up to 180s). Retrying re-requests the OTP for the
+        // same number and guarantees a slower failure. Surface it as a real failure instead.
+        if (isOtpRateLimit(result.getThrowable())) {
+            log.warn("=== NOT RETRYING [{}]: failure is an OTP rate-limit; retrying would escalate the backoff. ===",
+                    result.getName());
+            return false;
+        }
         int maxRetryLimit = getMaxRetryLimit();
         if (retryCount < maxRetryLimit) {
             retryCount++;
@@ -28,6 +37,16 @@ public class RetryAnalyzer implements IRetryAnalyzer {
             return true; // Rerun test
         }
         return false; // Do not rerun
+    }
+
+    /** True if this throwable (or any cause in its chain) is an OTP rate-limit. */
+    private boolean isOtpRateLimit(Throwable t) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            if (cause instanceof OtpRateLimitException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int getMaxRetryLimit() {

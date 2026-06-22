@@ -1,0 +1,100 @@
+[
+	{
+		"name": "builtin",
+		"initConfig": [
+			{
+				"location": "d:\\Automation\\timepieces-automation-framework",
+				"analysisMode": "source-only",
+				"providerSpecificConfig": {
+					"excludePatterns": [
+						"**/gradlew",
+						"**/gradle/**",
+						"**/.mvn/**",
+						"**/*.jpg",
+						"**/.devcontainer/**",
+						"**/.git/**",
+						"**/org.eclipse.osgi/**",
+						"**/*.svg",
+						"**/*.png",
+						"**/.git*",
+						"**/README.*",
+						"**/.appcat-ignore",
+						"**/.github/**",
+						"**/org.eclipse.equinox.launcher/**",
+						"**/migrate-copilot/**",
+						"**/gradlew.bat",
+						"**/.gradle/**",
+						"**/mvnw.cmd",
+						"**/.idea/**",
+						"**/.metadata/**",
+						"**/org.eclipse.core.runtime/**",
+						"**/.migrate-copilot/**",
+						"**/target/**",
+						"**/mvnw",
+						"**/.devops/**",
+						"**/.editorconfig",
+						"**/LICENSE",
+						"**/org.eclipse.equinox.app/**"
+					],
+					"excludedPaths": [
+						"d:\\Automation\\timepieces-automation-framework\\.github\\modernize"
+					]
+				}
+			}
+		],
+		"ContextLines": 100
+	},
+	{
+		"name": "java",
+		"binaryPath": "C:\\Users\\Avinash Rath\\.appcat\\jdtls\\bin\\jdtls",
+		"initConfig": [
+			{
+				"location": "d:\\Automation\\timepieces-automation-framework",
+				"analysisMode": "source-only",
+				"providerSpecificConfig": {
+					"bundles": "C:\\Users\\Avinash Rath\\.appcat\\jdtls\\java-analyzer-bundle\\java-analyzer-bundle.core\\target\\java-analyzer-bundle.core-1.0.0-SNAPSHOT.jar",
+					"cleanExplodedBin": true,
+					"depOpenSourceLabelsFile": "C:\\Users\\Avinash Rath\\.appcat\\maven.default.index",
+					"excludePatterns": [
+						"**/.appcat-ignore",
+						"**/gradlew",
+						"**/.editorconfig",
+						"**/LICENSE",
+						"**/org.eclipse.equinox.app/**",
+						"**/org.eclipse.osgi/**",
+						"**/migrate-copilot/**",
+						"**/mvnw",
+						"**/mvnw.cmd",
+						"**/*.png",
+						"**/.git/**",
+						"**/.devops/**",
+						"**/.github/**",
+						"**/org.eclipse.core.runtime/**",
+						"**/org.eclipse.equinox.launcher/**",
+						"**/.migrate-copilot/**",
+						"**/target/**",
+						"**/.gradle/**",
+						"**/.mvn/**",
+						"**/.idea/**",
+						"**/.metadata/**",
+						"**/gradlew.bat",
+						"**/gradle/**",
+						"**/*.svg",
+						"**/*.jpg",
+						"**/.devcontainer/**",
+						"**/.git*",
+						"**/README.*"
+					],
+					"excludedPaths": [
+						"d:\\Automation\\timepieces-automation-framework\\.github\\modernize"
+					],
+					"fernFlowerPath": "C:\\Users\\Avinash Rath\\.appcat\\fernflower.jar",
+					"lspServerName": "java",
+					"lspServerPath": "C:\\Users\\Avinash Rath\\.appcat\\jdtls\\bin\\jdtls",
+					"workspace": "C:\\Users\\Avinash Rath\\.appcat\\.jdtls-workspace\\f75dc061fbb2c137"
+				}
+			}
+		],
+		"ContextLines": 100
+	}
+]

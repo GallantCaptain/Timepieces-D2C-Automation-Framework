@@ -3,6 +3,8 @@ package com.timepieces.automation.pages.web.account;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
@@ -10,6 +12,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.timepieces.automation.exceptions.OtpRateLimitException;
 import com.timepieces.automation.pages.HeaderOnlyBasePage;
 import com.timepieces.automation.pages.web.StagingGatePage;
 import com.timepieces.automation.utils.BrowserUtils;
@@ -116,6 +119,15 @@ public class LoginPage extends HeaderOnlyBasePage {
     /* Too many attempts message happens after user changes their phone number after submitting the otp */
     private final By tooManyAttemptsMessageLockout = By.xpath(
             "//div[@class='flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-amber-900/30 border border-amber-700/40']");
+
+    /*
+     * OTP-send rate-limit backoff toast: "Too many attempts" + "Please wait Ns before trying".
+     * This is the escalating per-number throttle that replaces the OTP verify screen when a
+     * number is asked for an OTP too often. Distinct from tooManyAttemptsMessageLockout above
+     * (which is the post-OTP change-phone lockout). Text-based so it survives Tailwind churn.
+     */
+    private final By otpRateLimitHeading = By.xpath("//p[normalize-space()='Too many attempts']");
+    private final By otpRateLimitWaitText = By.xpath("//p[contains(normalize-space(),'Please wait')]");
     // Timepieces Data Secure Message [Ui Assertion Only, Always Visible on Login Page]:
     private final By timepiecesSecureAssuranceMessage = By.xpath(
             "//p[contains(normalize-space(), 'Your details are secure and used only for your Timepieces experience.')]");
@@ -489,11 +501,46 @@ public class LoginPage extends HeaderOnlyBasePage {
         try {
             waitForVisibility(verifyAccessMessage);
         } catch (TimeoutException e) {
+            // The verify screen never showed. Before blaming the locator, check whether the
+            // backend throttled this number — that surfaces as the "Too many attempts / wait Ns"
+            // toast, which is a rate-limit (escalates up to 180s), not a missing element.
+            Optional<Integer> rateLimitWait = detectOtpRateLimitSeconds();
+            if (rateLimitWait.isPresent()) {
+                log.error("OTP send was rate-limited — UI shows 'Too many attempts, wait {}s'. "
+                        + "Not a locator/app fault.", rateLimitWait.get());
+                throw new OtpRateLimitException(rateLimitWait.get());
+            }
             log.error("Timeout waiting for verifyAccessMessage. Page source: \n{}", driver.getPageSource());
             throw e;
         }
         log.info("OTP dispatched. OTP entry screen is now visible.");
         return this;
+    }
+
+    /**
+     * Fast, non-blocking check for the OTP-send rate-limit backoff toast.
+     * Uses {@code findElements} (no explicit wait) so it does not add the full
+     * 15s timeout on top of the one we just spent waiting for the verify screen.
+     *
+     * @return the requested wait in seconds if the toast is present (-1 wrapped as
+     *         the value if the toast is shown but no number could be parsed),
+     *         or empty if no rate-limit toast is on the page.
+     */
+    private Optional<Integer> detectOtpRateLimitSeconds() {
+        boolean throttled = !driver.findElements(otpRateLimitHeading).isEmpty();
+        if (!throttled) {
+            return Optional.empty();
+        }
+        int seconds = -1;
+        List<WebElement> waitTexts = driver.findElements(otpRateLimitWaitText);
+        if (!waitTexts.isEmpty()) {
+            // e.g. "Please wait 9s before trying again" / "Please wait 180 seconds"
+            Matcher m = Pattern.compile("(\\d+)\\s*s").matcher(waitTexts.get(0).getText());
+            if (m.find()) {
+                seconds = Integer.parseInt(m.group(1));
+            }
+        }
+        return Optional.of(seconds);
     }
 
     /**
