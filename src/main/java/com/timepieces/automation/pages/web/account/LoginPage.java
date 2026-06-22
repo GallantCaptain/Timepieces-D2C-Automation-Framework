@@ -52,6 +52,12 @@ public class LoginPage extends HeaderOnlyBasePage {
     // ==========================================
     // LOCATORS
     // ==========================================
+    // Login Phone Form Container:
+    private final By loginPhoneForm = By.cssSelector("[data-testid='login-phone-form']");
+
+    // Login Phone Heading:
+    private final By loginPhoneHeading = By.cssSelector("[data-testid='login-phone-heading']");
+
     // Already Created Profile & Welcome Message Elements for Login Page
     // Timepieces Image - Before/After Entering Phone Number
     private final By timepiecesLoginPageImage = By.cssSelector("img[alt='Timepieces']");
@@ -752,5 +758,25 @@ public class LoginPage extends HeaderOnlyBasePage {
         }
         log.warn("Resend OTP link not displayed.");
         return false;
+    }
+
+    /**
+     * V.12 Verifies that the login phone form is displayed.
+     * @return true if the login phone form is displayed, false otherwise.
+     */
+    public boolean isLoginPhoneFormDisplayed() {
+        boolean displayed = isDisplayed(loginPhoneForm);
+        log.info("Login Phone Form displayed check: {}", displayed);
+        return displayed;
+    }
+
+    /**
+     * V.13 Verifies that the login phone heading is displayed.
+     * @return true if the login phone heading is displayed, false otherwise.
+     */
+    public boolean isLoginPhoneHeadingDisplayed() {
+        boolean displayed = isDisplayed(loginPhoneHeading);
+        log.info("Login Phone Heading displayed check: {}", displayed);
+        return displayed;
     }
 }
