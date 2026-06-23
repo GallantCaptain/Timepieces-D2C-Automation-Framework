@@ -19,6 +19,7 @@ import com.timepieces.automation.utils.ConfigReader;
 import com.timepieces.automation.utils.WindowUtils;
 
 import lombok.extern.log4j.Log4j2;
+
 /**
  * OnboardingPage — Page Object Repository for the Timepieces Onboarding Page.
  *
@@ -42,10 +43,13 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 public class OnboardingPage extends HeaderOnlyBasePage {
-	// /********* Constructor *********/
+	// ==========================================
+	// Constructor
+	// ==========================================
 	public OnboardingPage(WebDriver driver) {
 		super(driver);
 	}
+
 	/**
 	 * Onboarding User Journey [Shared state - LoginPage]:
 	 * https://www.timepieces-d2c.example/login
@@ -519,7 +523,8 @@ public class OnboardingPage extends HeaderOnlyBasePage {
 	}
 
 	/**
-	 * V.11 Verifies that the secure assurance message ("Your details are secure...")
+	 * V.11 Verifies that the secure assurance message ("Your details are
+	 * secure...")
 	 * is displayed on the onboarding page.
 	 *
 	 * @return true if the secure assurance message is displayed, false otherwise.

@@ -1,28 +1,29 @@
 package com.timepieces.automation.exceptions;
 
 /**
- * Thrown when the Timepieces login throttles OTP requests for a phone number and
- * shows the "Too many attempts — Please wait Ns before trying" backoff toast
- * instead of the OTP verify screen.
+ * Thrown when OTP send is blocked by the ~90s "Too many attempts" cooldown
+ * ({@code login-cooldown}) — the OTP verify screen never appears because the
+ * number is in a cooldown window (triggered by phone-number churn, not by wrong
+ * OTP guesses).
  *
- * <p>The backoff is keyed on the phone number and <b>escalates with each retry</b>
- * (observed from ~9s up to 180s). Retrying the same number therefore makes things
- * worse, so {@code RetryAnalyzer} treats this exception as non-retryable. It is a
- * distinct type (not a bare Selenium {@code TimeoutException}) so the failure is
- * reported honestly as a rate-limit, not a generic "element not visible".
+ * <p>The cooldown is a fixed window (~90s), so an immediate retry just fails again.
+ * {@code RetryAnalyzer} therefore treats this exception as non-retryable, and tests
+ * that must proceed should instead wait it out (see {@code LoginPage.waitOutOtpCooldown}).
+ * It is a distinct type (not a bare Selenium {@code TimeoutException}) so the failure
+ * is reported honestly as a cooldown, not a generic "element not visible".
  */
 public class OtpRateLimitException extends RuntimeException {
 
-    /** The cooldown the UI asked the user to wait, in seconds; -1 if it could not be parsed. */
+    /** The cooldown to wait out, in seconds; -1 if it could not be determined. */
     private final int waitSeconds;
 
     public OtpRateLimitException(int waitSeconds) {
         super(waitSeconds >= 0
-                ? "OTP request rate-limited: the login asked to wait " + waitSeconds
-                        + "s before trying again. The OTP verify screen was never shown. "
-                        + "Do not retry the same number — the backoff escalates up to 180s."
-                : "OTP request rate-limited: the login showed the 'Too many attempts' backoff "
-                        + "toast instead of the OTP verify screen. Do not retry the same number.");
+                ? "OTP send blocked by the 'Too many attempts' cooldown (~" + waitSeconds
+                        + "s). The OTP verify screen was never shown. Do not retry immediately —"
+                        + " wait out the cooldown window."
+                : "OTP send blocked by the 'Too many attempts' cooldown. The OTP verify screen "
+                        + "was never shown. Do not retry immediately — wait out the cooldown window.");
         this.waitSeconds = waitSeconds;
     }
 

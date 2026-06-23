@@ -103,4 +103,28 @@ public class LoginSteps {
     public void clicks_the_continue_button() {
         loginPage.clickContinueButton();
     }
+
+    // --- OTP brute-force security probe (tagged @OtpBruteForce; opt-in, not in smoke/regression) ---
+
+    @When("the user submits {int} incorrect OTP codes in a row")
+    public void the_user_submits_incorrect_otp_codes_in_a_row(int attempts) {
+        int allowed = loginPage.probeUnlimitedOtpAttempts(attempts);
+        testContext.setContextData("otpBruteForceAttempts", attempts);
+        testContext.setContextData("otpBruteForceAllowed", allowed);
+    }
+
+    @Then("the OTP entry is never locked or rate limited")
+    public void the_otp_entry_is_never_locked_or_rate_limited() {
+        int attempts = (int) testContext.getContextData("otpBruteForceAttempts");
+        int allowed = (int) testContext.getContextData("otpBruteForceAllowed");
+        // This assertion PASSES today because the verify step has no attempt limit — i.e. it
+        // documents a real vulnerability. Once a server-side cap/lockout is added (the fix),
+        // `allowed` will be < attempts and this scenario will START FAILING, signalling that the
+        // exposure is closed and the test should be inverted to assert the lockout.
+        assertThat(allowed)
+                .as("SECURITY: expected all %s wrong OTP submissions to be accepted with no lockout "
+                        + "(demonstrating the missing attempt limit), but only %s were allowed.",
+                        attempts, allowed)
+                .isEqualTo(attempts);
+    }
 }

@@ -19,21 +19,28 @@ import lombok.extern.log4j.Log4j2;
  * profile edit page.
  *
  * KEY STATES:
- * 1. Profile Incomplete — shows a banner prompting the user to complete their profile
- * 2. Profile Complete — shows the user's uploaded profile image and account details
+ * 1. Profile Incomplete — shows a banner prompting the user to complete their
+ * profile
+ * 2. Profile Complete — shows the user's uploaded profile image and account
+ * details
  *
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this} (AccountPage) to allow
+ * All methods that remain on this page return {@code this} (AccountPage) to
+ * allow
  * method chaining in step definitions.
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class AccountPage extends HeaderOnlyBasePage {
-    // /********* Constructor *********/
+    // ==========================================
+    // Constructor
+    // ==========================================
     public AccountPage(WebDriver driver) {
         super(driver);
     }
 
-    // /********* Locators *********/
+    // ==========================================
+    // LOCATORS
+    // ==========================================
     // When the profile is incomplete
     // Profile Image Container:
     private final By profileImageContainer = By

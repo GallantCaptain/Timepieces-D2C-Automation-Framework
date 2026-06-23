@@ -29,75 +29,78 @@ public class DriverFactory {
   private static final ThreadLocal<WebDriver> tlDriver = new ThreadLocal<>();
 
   /**
-   * ChromeOptions for Chrome & Brave: Utilized --headless=new instead of the legacy --headless,
-   * which is the modern standard for Chromium-based browsers starting from version 109 to ensure it
-   * renders pages identically to the headed version. Safari Fallback: Added a System.out.println
-   * warning so you have a trail in your console explaining why Safari is popping up even when
-   * headless=true is set in your config.
+   * ChromeOptions for Chrome & Brave: Utilized --headless=new instead of the
+   * legacy --headless,
+   * which is the modern standard for Chromium-based browsers starting from
+   * version 109 to ensure it
+   * renders pages identically to the headed version.
+   *
+   * <p>
+   * DYNAMIC SAFARI BYPASS: SafariDriver only exists on macOS. When
+   * {@code browser=safari} runs
+   * on macOS it is used as-is; on Linux (Docker/CI) and Windows it is dynamically
+   * substituted with
+   * a Chromium browser ({@code safari.fallback.browser}, default chrome) so the
+   * same suite runs on
+   * every platform. The substitution is NOT real Safari — it is logged and
+   * annotated in the Allure
+   * environment ({@code Browser.SAFARI = SUBSTITUTED ...}) so reports never imply
+   * a real Safari run.
    */
   public static WebDriver initDriver() {
     String browser = ConfigReader.get("browser");
     boolean isHeadless = Boolean.parseBoolean(ConfigReader.get("headless"));
     boolean disableChromeSandbox = Boolean.parseBoolean(ConfigReader.get("chrome.no.sandbox"));
     writeAllureEnvironmentInfo(browser, System.getProperty("env", "staging"));
-    WebDriver driver =
-        switch (browser.toLowerCase()) {
-          case "chrome" -> {
-            ChromeOptions chromeOptions = new ChromeOptions();
-            applyChromiumStabilityFlags(chromeOptions, disableChromeSandbox);
-            if (isHeadless) {
-              chromeOptions.addArguments("--headless=new");
-            }
-            log.info("Initialized ChromeDriver with headless={} and no-sandbox={}", isHeadless, disableChromeSandbox);
-            yield new ChromeDriver(chromeOptions);
-          }
+    WebDriver driver = switch (browser.toLowerCase()) {
+      case "firefox" -> {
+        FirefoxOptions firefoxOptions = new FirefoxOptions();
+        // Removes navigator.webdriver=true — masks the most obvious webdriver
+        // fingerprint
+        // from bot detectors like Cloudflare Turnstile. Same intent as the Chrome
+        // flags.
+        firefoxOptions.addPreference("dom.webdriver.enabled", false);
+        firefoxOptions.addPreference("useAutomationExtension", false);
+        if (isHeadless) {
+          firefoxOptions.addArguments("--headless");
+        }
+        log.info("Initialized FirefoxDriver with headless={}", isHeadless);
+        yield new FirefoxDriver(firefoxOptions);
+      }
+      case "chrome" -> newChromiumDriver("chrome", isHeadless, disableChromeSandbox);
 
-          case "firefox" -> {
-            FirefoxOptions firefoxOptions = new FirefoxOptions();
-            // Removes navigator.webdriver=true — masks the most obvious webdriver fingerprint
-            // from bot detectors like Cloudflare Turnstile. Same intent as the Chrome flags.
-            firefoxOptions.addPreference("dom.webdriver.enabled", false);
-            firefoxOptions.addPreference("useAutomationExtension", false);
-            if (isHeadless) {
-              firefoxOptions.addArguments("--headless");
-            }
-            log.info("Initialized FirefoxDriver with headless={}", isHeadless);
-            yield new FirefoxDriver(firefoxOptions);
-          }
+      case "edge" -> newChromiumDriver("edge", isHeadless, disableChromeSandbox);
 
-          case "edge" -> {
-            EdgeOptions edgeOptions = new EdgeOptions();
-            applyChromiumStabilityFlags(edgeOptions, disableChromeSandbox);
-            if (isHeadless) {
-              edgeOptions.addArguments("--headless=new");
-            }
-            log.info("Initialized EdgeDriver with headless={}", isHeadless);
-            yield new EdgeDriver(edgeOptions);
-          }
-           
-          case "safari" -> {
-            if (isHeadless) {
-              System.out.println("Safari browser is being used. Headless mode is not supported.");
-            }
-            log.info("Initialized SafariDriver");
-            yield new SafariDriver();
-          }
+      case "brave" -> newChromiumDriver("brave", isHeadless, disableChromeSandbox);
 
-          case "brave" -> {
-            ChromeOptions braveOptions = new ChromeOptions();
-            String bravePath = System.getenv("BRAVE_PATH");
-            if (bravePath == null || bravePath.isEmpty()) {
-              throw new IllegalStateException(
-                  "Environment variable BRAVE_PATH is not set or empty.");
-            }
-            braveOptions.setBinary(bravePath);
-            log.info("Initialized BraveDriver with headless={}", isHeadless);
-            applyChromiumStabilityFlags(braveOptions, disableChromeSandbox);
-            if (isHeadless) braveOptions.addArguments("--headless=new");
-            yield new ChromeDriver(braveOptions);
+      case "safari" -> {
+        // Real SafariDriver exists ONLY on macOS. On a Mac, use it directly.
+        if (isMacOs()) {
+          if (isHeadless) {
+            log.warn("Safari does not support headless mode; running headed on macOS.");
           }
-          default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
-        };
+          log.info("Initialized SafariDriver (macOS).");
+          yield new SafariDriver();
+        }
+        // DYNAMIC SAFARI BYPASS — Linux (Docker/CI) and Windows have no
+        // Selenium-drivable
+        // Safari/WebKit, so substitute a Chromium browser so the scenario still
+        // EXECUTES on
+        // every platform. This is NOT real Safari: WebKit-specific behaviour/bugs are
+        // not
+        // covered here. The substitution is logged and annotated in the Allure
+        // environment so
+        // reports never imply a real Safari run.
+        String fallback = resolveSafariFallbackBrowser();
+        String os = System.getProperty("os.name");
+        log.warn("Safari is macOS-only and this host is [{}]. Falling back to '{}' "
+            + "(Chromium substitute — NOT real Safari).", os, fallback);
+        annotateSafariSubstitution(os, fallback);
+        yield newChromiumDriver(fallback, isHeadless, disableChromeSandbox);
+      }
+
+      default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
+    };
     tlDriver.set(driver);
     applyCloudflareBypassHeader(driver);
     return getDriver();
@@ -112,7 +115,8 @@ public class DriverFactory {
       token = ConfigReader.get("cf.bypass.token");
     }
     if (token == null || token.isBlank()) {
-      log.debug("No CF_BYPASS_TOKEN environment variable, system property, or config property set. Cloudflare bypass header will not be applied.");
+      log.debug(
+          "No CF_BYPASS_TOKEN environment variable, system property, or config property set. Cloudflare bypass header will not be applied.");
       return;
     }
 
@@ -134,13 +138,19 @@ public class DriverFactory {
   }
 
   // Shared by Chrome, Edge, and Brave — all of which extend ChromiumOptions.
-  // --disable-dev-shm-usage avoids the tiny default /dev/shm crashing Chromium in Docker.
-  // --no-sandbox is required when the browser runs as root inside a container; opt-in via
-  //   chrome.no.sandbox so it doesn't silently turn off the sandbox on developer machines.
-  // The AutomationControlled / excludeSwitches / useAutomationExtension trio masks the
-  //   most obvious webdriver fingerprints so Cloudflare Turnstile's bot score drops.
-  //   Not a CAPTCHA bypass — a hostile challenge still blocks — but it gives managed
-  //   challenges a fighting chance of auto-passing.
+  // --disable-dev-shm-usage avoids the tiny default /dev/shm crashing Chromium in
+  // Docker.
+  // --no-sandbox is required when the browser runs as root inside a container;
+  // opt-in via
+  // chrome.no.sandbox so it doesn't silently turn off the sandbox on developer
+  // machines.
+  // The AutomationControlled / excludeSwitches / useAutomationExtension trio
+  // masks the
+  // most obvious webdriver fingerprints so Cloudflare Turnstile's bot score
+  // drops.
+  // Not a CAPTCHA bypass — a hostile challenge still blocks — but it gives
+  // managed
+  // challenges a fighting chance of auto-passing.
   private static void applyChromiumStabilityFlags(ChromiumOptions<?> options, boolean disableSandbox) {
     options.addArguments("--disable-dev-shm-usage");
     options.addArguments("--window-size=1920,1080");
@@ -153,8 +163,112 @@ public class DriverFactory {
   }
 
   /**
-   * getDriver() using ThreadLocal to ensure thread safety when running tests in parallel. Each
-   * thread will have its own instance of WebDriver, preventing conflicts and ensuring that tests do
+   * Builds a Chromium-family WebDriver (Chrome, Edge, or Brave). Shared by the
+   * direct browser
+   * cases AND the dynamic Safari fallback, so headless handling and the
+   * stability/anti-bot flags
+   * live in exactly one place. Any unrecognised value defaults to Chrome.
+   */
+  private static WebDriver newChromiumDriver(String chromiumBrowser, boolean isHeadless, boolean disableSandbox) {
+    switch (chromiumBrowser) {
+      case "edge" -> {
+        EdgeOptions edgeOptions = new EdgeOptions();
+        applyChromiumStabilityFlags(edgeOptions, disableSandbox);
+        if (isHeadless) {
+          edgeOptions.addArguments("--headless=new");
+        }
+        log.info("Initialized EdgeDriver with headless={}", isHeadless);
+        return new EdgeDriver(edgeOptions);
+      }
+      case "brave" -> {
+        ChromeOptions braveOptions = new ChromeOptions();
+        String bravePath = System.getenv("BRAVE_PATH");
+        if (bravePath == null || bravePath.isEmpty()) {
+          throw new IllegalStateException("Environment variable BRAVE_PATH is not set or empty.");
+        }
+        braveOptions.setBinary(bravePath);
+        applyChromiumStabilityFlags(braveOptions, disableSandbox);
+        if (isHeadless) {
+          braveOptions.addArguments("--headless=new");
+        }
+        log.info("Initialized BraveDriver with headless={}", isHeadless);
+        return new ChromeDriver(braveOptions);
+      }
+      default -> {
+        ChromeOptions chromeOptions = new ChromeOptions();
+        applyChromiumStabilityFlags(chromeOptions, disableSandbox);
+        if (isHeadless) {
+          chromeOptions.addArguments("--headless=new");
+        }
+        log.info("Initialized ChromeDriver with headless={} and no-sandbox={}", isHeadless, disableSandbox);
+        return new ChromeDriver(chromeOptions);
+      }
+    }
+  }
+
+  /**
+   * True when the host OS is macOS — the only platform with a real,
+   * Selenium-drivable Safari.
+   */
+  private static boolean isMacOs() {
+    return System.getProperty("os.name", "").toLowerCase().contains("mac");
+  }
+
+  /**
+   * Resolves the Chromium browser used to substitute Safari on non-macOS hosts.
+   * Configurable via
+   * {@code safari.fallback.browser} (chrome | edge | brave); defaults to and
+   * falls back to chrome.
+   */
+  private static String resolveSafariFallbackBrowser() {
+    String fb = ConfigReader.get("safari.fallback.browser");
+    if (fb == null || fb.isBlank()) {
+      return "chrome";
+    }
+    fb = fb.trim().toLowerCase();
+    if (fb.equals("chrome") || fb.equals("edge") || fb.equals("brave")) {
+      return fb;
+    }
+    log.warn("Configured safari.fallback.browser='{}' is not a supported Chromium target; using 'chrome'.", fb);
+    return "chrome";
+  }
+
+  /**
+   * Records the Safari→Chromium substitution in the Allure environment so reports
+   * never imply a
+   * real Safari run. Overrides the {@code Browser.SAFARI} entry written by
+   * writeAllureEnvironmentInfo.
+   */
+  private static void annotateSafariSubstitution(String os, String fallback) {
+    try {
+      File resultsDir = new File("target/allure-results");
+      if (!resultsDir.exists()) {
+        resultsDir.mkdirs();
+      }
+      File envFile = new File(resultsDir, "environment.properties");
+      Properties props = new Properties();
+      if (envFile.exists()) {
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(envFile)) {
+          props.load(fis);
+        } catch (IOException e) {
+          // ignore
+        }
+      }
+      props.setProperty("Browser.SAFARI", "SUBSTITUTED by " + fallback + " — real Safari unsupported on " + os);
+      props.setProperty("Browser." + fallback.toUpperCase(), "Active / Executed (Safari fallback)");
+      try (FileOutputStream fos = new FileOutputStream(envFile)) {
+        props.store(fos, "Allure Environment Properties");
+      }
+    } catch (Exception e) {
+      log.warn("Failed to annotate Safari substitution in Allure env: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * getDriver() using ThreadLocal to ensure thread safety when running tests in
+   * parallel. Each
+   * thread will have its own instance of WebDriver, preventing conflicts and
+   * ensuring that tests do
    * not interfere with each other.
    */
   public static synchronized WebDriver getDriver() {
@@ -162,8 +276,10 @@ public class DriverFactory {
   }
 
   /**
-   * removeDriver() using ThreadLocal to ensure thread safety when running tests in parallel. Each
-   * thread will have its own instance of WebDriver, preventing conflicts and ensuring that tests do
+   * removeDriver() using ThreadLocal to ensure thread safety when running tests
+   * in parallel. Each
+   * thread will have its own instance of WebDriver, preventing conflicts and
+   * ensuring that tests do
    * not interfere with each other.
    */
   public static void removeDriver() {

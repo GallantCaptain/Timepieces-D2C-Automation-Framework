@@ -35,9 +35,15 @@ on:
           - edge
           - brave
       tags:
-        description: 'Cucumber Tags Expression'
-        required: true
-        default: '@Smoke'
+        # Leave EMPTY (the default) to let each runner use its own @CucumberOptions tags
+        # (SmokeRunner=@Smoke, RegressionRunner=@Regression and not @Smoke). That keeps a
+        # dual-tagged scenario running ONCE. Setting a value here passes
+        # -Dcucumber.filter.tags, which OVERRIDES every runner's tags at once — so the same
+        # scenario can execute under both runners (double OTP request → rate-limit). Only set
+        # it for ad-hoc filtered runs, and prefer a single matching runner.
+        description: 'Optional Cucumber tag override (empty = use runner defaults; recommended)'
+        required: false
+        default: ''
         type: string
 
 permissions:
@@ -86,11 +92,18 @@ jobs:
           CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
+          # Only pass -Dcucumber.filter.tags when a tag override was explicitly supplied.
+          # When empty (the default for PRs, repository_dispatch, and unset dispatch inputs),
+          # the runners use their own tags and each scenario runs once — no double execution.
+          TAG_ARG=""
+          if [ -n "${{ inputs.tags }}" ]; then
+            TAG_ARG="-Dcucumber.filter.tags=${{ inputs.tags }}"
+          fi
           mvn test \
             -Denv="${{ inputs.env || 'staging' }}" \
             -Dbrowser="${{ inputs.browser || 'chrome' }}" \
             -Dheadless=true \
-            "-Dcucumber.filter.tags=${{ inputs.tags || '@Smoke' }}" \
+            $TAG_ARG \
             -Dchrome.no.sandbox=true
 
       - name: Generate Allure Report
