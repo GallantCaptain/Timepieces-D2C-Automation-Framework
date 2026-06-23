@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, type Run } from '../api/client';
+import { api, tokenStore, type Run } from '../api/client';
 import { useApi } from '../hooks/useApi';
 
 function fmtDuration(s: number): string {
@@ -92,7 +92,7 @@ export function RunsPage() {
                   <td className="num">{fmtDuration(r.durationSeconds)}</td>
                   <td>
                     {r.reportUrl ? (
-                      <a href={r.reportUrl} target="_blank" rel="noreferrer">
+                      <a href={`${r.reportUrl}?token=${tokenStore.get() ?? ''}`} target="_blank" rel="noreferrer">
                         Allure ↗
                       </a>
                     ) : (

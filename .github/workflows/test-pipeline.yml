@@ -123,10 +123,10 @@ jobs:
           cp -r target/site/allure-maven-plugin/history/* allure-history/ || true
           cp -r allure-history deploy/
 
-      - name: Deploy Allure Report to GitHub Pages
+      - name: Upload Allure Report as Artifact
         if: always()
-        uses: peaceiris/actions-gh-pages@v3
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: deploy
-          keep_files: true
+          name: allure-report-${{ github.run_number }}
+          path: target/site/allure-maven-plugin/
+          retention-days: 30

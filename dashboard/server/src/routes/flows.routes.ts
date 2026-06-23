@@ -61,6 +61,17 @@ flowsRouter.post('/:key/run', async (req, res) => {
   }
 
   try {
+    // Restrict concurrency: verify if any workflow run is currently in_progress or queued.
+    // NOTE: As execution resources grow, this can be increased, parameterized, or replaced with a queuing mechanism.
+    const recent = await listRecentRuns(5);
+    const activeRun = recent.find((r) => r.status === 'in_progress' || r.status === 'queued' || r.status === 'waiting');
+    if (activeRun) {
+      res.status(429).json({
+        error: `A test execution (Run #${activeRun.runNumber}) is already in progress. Concurrent runs are restricted to prevent rate limits.`,
+      });
+      return;
+    }
+
     await dispatchWorkflow({
       env: parsed.data.env,
       browser: parsed.data.browser,

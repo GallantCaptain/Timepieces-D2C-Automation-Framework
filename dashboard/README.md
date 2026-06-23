@@ -57,7 +57,12 @@ npm run dev                   # SPA on http://localhost:5173, proxies /api → :
 
 Build for production: `npm run build` (outputs `web/dist/`). Serve `dist/` behind
 the same origin as the API (or point a reverse proxy `/api` → the Node server).
-Hosting at `dev.timepieces-world.example` is handled separately.
+Hosting at `dev.timepieces-world.example` is handled separately. 
+
+### Subdomain Authentication & Security
+The QA dashboard (`dev.timepieces-world.example`) is completely isolated from the production analytics console (`dashboard.timepieces-world.example/dashboard`):
+1. **Token Isolation:** Authenticaton uses `localStorage`, which is strictly isolated by browser origin. Tokens set on `dev.timepieces-world.example` do not leak to or conflict with `dashboard.timepieces-world.example`.
+2. **Database Isolation:** User logins are stored in `dashboard_users` in the QA metrics database, completely separate from customer databases or PPI.
 
 ## Flows → tags
 

@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { query } from '../db.js';
 import { requireAuth } from '../auth.js';
-import { config } from '../config.js';
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import AdmZip from 'adm-zip';
+import { downloadArtifact, GitHubError } from '../github.js';
 
 export const runsRouter = Router();
 runsRouter.use(requireAuth);
@@ -19,10 +23,10 @@ interface RunRow {
   duration_seconds: number | null;
 }
 
-/** Builds the public Allure report URL for a build, if it looks like a CI run number. */
+/** Builds the secure Allure report URL for a build, if it looks like a CI run number. */
 function reportUrl(buildId: string | null): string | null {
   if (!buildId || !/^\d+$/.test(buildId)) return null; // LOCAL_* runs aren't published
-  return `https://${config.github.owner.toLowerCase()}.github.io/${config.github.repo}/runs/${buildId}/`;
+  return `/api/runs/${buildId}/report/index.html`;
 }
 
 function shape(row: RunRow) {
@@ -163,4 +167,53 @@ runsRouter.get('/:id', async (req, res) => {
     return;
   }
   res.json({ run: shape(rows[0]) });
+});
+
+const REPORTS_DIR = join(process.cwd(), 'data', 'reports');
+
+// GET /api/runs/:buildId/report/* — secure static file server for private Allure reports.
+runsRouter.get('/:buildId/report/*', async (req, res) => {
+  const buildIdStr = req.params.buildId;
+  const buildId = Number(buildIdStr);
+  if (!Number.isInteger(buildId)) {
+    res.status(400).json({ error: 'Invalid build id' });
+    return;
+  }
+
+  const runDir = join(REPORTS_DIR, buildIdStr);
+  const requestedPath = (req.params as Record<string, string>)['0'];
+
+  // Check if report index file exists, if not, fetch and unzip it
+  if (!existsSync(join(runDir, 'index.html'))) {
+    try {
+      console.log(`[reports] cache miss for run #${buildId}. Fetching from GitHub...`);
+      const buffer = await downloadArtifact(buildId);
+
+      await mkdir(runDir, { recursive: true });
+      const zip = new AdmZip(buffer);
+      zip.extractAllTo(runDir, true);
+      console.log(`[reports] successfully cached report for run #${buildId}`);
+    } catch (err) {
+      if (err instanceof GitHubError) {
+        console.error(`[reports] GitHub error fetching run #${buildId}:`, err.message, err.detail);
+        res.status(err.status === 404 ? 404 : 502).json({
+          error: err.status === 404 ? 'Report not found' : 'Failed to fetch report from GitHub API',
+          detail: err.message,
+        });
+        return;
+      }
+      console.error(`[reports] error caching run #${buildId}:`, err);
+      res.status(500).json({ error: 'Failed to extract Allure report' });
+      return;
+    }
+  }
+
+  // Serve file statically
+  const filePath = join(runDir, requestedPath || 'index.html');
+  if (!existsSync(filePath)) {
+    res.status(404).send('Not Found');
+    return;
+  }
+
+  res.sendFile(filePath);
 });

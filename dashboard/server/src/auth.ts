@@ -32,13 +32,20 @@ declare global {
   }
 }
 
-/** Rejects the request with 401 unless a valid Bearer token is present. */
+/** Rejects the request with 401 unless a valid Bearer token (or query token) is present. */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  let token = '';
   const header = req.header('authorization') ?? '';
-  const [scheme, token] = header.split(' ');
+  const [scheme, parsedToken] = header.split(' ');
 
-  if (scheme !== 'Bearer' || !token) {
-    res.status(401).json({ error: 'Missing or malformed Authorization header' });
+  if (scheme === 'Bearer' && parsedToken) {
+    token = parsedToken;
+  } else if (typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    res.status(401).json({ error: 'Missing or malformed Authorization token' });
     return;
   }
 

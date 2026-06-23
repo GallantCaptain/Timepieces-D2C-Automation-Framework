@@ -101,3 +101,43 @@ export class GitHubError extends Error {
     this.name = 'GitHubError';
   }
 }
+
+/**
+ * Downloads the private zip archive artifact for a given GitHub Action run number.
+ */
+export async function downloadArtifact(runNumber: number): Promise<Buffer> {
+  const { owner, repo } = config.github;
+  const listUrl = `${API}/repos/${owner}/${repo}/actions/artifacts?name=allure-report-${runNumber}`;
+
+  const res = await fetch(listUrl, { headers: headers() });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new GitHubError(
+      `Failed to list artifacts for run #${runNumber} (${res.status})`,
+      res.status,
+      detail.slice(0, 500),
+    );
+  }
+
+  const body = (await res.json()) as { artifacts?: { archive_download_url: string }[] };
+  const artifact = body.artifacts?.[0];
+  if (!artifact) {
+    throw new GitHubError(`Allure report artifact not found for run #${runNumber}`, 404, 'No matching artifact name');
+  }
+
+  const downloadRes = await fetch(artifact.archive_download_url, {
+    headers: headers(),
+  });
+
+  if (!downloadRes.ok) {
+    const detail = await downloadRes.text().catch(() => '');
+    throw new GitHubError(
+      `Failed to download artifact for run #${runNumber} (${downloadRes.status})`,
+      downloadRes.status,
+      detail.slice(0, 500),
+    );
+  }
+
+  const arrayBuffer = await downloadRes.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
