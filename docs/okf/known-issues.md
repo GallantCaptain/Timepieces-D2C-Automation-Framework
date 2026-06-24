@@ -25,3 +25,4 @@ Last reviewed: 2026-06-24
 | Incident | Evidence | Learning |
 | --- | --- | --- |
 | JVM crash on 2026-06-23 at 11:08:06 IST | `hs_err_pid4140.log` shows `EXCEPTION_ACCESS_VIOLATION`, problematic frame `jvm.dll+0x70c0c9`, current thread `GC Thread#1`, command line for Eclipse JDT LS. | Treat as IDE/JDT LS crash until proven otherwise; do not present as an automation test failure. |
+| CI Staging test failure on 2026-06-24 at 13:53 UTC (Run #28103614499) | Allure artifact contains screenshot `2673bf9a230b778e.png` displaying the Cloudflare "Verify you are human" checkbox page. | Confirmed that headless Chrome in GitHub Actions runner is still intercepted; WAF skip rule is not yet implemented on Cloudflare (TASK-CI-001). |

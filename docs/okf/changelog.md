@@ -20,3 +20,10 @@ This changelog is append-only. New entries must be added chronologically and mus
 - `LoginPage.java`: removed dead commented-out OTP-send rate-limit locators (throttle disabled on staging).
 - Verified with `mvnw -o test-compile` → BUILD SUCCESS.
 - Left `TODO(locators)` markers where real `data-testid`s are still pending (tracked as DEBT-008 / TASK-LOC-001).
+
+### CI/CD Failure Analysis (later same day)
+
+- Analyzed failed GitHub Actions workflow run `#28103614499` (staging-tests).
+- Downloaded and inspected the `allure-report-staging-1` artifact.
+- Traced the test failures (unmute button missing, login welcome message missing) to a Cloudflare human verification check page shown to the headless browser.
+- Logged the incident under `Incident Notes` in `known-issues.md` to track resolution block.
