@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
+import com.timepieces.automation.exceptions.OtpRateLimitException;
 import com.timepieces.automation.pages.web.account.LoginPage;
 import com.timepieces.automation.utils.ConfigReader;
 import com.timepieces.automation.utils.TwilioOtpClient;
@@ -12,8 +13,10 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import lombok.extern.log4j.Log4j2;
 
 // Assertions belong in Step Definitions, NEVER in Page Objects
+@Log4j2
 public class LoginSteps {
     private final TestContext testContext;
     private LoginPage loginPage;
@@ -48,10 +51,25 @@ public class LoginSteps {
         loginPage.enterPhoneNumber(phoneNumber);
     }
 
-    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key is active, otherwise need to create one in test bed. 
+    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key is active, otherwise need to create one in test bed.
     @And("clicks the send OTP button")
     public void clicks_the_send_otp_button() {
-        loginPage.clickSendOtpButton();
+        try {
+            loginPage.clickSendOtpButton();
+        } catch (OtpRateLimitException e) {
+            // Parallel scenarios and back-to-back automation runs reuse the same login number, so
+            // the ~90s "Too many attempts" cooldown (login-cooldown) can be active when this step
+            // runs. That is an environment timing artifact, not a product defect — so instead of
+            // failing, wait the cooldown out (its duration + a small buffer) and retry the send
+            // ONCE so the scenario can proceed. A second cooldown means the number is genuinely
+            // stuck, and we let it surface.
+            int waitSeconds = (e.getWaitSeconds() >= 0 ? e.getWaitSeconds() : 90) + 10;
+            log.warn("Send OTP hit the ~{}s cooldown (parallel/automation churn). Waiting it out and "
+                    + "retrying once.", e.getWaitSeconds());
+            loginPage.waitOutOtpCooldown(waitSeconds);
+            loginPage.clickSendOtpButton();
+            log.info("Send OTP succeeded on retry after the cooldown elapsed.");
+        }
     }
 
     @Then("the OTP verification screen should be displayed")

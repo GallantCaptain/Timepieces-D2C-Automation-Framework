@@ -26,6 +26,10 @@
         <log4j.version>2.23.1</log4j.version>
         <aspectj.version>1.9.24</aspectj.version>
         <monte.version>0.7.7.0</monte.version>
+        <!-- TestNG suite Surefire executes. Defaults to the full Smoke+Regression suite
+             (testng.xml) for local/PR/staging runs; the production nightly overrides it with
+             -Dsurefire.suite=testng-production.xml to run the non-login production scope. -->
+        <surefire.suite>testng.xml</surefire.suite>
     </properties>
 
     <dependencies>
@@ -166,7 +170,7 @@
                          default Test*.java naming patterns. The suite XML also feeds the
                          "environment" parameter that BaseRunner consumes via @Parameters. -->
                     <suiteXmlFiles>
-                        <suiteXmlFile>testng.xml</suiteXmlFile>
+                        <suiteXmlFile>${surefire.suite}</suiteXmlFile>
                     </suiteXmlFiles>
                     <forkCount>1</forkCount>
                     <!-- Cucumber's Allure plugin defaults to ./allure-results in the JVM working

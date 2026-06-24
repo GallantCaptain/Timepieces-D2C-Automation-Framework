@@ -1,17 +1,10 @@
 name: Test Suite Runner & Metrics Publisher
 
 on:
-  pull_request:
-    branches:
-      - main
-    # The browser smoke suite exercises the Java app under src/. Skip it for PRs
-    # that only touch non-test assets (e.g. the dashboard app, docs, dashboards),
-    # so an unrelated change isn't gated on an 11-minute Selenium run.
-    paths-ignore:
-      - 'dashboard/**'
-      - 'docs/**'
-      - 'grafana-dashboards/**'
-      - '**/*.md'
+  # PR runs are owned by staging-tests.yml. Running PRs here too would fire the
+  # staging suite twice per PR (two workflows hitting the same login number at once →
+  # OTP "too many attempts" cooldown). This pipeline now runs only on explicit
+  # dispatch and the dashboard's repository_dispatch (it keeps the Allure publish).
   repository_dispatch:
     types: [run-smoke-tests]
   workflow_dispatch:

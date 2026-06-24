@@ -1,0 +1,89 @@
+name: staging-tests
+
+# Runs the full staging suite (smoke + regression) on:
+#   - every PR targeting main (excluding non-test asset changes)
+#   - a nightly schedule
+#   - manual dispatch
+on:
+  pull_request:
+    branches:
+      - main
+    # The browser suite exercises the Java app under src/. Skip it for PRs that only
+    # touch non-test assets so an unrelated change isn't gated on a long Selenium run.
+    paths-ignore:
+      - 'dashboard/**'
+      - 'docs/**'
+      - 'grafana-dashboards/**'
+      - '**/*.md'
+  schedule:
+    # 00:00 UTC nightly (05:30 IST). Staggered before production-tests (02:00 UTC).
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+# Prevent overlapping staging runs on the same ref (a fresh nightly/PR push supersedes
+# an in-flight run) so two runs don't hit the same login number and trip the OTP cooldown.
+concurrency:
+  group: staging-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  run-staging-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Setup the Java environment
+      - name: Setup Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      # Step 3: Install the browser binary the suite drives (default browser=chrome)
+      - name: Install Browser Binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      # Step 4: Execute the full staging suite (smoke + regression) in ONE invocation.
+      # testng.xml runs both SmokeRunner and RegressionRunner, each owning disjoint tags
+      # (Smoke = "@Smoke and not @Regression", Regression = "@Regression"), so a single
+      # `mvn test` with NO -Dcucumber.filter.tags covers both suites and runs every
+      # scenario exactly once. Passing a tag override here would force the filter onto
+      # BOTH runners and double-execute matching scenarios (→ duplicate OTP requests →
+      # 90s "too many attempts" cooldown). Do not add -Dcucumber.filter.tags.
+      - name: Execute Staging Smoke + Regression (headless)
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          STAGING_GATE_PASS: ${{ secrets.STAGING_PASSWORD }}
+          CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          mvn -B test \
+            -Denv=staging \
+            -Dbrowser=chrome \
+            -Dheadless=true \
+            -Dchrome.no.sandbox=true \
+            -Dstaging.password="${STAGING_GATE_PASS}"
+
+      # Step 5: Build the Allure report even when tests fail
+      - name: Generate Allure Report
+        if: always()
+        run: mvn allure:report
+
+      # Step 6: Publish the report as a downloadable artifact for triage
+      - name: Upload Allure Report as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-staging-${{ github.run_number }}
+          path: target/site/allure-maven-plugin/
+          retention-days: 30
