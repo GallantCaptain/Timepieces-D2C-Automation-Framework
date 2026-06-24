@@ -62,10 +62,10 @@ public class StagingBypassSteps {
                 .isTrue();
     }
 
-    @And("the active storefront landing page initializes with the visible logo tracking element {string}")
-    public void the_active_storefront_landing_page_initializes_with_the_visible_logo_tracking_element(String logoLocator) {
-        assertThat(homePage.isLogoVisible(logoLocator))
-                .as("Active storefront landing page logo element '" + logoLocator + "' is not visible.")
+    @And("the active storefront landing page initializes with the visible hero section")
+    public void the_active_storefront_landing_page_initializes_with_the_visible_hero_section() {
+        assertThat(homePage.isHeroSectionDisplayed())
+                .as("Active storefront landing page hero section was not visible after the gate cleared.")
                 .isTrue();
     }
 

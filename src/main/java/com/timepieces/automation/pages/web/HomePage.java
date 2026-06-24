@@ -131,26 +131,4 @@ public class HomePage extends BasePage {
         return displayed;
     }
 
-    /**
-     * V.4 Checks if the brand logo is visible on the homepage/storefront.
-     *
-     * NOTE: this accepts a raw CSS selector for backwards compatibility with the staging-bypass
-     * smoke step ({@code StagingBypassSteps}). Page objects should normally encapsulate their own
-     * locators; once the logo's data-testid is confirmed, replace this with a no-arg
-     * {@code isLogoDisplayed()} backed by a private {@code logo} locator field.
-     *
-     * @param logoSelector The CSS selector for the logo element.
-     * @return true if visible, false otherwise.
-     */
-    public boolean isLogoVisible(String logoSelector) {
-        log.info("Checking visibility of logo using selector: {}", logoSelector);
-        try {
-            By locator = By.cssSelector(logoSelector);
-            return isDisplayed(locator);
-        } catch (Exception e) {
-            log.error("Logo with selector {} was not visible", logoSelector, e);
-            return false;
-        }
-    }
-
 }
