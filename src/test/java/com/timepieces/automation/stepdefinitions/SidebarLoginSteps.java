@@ -12,6 +12,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
+import com.timepieces.automation.pages.components.HeaderComponent;
+import com.timepieces.automation.pages.components.SidebarMenuComponent;
 import com.timepieces.automation.pages.web.account.LoginPage;
 import com.timepieces.automation.utils.ConfigReader;
 
@@ -26,11 +28,9 @@ public class SidebarLoginSteps {
     private final TestContext testContext;
     private final WebDriver driver;
     private final WebDriverWait wait;
-
-    // Locators
-    private final By hamburgerButton = By.cssSelector("button[aria-label='Open mobile menu'].text-white");
-    private final By sidebarContainer = By.cssSelector(".header-sidebar__container");
-    private final By sidebarSignInButton = By.xpath("//div[contains(@class, 'header-sidebar')]//button[normalize-space(text())='Sign in']");
+    
+    private HeaderComponent headerComponent;
+    private SidebarMenuComponent sidebarMenuComponent;
 
     public SidebarLoginSteps(TestContext testContext) {
         this.testContext = testContext;
@@ -40,6 +40,9 @@ public class SidebarLoginSteps {
 
     @Given("the user has opened the global responsive sidebar menu")
     public void the_user_has_opened_the_global_responsive_sidebar_menu() {
+        headerComponent = new HeaderComponent(driver);
+        sidebarMenuComponent = new SidebarMenuComponent(driver);
+
         String baseUrl = ConfigReader.get("base.url");
         log.info("Navigating to home page to open sidebar: {}", baseUrl);
         driver.get(baseUrl);
@@ -47,18 +50,20 @@ public class SidebarLoginSteps {
         // Bypass staging gate if present
         new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
 
-        log.info("Clicking the hamburger menu button.");
-        wait.until(ExpectedConditions.elementToBeClickable(hamburgerButton)).click();
+        log.info("Clicking the hamburger menu button via HeaderComponent.");
+        headerComponent.clickMenuToggle();
 
         log.info("Waiting for the sidebar menu to open.");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(sidebarContainer));
+        assertThat(sidebarMenuComponent.isSidebarDisplayed())
+                .as("Sidebar menu was not displayed.")
+                .isTrue();
     }
 
     @When("the user clicks on the {string} interaction link")
     public void the_user_clicks_on_the_interaction_link(String linkName) {
         if ("Sign In".equalsIgnoreCase(linkName)) {
-            log.info("Clicking the Sign In button inside the sidebar.");
-            wait.until(ExpectedConditions.elementToBeClickable(sidebarSignInButton)).click();
+            log.info("Clicking the Sign In button inside the sidebar via SidebarMenuComponent.");
+            sidebarMenuComponent.clickSignIn();
         } else {
             throw new IllegalArgumentException("Unsupported sidebar link interaction requested: " + linkName);
         }
@@ -80,14 +85,16 @@ public class SidebarLoginSteps {
 
     @And("the sidebar element should display the personalized element {string}")
     public void the_sidebar_element_should_display_the_personalized_element(String accountMarker) {
-        if (driver.findElements(sidebarContainer).isEmpty() || !driver.findElement(sidebarContainer).isDisplayed()) {
+        if (!sidebarMenuComponent.isSidebarDisplayed()) {
             log.info("Sidebar closed. Re-opening to verify personalized element.");
-            wait.until(ExpectedConditions.elementToBeClickable(hamburgerButton)).click();
-            wait.until(ExpectedConditions.visibilityOfElementLocated(sidebarContainer));
+            headerComponent.clickMenuToggle();
+            assertThat(sidebarMenuComponent.isSidebarDisplayed())
+                    .as("Sidebar menu was not displayed.")
+                    .isTrue();
         }
 
         log.info("Verifying personalized element in sidebar matching: {}", accountMarker);
-        By accountElement = By.xpath("//div[contains(@class, 'header-sidebar')]//a[@href='/account' or contains(normalize-space(text()), '" + accountMarker + "') or contains(normalize-space(text()), 'Account')]");
+        By accountElement = By.xpath("//div[@data-testid='nav-sidebar']//a[@href='/account' or contains(normalize-space(text()), '" + accountMarker + "') or contains(normalize-space(text()), 'Account')]");
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(accountElement));
         assertThat(element.isDisplayed())
                 .as("Personalized account element in sidebar was not displayed.")

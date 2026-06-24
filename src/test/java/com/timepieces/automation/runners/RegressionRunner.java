@@ -5,9 +5,16 @@ import io.cucumber.testng.CucumberOptions;
 @CucumberOptions(
     features = {
         "src/test/resources/features/01_authentication_identity/Staging_Password_Bypass.feature",
-        "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature"
+        "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature",
+        "src/test/resources/features/01_authentication_identity/OTP_Login_End_To_End.feature",
+        "src/test/resources/features/01_authentication_identity/OTP_Bruteforce_Security.feature"
     },
     glue = { "com.timepieces.automation.stepdefinitions", "com.timepieces.automation.hooks" },
+    // Disjointness with Smoke is enforced on the SmokeRunner side (tags = "@Smoke and not
+    // @Regression"), so this runner OWNS every @Regression scenario — including those also
+    // tagged @Smoke (e.g. the login/OTP init). Keep this as plain "@Regression": adding
+    // "and not @Smoke" here too would exclude dual-tagged scenarios from BOTH runners, so
+    // they would run nowhere. Exactly one runner must carry the overlap.
     tags = "@Regression",
     plugin = {
         "pretty",

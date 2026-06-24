@@ -1,0 +1,78 @@
+name: production-tests
+
+# Runs the full production suite (smoke + regression) on a nightly schedule and on
+# manual dispatch. Production is NOT run per-PR — only verified, merged code is
+# exercised against the live site.
+on:
+  schedule:
+    # 02:00 UTC nightly (07:30 IST). Staggered after staging-tests (00:00 UTC).
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+# Never run two production suites at once (they would hit the same login number and
+# trip the OTP cooldown).
+concurrency:
+  group: production-tests
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run-production-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Setup the Java environment
+      - name: Java JDK Setup
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      # Step 3: Install the browser binary the suite drives (default browser=chrome)
+      - name: Install Browser Binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      # Step 4: Execute the production scope via the dedicated production suite.
+      # -Dsurefire.suite=testng-production.xml selects ProductionRunner, which runs ONLY
+      # @ProdReady (non-login) scenarios — login/OTP is excluded until a Twilio + virtual
+      # domestic number provider is integrated (it would dispatch real OTPs nightly).
+      # NOTE: env MUST be "production" — ConfigReader loads config/<env>.properties and the
+      # file is production.properties (NOT prod). CF_BYPASS_TOKEN applies the Cloudflare
+      # X-Automation-Bypass header to prod too (the matching WAF skip rule must exist on the
+      # production Cloudflare zone for it to take effect).
+      - name: Execute Production Suite (non-login, headless)
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          mvn -B test \
+            -Denv=production \
+            -Dsurefire.suite=testng-production.xml \
+            -Dbrowser=chrome \
+            -Dheadless=true \
+            -Dchrome.no.sandbox=true
+
+      # Step 5: Build the Allure report even when tests fail
+      - name: Generate Allure Report
+        if: always()
+        run: mvn allure:report
+
+      # Step 6: Publish the report as a downloadable artifact for triage
+      - name: Upload Allure Report as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-production-${{ github.run_number }}
+          path: target/site/allure-maven-plugin/
+          retention-days: 30

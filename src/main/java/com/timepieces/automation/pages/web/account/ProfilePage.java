@@ -32,12 +32,16 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 public class ProfilePage extends HeaderOnlyBasePage {
-    /* Constructor */
+    // ==========================================
+    // Constructor
+    // ==========================================
     public ProfilePage(WebDriver driver) {
         super(driver);
     }
 
-    // /********* Locators *********/
+    // ==========================================
+    // LOCATORS
+    // ==========================================
     // My Account Link At Top (My Account -> Edit Profile)
     private final By accountLinkTopLeftProfilePage = By.cssSelector("a[href='/account']");
 

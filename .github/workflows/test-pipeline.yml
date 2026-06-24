@@ -1,17 +1,10 @@
 name: Test Suite Runner & Metrics Publisher
 
 on:
-  pull_request:
-    branches:
-      - main
-    # The browser smoke suite exercises the Java app under src/. Skip it for PRs
-    # that only touch non-test assets (e.g. the dashboard app, docs, dashboards),
-    # so an unrelated change isn't gated on an 11-minute Selenium run.
-    paths-ignore:
-      - 'dashboard/**'
-      - 'docs/**'
-      - 'grafana-dashboards/**'
-      - '**/*.md'
+  # PR runs are owned by staging-tests.yml. Running PRs here too would fire the
+  # staging suite twice per PR (two workflows hitting the same login number at once →
+  # OTP "too many attempts" cooldown). This pipeline now runs only on explicit
+  # dispatch and the dashboard's repository_dispatch (it keeps the Allure publish).
   repository_dispatch:
     types: [run-smoke-tests]
   workflow_dispatch:
@@ -35,9 +28,15 @@ on:
           - edge
           - brave
       tags:
-        description: 'Cucumber Tags Expression'
-        required: true
-        default: '@Smoke'
+        # Leave EMPTY (the default) to let each runner use its own @CucumberOptions tags
+        # (SmokeRunner=@Smoke, RegressionRunner=@Regression and not @Smoke). That keeps a
+        # dual-tagged scenario running ONCE. Setting a value here passes
+        # -Dcucumber.filter.tags, which OVERRIDES every runner's tags at once — so the same
+        # scenario can execute under both runners (double OTP request → rate-limit). Only set
+        # it for ad-hoc filtered runs, and prefer a single matching runner.
+        description: 'Optional Cucumber tag override (empty = use runner defaults; recommended)'
+        required: false
+        default: ''
         type: string
 
 permissions:
@@ -83,13 +82,21 @@ jobs:
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           STAGING_GATE_PASS: ${{ secrets.STAGING_PASSWORD }}
+          CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
+          # Only pass -Dcucumber.filter.tags when a tag override was explicitly supplied.
+          # When empty (the default for PRs, repository_dispatch, and unset dispatch inputs),
+          # the runners use their own tags and each scenario runs once — no double execution.
+          TAG_ARG=""
+          if [ -n "${{ inputs.tags }}" ]; then
+            TAG_ARG="-Dcucumber.filter.tags=${{ inputs.tags }}"
+          fi
           mvn test \
             -Denv="${{ inputs.env || 'staging' }}" \
             -Dbrowser="${{ inputs.browser || 'chrome' }}" \
             -Dheadless=true \
-            "-Dcucumber.filter.tags=${{ inputs.tags || '@Smoke' }}" \
+            $TAG_ARG \
             -Dchrome.no.sandbox=true
 
       - name: Generate Allure Report
@@ -109,10 +116,10 @@ jobs:
           cp -r target/site/allure-maven-plugin/history/* allure-history/ || true
           cp -r allure-history deploy/
 
-      - name: Deploy Allure Report to GitHub Pages
+      - name: Upload Allure Report as Artifact
         if: always()
-        uses: peaceiris/actions-gh-pages@v3
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: deploy
-          keep_files: true
+          name: allure-report-${{ github.run_number }}
+          path: target/site/allure-maven-plugin/
+          retention-days: 30

@@ -24,8 +24,7 @@ import lombok.extern.log4j.Log4j2;
  * Initialises a shared WebDriverWait that all page methods inherit. Timeout is
  * read from config (explicit.wait.timeout), defaulting to 10s, so it can be
  * overridden per environment without touching code. 3. Runs
- * PageFactory.initElements() so @FindBy-annotated fields on any subclass page
- * are automatically proxied and lazily resolved on first use.
+ * BY Plain Objects, e.g. private final By webElementName = By.....
  *
  * WHAT DOES NOT BELONG HERE: - Business logic (belongs in individual page
  * objects) - Assertions (belong in step definitions or test classes) - Driver

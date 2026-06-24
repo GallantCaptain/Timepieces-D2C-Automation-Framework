@@ -4,5 +4,6 @@
     "java.format.settings.url": "eclipse-formatter.xml",
     "github.copilot.chat.localIndex.enabled": true,
     "workbench.browser.experimentalUserTools.enabled": true,
-    "claudeCode.environmentVariables": []
+    "claudeCode.environmentVariables": [],
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
 }

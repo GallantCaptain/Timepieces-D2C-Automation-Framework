@@ -10,8 +10,8 @@ As a premium test user of Timepieces
     When the user enters the valid gatekeeper password "<password_secret>"
     And clicks the submit button
     Then the password wall clears successfully
-    And the active storefront landing page initializes with the visible logo tracking element "<logo_locator>"
+    And the active storefront landing page initializes with the visible hero section
 
     Examples:
-      | env_url                     | password_secret      | logo_locator          |
-      | https://staging.timepieces-d2c.example | ${STAGING_GATE_PASS} | header a[href='/'] svg |
+      | env_url                     | password_secret      |
+      | https://staging.timepieces-d2c.example | ${STAGING_GATE_PASS} |
