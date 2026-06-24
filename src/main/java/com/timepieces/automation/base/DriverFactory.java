@@ -184,7 +184,10 @@ public class DriverFactory {
         ChromeOptions braveOptions = new ChromeOptions();
         String bravePath = System.getenv("BRAVE_PATH");
         if (bravePath == null || bravePath.isEmpty()) {
-          throw new IllegalStateException("Environment variable BRAVE_PATH is not set or empty.");
+          bravePath = ConfigReader.get("brave.path");
+        }
+        if (bravePath == null || bravePath.isEmpty()) {
+          throw new IllegalStateException("Brave path is not set: set the BRAVE_PATH environment variable or brave.path in config.");
         }
         braveOptions.setBinary(bravePath);
         applyChromiumStabilityFlags(braveOptions, disableSandbox);
