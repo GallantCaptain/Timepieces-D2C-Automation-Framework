@@ -1,5 +1,37 @@
-# Timepieces QA Automation
+# OKF Navigation Index
 
+IMPORTANT FOR AI AGENTS
+
+Do not read the entire OKF.
+
+Use this index to locate only the files needed.
+
+## Architecture
+02_Architecture/
+
+## Decisions
+03_Decisions/
+
+## Testing
+04_Testing/
+
+## Framework Status
+05_Implementation/
+
+## Backlog
+06_Backlog/
+
+## Issues
+07_Issues/
+
+## Learnings
+08_Learnings/
+
+## Changelog
+09_Changelog/
+
+# Timepieces QA Automation
+Load only the minimum set of files required for the current task.
 End-to-end test automation for the Timepieces web application, plus a dashboard for
 viewing results and launching test runs.
 
@@ -98,10 +130,19 @@ dispatching the CI workflow. Setup and API details are in
 
 ## Documentation
 
+- [docs/okf/OKF_INDEX.md](docs/okf/OKF_INDEX.md) - Organizational Knowledge
+  File index and authoritative project memory
 - [docs/PRD.md](docs/PRD.md) — product requirements
 - [docs/system_architecture.md](docs/system_architecture.md) — architecture
 - [docs/test-strategy/](docs/test-strategy/) — test strategy
 - [docs/project_context.md](docs/project_context.md) — project context
+
+### Organizational Knowledge File
+
+The OKF is the single source of truth for current project knowledge. Start with
+[docs/okf/OKF_INDEX.md](docs/okf/OKF_INDEX.md), then use the topic files for
+status, decisions, backlog, risks, known issues, and learnings. Architectural and
+framework decisions are tracked as ADRs in [docs/adr/](docs/adr/).
 
 ---
 
@@ -124,3 +165,5 @@ dispatching the CI workflow. Setup and API details are in
   Cloudflare WAF skip rule keyed on an automation header (or, as a fallback, a
   self-hosted runner with an allowlisted IP). Targeting `dev` instead was ruled
   out — dev is not a test target.
+  
+
