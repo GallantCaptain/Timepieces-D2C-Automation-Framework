@@ -13,11 +13,12 @@ Last reviewed: 2026-06-24
 | ISSUE-005 | `staging.properties` defines `is.headless=false`, but `DriverFactory` reads `headless`; production has both keys. | Medium | Open | Use CLI `-Dheadless=...` or add `headless` to staging until config is reconciled. | TASK-CFG-001 |
 | ISSUE-006 | `hs_err_pid4140.log` records a JVM `EXCEPTION_ACCESS_VIOLATION` in VS Code Red Hat Java language server using Temurin 21.0.10. Root cause is TBD. | Medium | Open | Restart affected IDE/JDT LS process; deeper root-cause analysis TBD. | TASK-IDE-001 |
 | ISSUE-007 | CI workflow browser inputs include Edge and Brave, but the workflow install step only installs Chrome and Firefox. | Medium | Open | Use Docker test bed for Edge/Brave until CI browser setup is aligned, or update workflow. | TASK-RUN-001 |
-| ISSUE-008 | Uncommitted working-tree edit in `AstoniaCardComponent.java` has an incomplete `log.info("The ")` statement at line 63. | High | Open | Complete the catch-block statement before running compile/test verification. | TASK-CODE-001, RISK-BUILD-BREAK |
 
 ## Resolved Issues
 
-No resolved issues have been recorded in the OKF yet.
+| ID | Description | Severity | Resolved | Resolution | Traceability |
+| --- | --- | --- | --- | --- | --- |
+| ISSUE-008 | Working-tree edits left compile-breaking placeholder stubs across refactored page objects: duplicate `private final By varName` fields and an invalid identifier (`private final By 15`) in `HomePage.java`, duplicate `varName` placeholders in `SidebarMenuComponent.java`, plus a redundant try/catch and a `BasePage.wait`-shadowing field in `AstoniaCardComponent.java`. | High | 2026-06-24 | Removed all placeholder stubs; real locators preserved and `TODO(locators)` markers left where genuine `data-testid`s are still pending. Added business/verification/helper methods (incl. the missing `dismissAstoniaCard()`) and fixed Astonia logic. `mvnw test-compile` → BUILD SUCCESS. | TASK-CODE-001, RISK-BUILD-BREAK |
 
 ## Incident Notes
 

@@ -36,7 +36,8 @@ Last updated: 2026-06-24
 | BLK-002 | Dashboard flow execution is disabled when `GITHUB_TOKEN` is absent. | On-demand test launches unavailable. | PAT/secret with `actions:write` | TASK-DASH-001 |
 | BLK-003 | OTP verification has no attempt limit on staging based on committed security probe notes. | Authentication security exposure remains open until product/app fix. | Application-side rate limiting/lockout | ISSUE-002 |
 | BLK-004 | Java language server crash root cause is TBD. | IDE stability risk. | Investigation of `hs_err_pid4140.log`, JDK/JDT LS versions | ISSUE-006 |
-| BLK-005 | Current working tree contains an incomplete statement in `AstoniaCardComponent.java:63`. | Maven compile/test verification should wait until the edit is completed. | Owner of current uncommitted component edit | ISSUE-008 |
+
+> BLK-005 (compile-breaking placeholder stubs in refactored page objects) was **resolved 2026-06-24** — stubs removed, methods added, `mvnw test-compile` → BUILD SUCCESS. See resolved ISSUE-008.
 
 ## Technical Debt
 
@@ -48,7 +49,8 @@ Last updated: 2026-06-24
 | DEBT-004 | README claims Allure publishes to GitHub Pages, but inspected workflow uploads an artifact and organizes deploy files without a Pages deploy step. | `README.md`, `.github/workflows/test-pipeline.yml` | TASK-CI-002 |
 | DEBT-005 | Dashboard flow env list includes `dev`, but workflow input allows only `staging` and `prod`. | `flows.config.ts`, workflow input. | TASK-DASH-002 |
 | DEBT-006 | Rest-Assured, Appium, and Healenium dependencies are present, but verified tests/integration are TBD. | `pom.xml`, no verified implementations found. | TASK-DOC-001 |
-| DEBT-007 | Astonia product drop card behavior is being changed in the working tree but is not yet represented by verified tests or completed implementation. | Uncommitted `AstoniaCardComponent.java` diff. | TASK-CODE-001 |
+| DEBT-007 | Astonia drop card POM is implemented and compiles, but the timed appear/dismiss/reappear behavior is not yet covered by verified tests. | `AstoniaCardComponent.java` (methods present; no feature/scenario exercising them). | TASK-RUN-001 |
+| DEBT-008 | `HomePage` and `SidebarMenuComponent` carry `TODO(locators)` markers where real `data-testid`s are still pending (remaining homepage sections; logged-in user container child elements). | `HomePage.java`, `SidebarMenuComponent.java`. | TASK-LOC-001 |
 
 ## Session-End Update
 

@@ -13,7 +13,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
 import com.timepieces.automation.pages.components.HeaderComponent;
-import com.timepieces.automation.pages.components.cards.SidebarMenuComponent;
+import com.timepieces.automation.pages.components.SidebarMenuComponent;
 import com.timepieces.automation.pages.web.account.LoginPage;
 import com.timepieces.automation.utils.ConfigReader;
 

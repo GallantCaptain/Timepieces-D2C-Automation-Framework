@@ -2,6 +2,24 @@
 
 Last updated: 2026-06-24
 
+## 2026-06-24 Page-Object Refactor Cleanup
+
+### Modified Items
+
+- `HomePage.java` — removed ~24 duplicate `varName` placeholder fields and the invalid identifier `private final By 15`; kept real hero locators; added `waitUntilLoaded`, `toggleHeroMute`, `clickDiscoverCta` (→ `AstoniaDropPage`), and `isHomePageLoaded`/`isHeroSectionDisplayed`/`isHeroOverlayDisplayed`; pruned unused imports.
+- `SidebarMenuComponent.java` — placeholder `varName` stubs removed (real locators already filled in by component owner); added navigation business methods (logo, timepieces/accessories submenus, back, wishlist, track-orders/orders, account profile, country selector) and verification methods (`isSignInButtonDisplayed`, `isUserLoggedIn`, `isBecomeMemberPromptDisplayed`, `isSidebarLogoDisplayed`, `isProductsSubMenuDisplayed`, `getMenuItemCount`).
+- `AstoniaCardComponent.java` — removed the `BasePage.wait`-shadowing field and redundant try/catch; added `dismissAstoniaCard()`; replaced misleading reappearance methods with `clickAstoniaDropCardWhenVisible(int)` and `isAstoniaDropCardDisplayedWithin(int)` plus a shared `becomesVisibleWithin(int)` helper.
+- `LoginPage.java` — removed dead commented-out OTP-send rate-limit locators.
+
+### Status Changes
+
+- ISSUE-008 → Resolved; TASK-CODE-001 → Completed; RISK-BUILD-BREAK → Resolved; BLK-005 → cleared.
+- DEBT-007 re-scoped (Astonia POM now compiles; lacks verified test coverage → TASK-RUN-001); new DEBT-008 for pending `TODO(locators)` (→ TASK-LOC-001).
+
+### Verification
+
+- `mvnw -o test-compile` → BUILD SUCCESS.
+
 ## 2026-06-24 Initial OKF Creation
 
 ### Added Items

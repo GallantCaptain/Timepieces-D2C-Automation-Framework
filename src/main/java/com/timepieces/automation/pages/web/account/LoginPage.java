@@ -145,19 +145,11 @@ public class LoginPage extends HeaderOnlyBasePage {
      */
     private final By tooManyAttemptsMessageLockout = By.cssSelector("div[data-testid='login-cooldown']");
 
-    /*
-     * OTP-send rate-limit backoff toast: "Too many attempts" +
-     * "Please wait Ns before trying".
-     * This is the escalating per-number throttle that replaces the OTP verify
-     * screen when a
-     * number is asked for an OTP too often. Distinct from
-     * tooManyAttemptsMessageLockout above
-     * (which is the post-OTP change-phone lockout). Text-based so it survives
-     * Tailwind churn.
-     */
-    /* Currently this feature is disbaled and the user can retry unlimited times with a 30s reset*/
-    // private final By otpRateLimitHeading = By.xpath("//p[normalize-space()='Too many attempts']");
-    // private final By otpRateLimitWaitText = By.xpath("//p[contains(normalize-space(),'Please wait')]");
+    // NOTE: an OTP-SEND rate-limit backoff toast ("Too many attempts / Please wait Ns") used to be
+    // mapped here, but that throttle is disabled on staging (sending is effectively unlimited with a
+    // short reset). The only real lockout is the post-OTP change-phone cooldown, mapped above as
+    // tooManyAttemptsMessageLockout (login-cooldown). Locators intentionally removed — see the
+    // class-level SECURITY NOTE.
 
     // Timepieces Data Secure Message [Ui Assertion Only, Always Visible on Login
     // Page]:

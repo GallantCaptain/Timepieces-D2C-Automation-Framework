@@ -12,7 +12,7 @@ Last reviewed: 2026-06-24
 | RISK-ENV-JAVA-MISMATCH | Local tooling may use Java 21 while project expects Java 25. | Observed in `hs_err_pid4140.log` | Medium | Align IDE runtime with project JDK or document supported IDE JDK matrix. | ISSUE-006, TASK-IDE-001 |
 | RISK-DASH-MONOREPO | Dashboard and Java framework toolchains interfere with each other in monorepo. | Medium | Medium | Keep CI path filters; split repo when ADR 0001 triggers occur. | DEC-0001 |
 | RISK-REPORTING-DRIFT | Report publishing expectations differ between docs and workflow. | Medium | Medium | Decide GitHub Pages vs artifact-only and update workflow/docs. | ISSUE-004, TASK-CI-002 |
-| RISK-BUILD-BREAK | Uncommitted Java component edit may block compilation until the incomplete statement is fixed. | Observed | High | Complete `AstoniaCardComponent.java:63` before running Maven verification. | ISSUE-008, TASK-CODE-001 |
+| RISK-BUILD-BREAK | Compile-breaking placeholder stubs in refactored page objects blocked Maven compilation. | Resolved (2026-06-24) | High | Stubs removed across `HomePage`/`SidebarMenuComponent`/`AstoniaCardComponent`; `mvnw test-compile` → BUILD SUCCESS. Recurrence guard: keep `By.cssSelector("value")` / duplicate `varName` placeholders out of committed code. | ISSUE-008, TASK-CODE-001 |
 
 ## Risk Review Notes
 
