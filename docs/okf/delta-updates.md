@@ -1,6 +1,31 @@
 # Delta Updates
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
+
+## 2026-06-25 Cloudflare Bypass Triage & CDP Fix
+
+### Added Items
+
+- `.github/workflows/cf-bypass-check.yml` — A manual diagnostic workflow that probes staging with/without the `x-automation-bypass` header to isolate the browser-send layer from the Cloudflare skip-rule layer.
+
+### Modified Items
+
+- `DriverFactory.java` — Fixed CDP header injection by calling `Network.enable` prior to `Network.setExtraHTTPHeaders`.
+- `CurrentStatus.md` — Updated `PROG-003` and `BLK-001` to reflect that browser-side injection is resolved, but Cloudflare-side configuration blocks progress.
+- `learnings.md` — Added `LEARN-011` regarding the CDP `Network.enable` requirement, and updated the troubleshooting table with guidance on using `cf-bypass-check.yml` for triage.
+- `task-backlog.md` — Updated `TASK-CI-001` description and dependencies.
+- `known-issues.md` — Updated `ISSUE-001` status/workaround and added CI Staging test failure triage (Run #28148134339) in Incident Notes.
+- `changelog.md` — Appended today's triage and changes.
+
+### Status Changes
+
+- `ISSUE-001` status updated (browser-side fix completed, Cloudflare-side pending).
+- `TASK-CI-001` dependencies updated.
+
+### Verification
+
+- Manual `cf-bypass-check` diagnostic run (`#28148005172`) verified header injection, but confirmed Cloudflare-side challenges remain.
+- Framework compilation verified (`mvnw compile` -> BUILD SUCCESS).
 
 ## 2026-06-24 Page-Object Refactor Cleanup
 

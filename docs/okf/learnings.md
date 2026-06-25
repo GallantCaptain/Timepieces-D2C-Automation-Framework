@@ -1,6 +1,6 @@
 # Learnings
 
-Last reviewed: 2026-06-24
+Last updated: 2026-06-25
 
 | ID | Learning | Source | Reusable Guidance |
 | --- | --- | --- | --- |
@@ -14,12 +14,14 @@ Last reviewed: 2026-06-24
 | LEARN-008 | Allure CLI/report generation is pinned separately because Allure commandline 2.29.1 was not available in Maven Central. | `pom.xml` comment | Keep `allure.cli.version` separate from Java adapter version unless verified. |
 | LEARN-009 | Dashboard flow execution is deliberately disabled until `GITHUB_TOKEN` is configured. | `dashboard/README.md`, `config.ts` | Treat greyed-out flow buttons as expected without token. |
 | LEARN-010 | `hs_err_pid4140.log` is from Eclipse JDT LS on Temurin 21, not direct evidence of a Maven/Selenium test crash. | `hs_err_pid4140.log` | Triage IDE JVM crashes separately from framework execution failures. |
+| LEARN-011 | CDP extra HTTP headers are silently ignored unless `Network.enable` is first executed in the same session. | `DriverFactory.java` | Always call `Network.enable` prior to `Network.setExtraHTTPHeaders` in Chromium CDP. |
 
 ## Troubleshooting Notes
 
 | Symptom | Likely Cause | First Checks |
 | --- | --- | --- |
 | CI cannot find page elements on staging | Cloudflare challenge may be blocking app load | Inspect screenshot/page source; confirm `CF_BYPASS_TOKEN` and Cloudflare WAF skip rule |
+| Cloudflare bypass header is successfully applied but requests are still challenged | Cloudflare Bot Fight Mode or WAF Skip rule misconfiguration | Run manual diagnostic `.github/workflows/cf-bypass-check.yml` to isolate the browser-send layer from Cloudflare-rule layer. |
 | Headless flag appears ignored on staging | Config key drift: staging has `is.headless`, driver reads `headless` | Run with `-Dheadless=true` or add `headless` config |
 | Dashboard dispatch button disabled | Missing `GITHUB_TOKEN` | Check server env and `/api/flows` response |
 | Checkout dashboard flow runs no checkout tests | Runner feature list excludes checkout feature files | Reconcile `flows.config.ts`, runner `features`, and tags |

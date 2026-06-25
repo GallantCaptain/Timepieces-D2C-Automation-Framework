@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
 
 ## Completed Features
 
@@ -25,14 +25,14 @@ Last updated: 2026-06-24
 | --- | --- | --- | --- |
 | PROG-001 | `data-testid` locator rollout | README marks rollout in progress with target around 2026-06-21; actual completion is TBD. | Product/app locator availability |
 | PROG-002 | Dashboard rollout to `dev.timepieces-world.example` | Documented as handled by dev team; deployment status TBD. | Dev team hosting, secrets, deployment pipeline |
-| PROG-003 | Cloudflare bypass for CI staging access | Framework sends `X-Automation-Bypass` for Chromium sessions when token exists; Cloudflare WAF rule status TBD. | `CF_BYPASS_TOKEN`, Cloudflare admin rule |
+| PROG-003 | Cloudflare bypass for CI staging access | Browser-side injection fixed (CDP Network.enable added in fix/cloudflare-bypass-header); Cloudflare-side configuration blocks bypass. | `CF_BYPASS_TOKEN`, Cloudflare admin rule |
 | PROG-004 | OKF governance | Initial OKF established; future meaningful changes must update OKF, backlog, decisions, status, and changelog. | Project discipline |
 
 ## Blocked Items
 
 | ID | Blocker | Impact | Dependency | Related Issue |
 | --- | --- | --- | --- | --- |
-| BLK-001 | CI smoke suite is blocked by Cloudflare human verification on `staging.timepieces-d2c.example`. | CI cannot reliably reach app before tests begin. | Cloudflare WAF skip rule or self-hosted runner allowlist | ISSUE-001 |
+| BLK-001 | CI smoke suite is blocked by Cloudflare human verification on `staging.timepieces-d2c.example`. | CI cannot reliably reach app before tests begin. | Cloudflare-side skip rule/Bot Fight Mode adjustment | ISSUE-001 |
 | BLK-002 | Dashboard flow execution is disabled when `GITHUB_TOKEN` is absent. | On-demand test launches unavailable. | PAT/secret with `actions:write` | TASK-DASH-001 |
 | BLK-003 | OTP verification has no attempt limit on staging based on committed security probe notes. | Authentication security exposure remains open until product/app fix. | Application-side rate limiting/lockout | ISSUE-002 |
 | BLK-004 | Java language server crash root cause is TBD. | IDE stability risk. | Investigation of `hs_err_pid4140.log`, JDK/JDT LS versions | ISSUE-006 |

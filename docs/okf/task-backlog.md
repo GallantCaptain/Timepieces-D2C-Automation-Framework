@@ -1,11 +1,11 @@
 # Task Backlog
 
-Last reviewed: 2026-06-24
+Last reviewed: 2026-06-25
 
 | ID | Priority | Description | Dependencies | Status |
 | --- | --- | --- | --- | --- |
 | TASK-OKF-001 | P0 | Create initial OKF, OKF index, topic files, ADR records, and README navigation. | Repository inspection | Completed |
-| TASK-CI-001 | P0 | Unblock CI staging access by completing Cloudflare WAF skip rule for `X-Automation-Bypass` or approving a self-hosted runner allowlist. | Cloudflare admin access, `CF_BYPASS_TOKEN` secret | Open |
+| TASK-CI-001 | P0 | Unblock CI staging access. Browser-side fix completed (CDP Network.enable added in fix/cloudflare-bypass-header); Cloudflare-side configuration (Skip rule/Bot Fight Mode) remains open. | Cloudflare admin access, `CF_BYPASS_TOKEN` secret | Open |
 | TASK-SEC-001 | P0 | Add server-side OTP verification attempt cap/lockout, then invert/update `@OtpBruteForce` expectations to assert the fix. | Product/app backend change | Open |
 | TASK-CODE-001 | P0 | Resolve compile-breaking placeholder stubs across refactored page objects (`HomePage`, `SidebarMenuComponent`, `AstoniaCardComponent`); add business/verification/helper methods and fix Astonia logic. | Owner of component edits | Completed (2026-06-24) |
 | TASK-RUN-001 | P1 | Reconcile runner feature registration, tags, and step definitions so documented smoke/regression/dashboard flows execute intended features. | QA decision on executable scope, missing glue implementation | Open |
