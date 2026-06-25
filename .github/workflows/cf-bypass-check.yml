@@ -8,6 +8,12 @@ name: cf-bypass-check
 #   * If "with header" is STILL challenged -> the rule does not cover the challenge source
 #     (e.g. Bot Fight Mode on the Free plan, or Browser Integrity Check) and must be broadened.
 on:
+  # TEMPORARY: push trigger so the diagnostic can run from the fix branch before it exists on
+  # the default branch (workflow_dispatch requires the file on the default branch). Reverted
+  # before the PR is opened — the merged workflow is dispatch-only.
+  push:
+    branches:
+      - fix/cloudflare-bypass-header
   workflow_dispatch:
     inputs:
       url:
@@ -26,7 +32,7 @@ jobs:
       - name: Probe Cloudflare with/without bypass header
         env:
           CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
-          URL: ${{ inputs.url }}
+          URL: ${{ inputs.url || 'https://staging.timepieces-d2c.example/login' }}
         run: |
           set -uo pipefail
 
