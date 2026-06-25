@@ -1,0 +1,91 @@
+name: cf-bypass-check
+
+# Manual diagnostic: from a GitHub-hosted (datacenter) IP — the same kind of IP that gets
+# challenged in CI — probe staging WITH and WITHOUT the x-automation-bypass header and report
+# exactly what Cloudflare does. This isolates the two layers of the bypass:
+#   * If "no header" is challenged but "with header" is NOT  -> the Skip rule works; the only
+#     remaining job is making the browser actually send the header (DriverFactory Network.enable).
+#   * If "with header" is STILL challenged -> the rule does not cover the challenge source
+#     (e.g. Bot Fight Mode on the Free plan, or Browser Integrity Check) and must be broadened.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to probe'
+        required: true
+        default: 'https://staging.timepieces-d2c.example/login'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Cloudflare with/without bypass header
+        env:
+          CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
+          URL: ${{ inputs.url }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${CF_BYPASS_TOKEN}" ]; then
+            echo "::error::CF_BYPASS_TOKEN secret is empty/unset. Add it to repo secrets first."
+            exit 1
+          fi
+          # Mask the token in logs.
+          echo "::add-mask::${CF_BYPASS_TOKEN}"
+
+          # Probe once; echoes "<http_code>|<cf-mitigated>|<cf-ray>|<challenged:yes|no>".
+          probe() {
+            local label="$1"; shift
+            local hdrs body code mit ray challenged
+            hdrs="$(mktemp)"; body="$(mktemp)"
+            code="$(curl -sS -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' \
+                      -D "$hdrs" -o "$body" -w '%{http_code}' "$@" "$URL" || echo '000')"
+            mit="$(grep -i '^cf-mitigated:' "$hdrs" | tr -d '\r' | awk '{print $2}')"
+            ray="$(grep -i '^cf-ray:'       "$hdrs" | tr -d '\r' | awk '{print $2}')"
+            # A Cloudflare interstitial: 403/503 + challenge markers, or a cf-mitigated header.
+            challenged='no'
+            if [ -n "$mit" ]; then challenged='yes'; fi
+            if grep -qiE 'Just a moment|challenge-platform|Performing security verification|cf-challenge|/cdn-cgi/challenge' "$body"; then
+              challenged='yes'
+            fi
+            echo
+            echo "----- ${label} -----"
+            echo "HTTP status : ${code}"
+            echo "cf-mitigated: ${mit:-<none>}"
+            echo "cf-ray      : ${ray:-<none>}"
+            echo "challenged  : ${challenged}"
+            echo "${challenged}"  > "/tmp/${label}.verdict"
+            rm -f "$hdrs" "$body"
+          }
+
+          echo "Probing: ${URL}"
+          probe "no-header"
+          probe "with-header" -H "x-automation-bypass: ${CF_BYPASS_TOKEN}"
+
+          NO="$(cat /tmp/no-header.verdict)"
+          WITH="$(cat /tmp/with-header.verdict)"
+
+          echo
+          echo "=============================================================="
+          echo "VERDICT"
+          echo "  no-header challenged : ${NO}"
+          echo "  with-header challenged: ${WITH}"
+          echo "--------------------------------------------------------------"
+          if [ "$NO" = "yes" ] && [ "$WITH" = "no" ]; then
+            echo "RULE WORKS. The bypass header clears the challenge from a datacenter IP."
+            echo "=> The only remaining fix is browser-side: DriverFactory must actually SEND the"
+            echo "   header (Network.enable before Network.setExtraHTTPHeaders)."
+          elif [ "$WITH" = "yes" ]; then
+            echo "RULE DOES NOT COVER THIS CHALLENGE. The header arrives but is still challenged."
+            echo "=> Cloudflare side: broaden the Skip rule (More components to skip -> Browser"
+            echo "   Integrity Check, Security Level) and note that on the FREE plan 'Bot Fight"
+            echo "   Mode' cannot be skipped by a rule and must be turned OFF for this host."
+          else
+            echo "NO CHALLENGE even without the header (runner IP not challenged right now)."
+            echo "=> Re-run later, or this IP is currently trusted; not conclusive."
+          fi
+          echo "=============================================================="

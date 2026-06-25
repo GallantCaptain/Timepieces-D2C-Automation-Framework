@@ -123,12 +123,18 @@ public class DriverFactory {
     if (driver instanceof ChromiumDriver chromiumDriver) {
       log.info("Applying Cloudflare bypass header x-automation-bypass to Chromium session.");
       try {
-        Map<String, Object> params = new HashMap<>();
+        // CRITICAL: Network.setExtraHTTPHeaders is silently ignored unless the Network domain
+        // is enabled on the SAME CDP session first. Without this enable call the command still
+        // returns OK (so it looks applied) but the header is never attached to any request — so
+        // the Cloudflare skip rule never matches and CI keeps getting challenged. Enable first.
+        chromiumDriver.executeCdpCommand("Network.enable", new HashMap<>());
+
         Map<String, Object> headers = new HashMap<>();
         headers.put("x-automation-bypass", token);
+        Map<String, Object> params = new HashMap<>();
         params.put("headers", headers);
         chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
-        log.info("Cloudflare bypass header successfully applied.");
+        log.info("Cloudflare bypass header applied (Network domain enabled, header attached to all requests).");
       } catch (Exception e) {
         log.error("Failed to apply Cloudflare bypass header via CDP: {}", e.getMessage(), e);
       }
