@@ -27,3 +27,11 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Downloaded and inspected the `allure-report-staging-1` artifact.
 - Traced the test failures (unmute button missing, login welcome message missing) to a Cloudflare human verification check page shown to the headless browser.
 - Logged the incident under `Incident Notes` in `known-issues.md` to track resolution block.
+
+## 2026-06-25
+
+- Triaged and analyzed failed CI staging run `#28148134339` on the `fix/cloudflare-bypass-header` branch.
+- Inspected the logs of the manual `cf-bypass-check` diagnostic run `#28148005172`.
+- Confirmed that the `X-Automation-Bypass` header is correctly injected browser-side after the `Network.enable` fix, but Cloudflare still challenges both authenticated and unauthenticated requests.
+- Documented that either Bot Fight Mode on the Free plan is active (which ignores custom bypass rules), or Browser Integrity Check/Security Level settings are triggering before custom WAF rules can bypass them.
+- Updated `known-issues.md` with today's incident report and revised bypass recommendations.
