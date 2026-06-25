@@ -121,11 +121,11 @@ public class DriverFactory {
     }
 
     if (driver instanceof ChromiumDriver chromiumDriver) {
-      log.info("Applying Cloudflare bypass header X-Automation-Bypass to Chromium session.");
+      log.info("Applying Cloudflare bypass header x-automation-bypass to Chromium session.");
       try {
         Map<String, Object> params = new HashMap<>();
         Map<String, Object> headers = new HashMap<>();
-        headers.put("X-Automation-Bypass", token);
+        headers.put("x-automation-bypass", token);
         params.put("headers", headers);
         chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
         log.info("Cloudflare bypass header successfully applied.");
@@ -187,7 +187,8 @@ public class DriverFactory {
           bravePath = ConfigReader.get("brave.path");
         }
         if (bravePath == null || bravePath.isEmpty()) {
-          throw new IllegalStateException("Brave path is not set: set the BRAVE_PATH environment variable or brave.path in config.");
+          throw new IllegalStateException(
+              "Brave path is not set: set the BRAVE_PATH environment variable or brave.path in config.");
         }
         braveOptions.setBinary(bravePath);
         applyChromiumStabilityFlags(braveOptions, disableSandbox);
