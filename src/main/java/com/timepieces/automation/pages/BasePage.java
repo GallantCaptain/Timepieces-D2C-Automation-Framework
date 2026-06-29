@@ -236,4 +236,20 @@ public abstract class BasePage {
     protected By formatLocator(By xPathTemplate, String replacementValue) {
         return By.xpath(String.format(xPathTemplate.toString().replace("By.xpath: ", ""), replacementValue));
     }
+
+    /**
+     * Checks if the current browser window is sized as a mobile viewport.
+     * 
+     * @return true if the window width is less than 768 pixels, false otherwise.
+     */
+    public boolean isMobileViewport() {
+        try {
+            int width = driver.manage().window().getSize().getWidth();
+            log.debug("Current viewport width: {}px", width);
+            return width < 768; // Tailwind md breakpoint
+        } catch (Exception e) {
+            log.error("Failed to determine viewport size: {}", e.getMessage());
+            return false;
+        }
+    }
 }

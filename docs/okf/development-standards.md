@@ -1,6 +1,6 @@
 # Development Standards
 
-Last reviewed: 2026-06-24
+Last reviewed: 2026-06-29
 
 ## Languages
 
@@ -38,6 +38,9 @@ Last reviewed: 2026-06-24
 | Use `ConfigReader.get(...)` instead of hardcoded environment values. | Current | `docs/project_context.md` |
 | Local secrets and environment-specific overrides should use uncommitted `<env>.local.properties`. | Current | `ConfigReader.java`, `docs/project_context.md` |
 | Dashboard real secrets belong in `.env`, with `.env.example` as the committed template. | Current | `dashboard/README.md`, `.env.example` |
+| API testing should be built and run purely in TDD (TestNG/Rest Assured), avoiding BDD/Cucumber layers. | Current | `SearchApiTest.java`, `testng.xml` |
+| Agents must import and reuse shared utility classes and inherited `BasePage` methods instead of calling fully qualified package names inline. | Current | `BasePage.java`, `BrowserUtils.java`, `WindowUtils.java`, `FooterComponent.java`, `FooterSteps.java` |
+| Page and component objects should call inherited `BasePage` wrappers such as `getElement`, `getElements`, `clickElement`, `getText`, `getAttribute`, `formatLocator`, and `isMobileViewport` directly when available. | Current | `BasePage.java`, `FooterComponent.java` |
 
 ## Design Patterns
 
@@ -49,6 +52,14 @@ Last reviewed: 2026-06-24
 | Dependency injection | Cucumber PicoContainer injects `TestContext` into steps |
 | ThreadLocal driver lifecycle | `DriverFactory` isolates WebDriver per scenario thread |
 | Listener-based cross-cutting behavior | Retry and metrics listeners are wired through `testng.xml` |
+| Shared utility imports | Step definitions and page objects import `ConfigReader`, `BrowserUtils`, `WindowUtils`, and similar utilities at the top of the file, then call the short class name in code |
+
+## Agent Implementation Instructions
+
+- When adding or modifying Java code, add explicit imports for utilities under `com.timepieces.automation.utils` and page objects under `com.timepieces.automation.pages` instead of using inline fully qualified calls such as `com.timepieces.automation.utils.BrowserUtils.scrollToBottom(driver)`.
+- When a page or component extends `BasePage`, use the inherited helper methods directly instead of reimplementing waits, visibility checks, clicks, element lookup, attribute reads, locator formatting, or viewport checks in the child class.
+- If a reusable operation does not exist in `BasePage` or `utils`, add a small named helper to the appropriate shared class only when it is broadly useful; otherwise keep the behavior inside the owning page/component object.
+- Keep step definitions thin: import page objects, components, and utilities, then route browser behavior into page/component APIs while leaving assertions in the step or test class.
 
 ## Branching Strategy
 

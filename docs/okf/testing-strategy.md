@@ -1,17 +1,17 @@
 # Testing Strategy
 
-Last reviewed: 2026-06-24
+Last reviewed: 2026-06-29
 
 ## Test Levels
 
 | Level | Current Coverage | Status |
 | --- | --- | --- |
-| UI smoke | Cucumber scenarios tagged `@Smoke`; current runners register only selected authentication feature files | Partial |
-| UI regression | Cucumber scenarios tagged `@Regression`; current runner registers selected authentication feature files | Partial |
+| UI smoke | Cucumber scenarios tagged `@Smoke`; current runner registers selected authentication and footer feature files | Partial |
+| UI regression | Cucumber scenarios tagged `@Regression`; current runner registers selected authentication and footer feature files | Partial |
 | Security probe | `@OtpBruteForce` documents missing OTP verification attempt limit | Present, opt-in |
 | Real OTP E2E | `@OtpE2E` uses Twilio to retrieve live OTP | Present, opt-in and config-dependent |
 | Dashboard API/UI tests | TBD; no automated dashboard test suite found |
-| API tests with Rest-Assured | TBD; dependency present, no verified API tests found |
+| API tests with Rest-Assured | `SearchApiTest` verifies storefront search keywords through staging API endpoints | Present |
 | Mobile tests with Appium | TBD; dependency present, no verified Appium tests found |
 | Manual testing | TBD; no current manual testing standard found |
 
@@ -20,10 +20,11 @@ Last reviewed: 2026-06-24
 Coverage expectations are TBD. Verified current artifacts:
 
 - 11 Gherkin feature files exist under `src/test/resources/features`.
-- 3 step definition classes exist under `src/test/java/com/timepieces/automation/stepdefinitions`.
+- 4 step definition classes exist under `src/test/java/com/timepieces/automation/stepdefinitions`.
 - 81 page/component object Java files exist under `src/main/java/com/timepieces/automation/pages`.
-- `testng.xml` executes `SmokeRunner` and `RegressionRunner`.
-- `SmokeRunner` and `RegressionRunner` currently register authentication feature files only.
+- `testng.xml` executes `SmokeRunner`, `RegressionRunner`, and `SearchApiTest`.
+- `SmokeRunner` and `RegressionRunner` currently register authentication and global footer feature files.
+- `SearchApiTest` loads `testdata/search_keywords.json`, calls the staging password/token/search API path, writes `target/search_keyword_api_report.md`, and asserts the baseline pass rate is at least 55%.
 
 ## Supported Browsers and Platforms
 
@@ -52,14 +53,15 @@ Coverage expectations are TBD. Verified current artifacts:
 
 | Runner | Registered Feature Files | Tag Filter |
 | --- | --- | --- |
-| `SmokeRunner` | `Staging_Password_Bypass.feature`, `User_Authentication_And_OTP_Verification.feature` | `@Smoke and not @Regression` |
-| `RegressionRunner` | `Staging_Password_Bypass.feature`, `User_Authentication_And_OTP_Verification.feature`, `OTP_Login_End_To_End.feature`, `OTP_Bruteforce_Security.feature` | `@Regression` |
+| `SmokeRunner` | `Staging_Password_Bypass.feature`, `User_Authentication_And_OTP_Verification.feature`, `Global_Footer_Navigation.feature` | `@Smoke and not @Regression` |
+| `RegressionRunner` | `Staging_Password_Bypass.feature`, `User_Authentication_And_OTP_Verification.feature`, `OTP_Login_End_To_End.feature`, `OTP_Bruteforce_Security.feature`, `Global_Footer_Navigation.feature` | `@Regression` |
+| `SearchApiTest` | `src/test/resources/testdata/search_keywords.json` via TestNG/Rest-Assured, not Cucumber | TestNG class in `testng.xml` |
 
 ## Known Coverage Drift
 
 | Drift | Impact | Related Issue |
 | --- | --- | --- |
-| Catalog, checkout, footer, homepage, search, and sidebar feature files are present but not registered by current runners. | Tagged flows such as dashboard checkout may not execute intended feature files. | ISSUE-003 |
+| Catalog, checkout, homepage, search UI, and sidebar feature files are present but not fully registered by current Cucumber runners. Footer is now registered in smoke and regression. | Tagged flows such as dashboard checkout may not execute intended feature files. | ISSUE-003 |
 | `docs/project_context.md` mentions `SanityRunner`, but no `SanityRunner.java` exists and `testng.xml` does not reference one. | Older docs can mislead suite execution expectations. | ISSUE-004 |
 | Dashboard flow config includes `dev`, but workflow dispatch accepts only `staging` and `prod`. | Dashboard-triggered `dev` runs may fail validation. | ISSUE-004 |
 

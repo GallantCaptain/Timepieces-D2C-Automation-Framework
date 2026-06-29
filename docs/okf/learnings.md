@@ -1,6 +1,6 @@
 # Learnings
 
-Last updated: 2026-06-25
+Last updated: 2026-06-29
 
 | ID | Learning | Source | Reusable Guidance |
 | --- | --- | --- | --- |
@@ -15,6 +15,9 @@ Last updated: 2026-06-25
 | LEARN-009 | Dashboard flow execution is deliberately disabled until `GITHUB_TOKEN` is configured. | `dashboard/README.md`, `config.ts` | Treat greyed-out flow buttons as expected without token. |
 | LEARN-010 | `hs_err_pid4140.log` is from Eclipse JDT LS on Temurin 21, not direct evidence of a Maven/Selenium test crash. | `hs_err_pid4140.log` | Triage IDE JVM crashes separately from framework execution failures. |
 | LEARN-011 | CDP extra HTTP headers are silently ignored unless `Network.enable` is first executed in the same session. | `DriverFactory.java` | Always call `Network.enable` prior to `Network.setExtraHTTPHeaders` in Chromium CDP. |
+| LEARN-012 | Zephyr Scale Cloud API uses region-specific base URLs (e.g. `eu.api.zephyrscale.smartbear.com/v2`) and requires Connect-app Bearer JWT tokens. | Zephyr Scale REST API | Ensure BDD Gherkin text uploaded via `/testscript` excludes `Feature:`/`Scenario:` headers, and `tags` custom fields use only pre-configured values. |
+| LEARN-013 | Storefront API tests should be written in pure TDD (TestNG/Rest Assured) instead of BDD/Cucumber. | Search API testing | Maintain API-level validation as fast, code-first TestNG tests without Gherkin overlays. |
+| LEARN-014 | Footer automation now depends on responsive footer behavior, so shared viewport and window helpers should be reused instead of duplicated or called with inline package names. | `BasePage.java`, `FooterComponent.java`, `FooterSteps.java`, `WindowUtils.java` | Import shared utilities at the top of Java files and call inherited `BasePage` wrappers directly from page/component classes. |
 
 ## Troubleshooting Notes
 
@@ -26,3 +29,5 @@ Last updated: 2026-06-25
 | Dashboard dispatch button disabled | Missing `GITHUB_TOKEN` | Check server env and `/api/flows` response |
 | Checkout dashboard flow runs no checkout tests | Runner feature list excludes checkout feature files | Reconcile `flows.config.ts`, runner `features`, and tags |
 | JDK crash file appears in repo root | IDE language server crash produced `hs_err_pid*.log` | Triage JDT LS/JDK version; do not assume test failure |
+| Zephyr test case creation fails with 400 Bad Request | Required custom fields missing, invalid tag options, or Gherkin headers included in BDD script | Verify `tags` options match pre-configured Jira options (e.g., Smoke, Homepage, Login); verify BDD `testScript` text contains only raw steps. |
+| Java automation code starts using inline fully qualified package calls | Agent or contributor skipped explicit imports for shared utilities/page objects | Add imports such as `BrowserUtils`, `WindowUtils`, `ConfigReader`, or page classes at the top of the file; call inherited `BasePage` methods directly where available. |

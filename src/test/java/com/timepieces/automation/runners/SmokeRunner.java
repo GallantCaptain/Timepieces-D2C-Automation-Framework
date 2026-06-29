@@ -4,7 +4,8 @@ import io.cucumber.testng.CucumberOptions;
 
 @CucumberOptions(features = {
         "src/test/resources/features/01_authentication_identity/Staging_Password_Bypass.feature",
-        "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature"
+        "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature",
+        "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature"
         // NOTE: opt-in features (@OtpE2E, @OtpBruteForce) are registered ONLY in
         // RegressionRunner.
         // They are always invoked via -Dcucumber.filter.tags, which overrides BOTH

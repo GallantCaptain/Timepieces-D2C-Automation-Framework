@@ -10,7 +10,13 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * This is the Page Object Repository of all the WebElements in the Timepieces
- * HomePage.
+ * HomePage. The Homepage in production: https://www.timepieces-d2c.example/,
+ * The Homepage in staging: https://staging.timepieces-d2c.example/
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this} (Homepage) to allow
+ * method chaining in step definitions. The chained step returns
+ * the next page object once navigation is confirmed (for all the linked pages).
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class HomePage extends BasePage {

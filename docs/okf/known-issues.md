@@ -1,6 +1,6 @@
 # Known Issues
 
-Last reviewed: 2026-06-25
+Last reviewed: 2026-06-29
 
 ## Open Issues
 
@@ -8,7 +8,7 @@ Last reviewed: 2026-06-25
 | --- | --- | --- | --- | --- | --- |
 | ISSUE-001 | CI smoke suite is blocked when `staging.timepieces-d2c.example` serves a Cloudflare "verify you are human" challenge to the GitHub-hosted runner. | High | Open | Browser-side header injection fixed (CDP Network.enable added in fix/cloudflare-bypass-header). Cloudflare side: must disable Bot Fight Mode (on Free plan) or broaden WAF Skip rule to cover Bot Fight Mode/Browser Integrity Check. | TASK-CI-001, RISK-CI-CF |
 | ISSUE-002 | OTP verification accepts unlimited wrong OTP submissions according to committed security probe comments and scenario expectations. | Critical | Open | No framework workaround; requires application-side attempt cap/lockout. Keep `@OtpBruteForce` opt-in. | TASK-SEC-001, RISK-SEC-OTP |
-| ISSUE-003 | Feature files for catalog, checkout, footer, homepage, search, and sidebar exist but are not registered by the current Cucumber runners. | High | Open | Run only verified runner scope until runners/glue are reconciled. | TASK-RUN-001, RISK-COVERAGE-DRIFT |
+| ISSUE-003 | Feature files for catalog, checkout, homepage, search UI, and sidebar remain partially or separately wired; footer is now registered in both current Cucumber runners. | High | Open | Run only verified runner scope until runners/glue are fully reconciled. Use `SearchApiTest` for current search API coverage. | TASK-RUN-001, RISK-COVERAGE-DRIFT |
 | ISSUE-004 | Documentation drift exists across README/context/workflow/dashboard config. Examples: `SanityRunner` is referenced but absent; README mentions GitHub Pages publish without a current deploy step; dashboard lists `dev` while workflow accepts `staging`/`prod`. | Medium | Open | Treat OKF CurrentStatus as current truth; preserve older docs and update them deliberately. | TASK-DOC-001, TASK-CI-002, TASK-DASH-002 |
 | ISSUE-005 | `staging.properties` defines `is.headless=false`, but `DriverFactory` reads `headless`; production has both keys. | Medium | Open | Use CLI `-Dheadless=...` or add `headless` to staging until config is reconciled. | TASK-CFG-001 |
 | ISSUE-006 | `hs_err_pid4140.log` records a JVM `EXCEPTION_ACCESS_VIOLATION` in VS Code Red Hat Java language server using Temurin 21.0.10. Root cause is TBD. | Medium | Open | Restart affected IDE/JDT LS process; deeper root-cause analysis TBD. | TASK-IDE-001 |

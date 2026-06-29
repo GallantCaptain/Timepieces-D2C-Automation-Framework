@@ -1,6 +1,6 @@
 # Project Structure
 
-Last reviewed: 2026-06-24
+Last reviewed: 2026-06-29
 
 ## Directory Layout
 
@@ -17,10 +17,11 @@ timepieces-automation-framework/
 |   `-- test-strategy/              # Focused testing strategy docs
 |-- grafana-dashboards/             # Exported Grafana dashboard JSON
 |-- src/main/java/...               # Framework page objects, utilities, driver factory
-|-- src/test/java/...               # Hooks, runners, listeners, step definitions, test context
+|-- src/test/java/...               # Hooks, runners, listeners, step definitions, TestNG tests, test context
 |-- src/test/resources/config/      # Environment properties
 |-- src/test/resources/features/    # Cucumber feature files
 |-- src/test/resources/lang/        # Language/resource properties
+|-- src/test/resources/testdata/    # Structured data for TestNG/API tests
 |-- target/                         # Generated Maven/test artifacts
 |-- logs/                           # Generated runtime logs
 |-- pom.xml                         # Maven source of truth
@@ -37,9 +38,14 @@ timepieces-automation-framework/
 | `testng.xml` | Suite listeners, runners, default environment |
 | `src/main/java/com/timepieces/automation/base/DriverFactory.java` | WebDriver lifecycle and browser support |
 | `src/main/java/com/timepieces/automation/utils/ConfigReader.java` | Configuration resolution |
+| `src/main/java/com/timepieces/automation/pages/BasePage.java` | Shared page-object synchronization, element wrappers, dynamic locator helper, and viewport helper |
+| `src/main/java/com/timepieces/automation/pages/components/FooterComponent.java` | Global footer component behavior for mobile and desktop layouts |
 | `src/test/java/com/timepieces/automation/hooks/Hooks.java` | Cucumber scenario setup/teardown |
+| `src/test/java/com/timepieces/automation/stepdefinitions/FooterSteps.java` | Cucumber glue for global footer visibility/link/navigation validation |
+| `src/test/java/com/timepieces/automation/tests/SearchApiTest.java` | TestNG/Rest-Assured storefront search keyword validation |
 | `src/test/java/com/timepieces/automation/listeners/MetricsListener.java` | Metrics listener |
 | `src/test/java/com/timepieces/automation/utils/TestMetricsPublisher.java` | Postgres metrics publisher |
+| `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests |
 | `src/test/resources/config/staging.properties` | Staging configuration |
 | `src/test/resources/config/production.properties` | Production configuration |
 | `.github/workflows/test-pipeline.yml` | CI/manual/repository-dispatch workflow |
@@ -73,8 +79,10 @@ timepieces-automation-framework/
 | `target/cucumber-reports` | Cucumber plugins | Do not commit |
 | `target/screen-recordings` | `ScreenRecorderUtil` | Do not commit |
 | `target/site/allure-maven-plugin` | `mvn allure:report` | Do not commit |
+| `target/search_keyword_api_report.md` | `SearchApiTest` | Generated verification report; commit only when explicitly requested as evidence |
 | `.allure` | Allure tooling | Do not commit unless explicitly required |
 | `logs/` | Log4j2 | Do not commit runtime output |
+| `output/pdf/timepieces-framework-design-guide.pdf` | Documentation generation | Generated/exported artifact; commit policy TBD unless explicitly requested |
 | `dashboard/web/dist/` | Vite build | Generated artifact |
 | `dashboard/**/node_modules/` | npm install | Do not commit |
 

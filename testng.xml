@@ -21,4 +21,10 @@
             <class name="com.timepieces.automation.runners.RegressionRunner" />
         </classes>
     </test>
+
+    <test name="API Executions">
+        <classes>
+            <class name="com.timepieces.automation.tests.SearchApiTest" />
+        </classes>
+    </test>
 </suite>

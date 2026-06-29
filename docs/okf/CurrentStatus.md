@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-06-25
+Last updated: 2026-06-29
 
 ## Completed Features
 
@@ -18,6 +18,9 @@ Last updated: 2026-06-25
 | STAT-010 | Local Postgres is available through Docker Compose. | `docker-compose.yml` | DEC-0006 |
 | STAT-011 | CI workflow exists for PR, manual, and repository dispatch test execution. | `.github/workflows/test-pipeline.yml` | IMPL-CI-001 |
 | STAT-012 | Initial OKF was created. | `docs/okf/` | TASK-OKF-001 |
+| STAT-013 | Storefront search API validation exists as a TestNG/Rest-Assured suite with JSON test data and a generated markdown report. | `SearchApiTest.java`, `search_keywords.json`, `testng.xml` | TASK-MOBILE-API-001 |
+| STAT-014 | Global footer navigation is now wired into smoke and regression BDD runner scope. | `Global_Footer_Navigation.feature`, `FooterSteps.java`, `SmokeRunner.java`, `RegressionRunner.java` | TASK-RUN-001 |
+| STAT-015 | `BasePage` exposes a shared responsive viewport helper used by footer component logic. | `BasePage.java`, `FooterComponent.java` | DEC-0003 |
 
 ## In-Progress Features
 
@@ -43,12 +46,12 @@ Last updated: 2026-06-25
 
 | ID | Debt | Evidence | Action |
 | --- | --- | --- | --- |
-| DEBT-001 | Feature tree and runner registration are misaligned. | 11 feature files exist; current runners register only selected authentication files. | TASK-RUN-001 |
+| DEBT-001 | Feature tree and runner registration are still partially misaligned. | 11 feature files exist; current runners register authentication and footer feature files, while catalog/search/checkout/homepage flows remain partially or separately wired. | TASK-RUN-001 |
 | DEBT-002 | Documentation references `SanityRunner`, but no `SanityRunner.java` exists. | `docs/project_context.md` vs current runners. | TASK-DOC-001 |
 | DEBT-003 | `staging.properties` uses `is.headless`, while `DriverFactory` reads `headless`. | Config/code mismatch. | TASK-CFG-001 |
 | DEBT-004 | README claims Allure publishes to GitHub Pages, but inspected workflow uploads an artifact and organizes deploy files without a Pages deploy step. | `README.md`, `.github/workflows/test-pipeline.yml` | TASK-CI-002 |
 | DEBT-005 | Dashboard flow env list includes `dev`, but workflow input allows only `staging` and `prod`. | `flows.config.ts`, workflow input. | TASK-DASH-002 |
-| DEBT-006 | Rest-Assured, Appium, and Healenium dependencies are present, but verified tests/integration are TBD. | `pom.xml`, no verified implementations found. | TASK-DOC-001 |
+| DEBT-006 | Appium and Healenium dependencies are present, but verified tests/integration remain TBD; Rest-Assured is now active for search API validation. | `pom.xml`, `SearchApiTest.java` | TASK-DOC-001 |
 | DEBT-007 | Astonia drop card POM is implemented and compiles, but the timed appear/dismiss/reappear behavior is not yet covered by verified tests. | `AstoniaCardComponent.java` (methods present; no feature/scenario exercising them). | TASK-RUN-001 |
 | DEBT-008 | `HomePage` and `SidebarMenuComponent` carry `TODO(locators)` markers where real `data-testid`s are still pending (remaining homepage sections; logged-in user container child elements). | `HomePage.java`, `SidebarMenuComponent.java`. | TASK-LOC-001 |
 

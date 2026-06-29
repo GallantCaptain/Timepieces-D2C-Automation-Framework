@@ -9,12 +9,14 @@ Feature: Global Footer Navigation
     Given the user is on the Timepieces storefront homepage 
     Then the global footer should be visible at the bottom of the page
     And the footer should display the following policy and utility links:
-      | Privacy Policy   |
-      | Terms of Service |
-      | Shipping Policy  |
-      | Refund Policy    |
-      | Guarantee Policy |
-      | Contact          |
-      | Wishlist         |
-      | Track Orders     |
-      | Site Map         |
+      | Legal              |
+      | Sitemap            |
+      | Contact            |
+      | Account            |
+      | Share your moment  |
+    And each footer link should navigate to the correct page in a new tab when clicked and then close the tab:
+      | Legal              |
+      | Sitemap            |
+      | Contact            |
+      | Account            |
+      | Share your moment  |
