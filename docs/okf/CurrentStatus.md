@@ -18,7 +18,7 @@ Last updated: 2026-06-29
 | STAT-010 | Local Postgres is available through Docker Compose. | `docker-compose.yml` | DEC-0006 |
 | STAT-011 | CI workflow exists for PR, manual, and repository dispatch test execution. | `.github/workflows/test-pipeline.yml` | IMPL-CI-001 |
 | STAT-012 | Initial OKF was created. | `docs/okf/` | TASK-OKF-001 |
-| STAT-013 | Storefront search API validation exists as a TestNG/Rest-Assured suite with JSON test data and a generated markdown report. | `SearchApiTest.java`, `search_keywords.json`, `testng.xml` | TASK-MOBILE-API-001 |
+| STAT-013 | Storefront search API validation expanded to 100 TestNG/Rest-Assured tests across 6 groups including generic, collection, brand, misspelling, deep keyword, and edge case searches. | `SearchApiTest.java`, `search_keywords.json`, `testng.xml` | TASK-MOBILE-API-001 |
 | STAT-014 | Global footer navigation is now wired into smoke and regression BDD runner scope. | `Global_Footer_Navigation.feature`, `FooterSteps.java`, `SmokeRunner.java`, `RegressionRunner.java` | TASK-RUN-001 |
 | STAT-015 | `BasePage` exposes a shared responsive viewport helper used by footer component logic. | `BasePage.java`, `FooterComponent.java` | DEC-0003 |
 

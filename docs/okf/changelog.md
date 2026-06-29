@@ -45,8 +45,11 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Converted `Timepieces_Search_Keywords.xlsx` into a structured test resource JSON (`search_keywords.json`) under `src/test/resources/testdata/` to keep tests fast and self-contained.
 - Implemented `SearchApiTest.java` as a pure TDD TestNG test class under `com.timepieces.automation.api`, adhering to the standard that API tests run in TDD rather than BDD/Cucumber.
 - Bypassed the gatekeeper password wall programmatically using `POST /api/verify-password` and extracted tokens/timestamps via `POST /api/request-token` to execute secure, headless search API requests.
+- Refactored and expanded `SearchApiTest.java` to contain exactly 100 individual TestNG tests across 6 groups (Product Matrix, Generic Keywords, Collection Search, Brand & Misspellings, Deep Keywords, Edge Cases).
+- Integrated generic watch terms (e.g. `watches`, `watch`, `luxury watch`, `wristwatch`, etc.) into standalone test assertions.
 - Integrated the API executions suite into `testng.xml` under a new `<test name="API Executions">` block.
 - Logged key search engine bugs (e.g. searching 'wristwatch' returning nothing; searching 'watches' failing to return timepieces) and summarized a 59.38% baseline pass rate in a markdown report.
+- Refactored the report generator in `SearchApiTest` to produce group-wise pass/fail metrics.
 - Updated `learnings.md` and `development-standards.md` to establish TDD preferences for API automation.
 - Expanded global footer BDD coverage by registering `Global_Footer_Navigation.feature` in both `SmokeRunner` and `RegressionRunner`.
 - Added `FooterSteps.java` to validate footer visibility, expected footer links, and new-tab navigation using `FooterComponent`, `HomePage`, `WindowUtils`, and `ConfigReader`.
