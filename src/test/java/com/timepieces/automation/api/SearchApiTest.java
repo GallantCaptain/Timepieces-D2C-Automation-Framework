@@ -609,19 +609,43 @@ public class SearchApiTest {
     // Private Helpers
     // ==================================================================================
 
+    /**
+     * Records a failed result with extra handle-level detail and emits a warning log.
+     * <p>
+     * Currently unused — retained for future per-keyword failure tracking. Counting and
+     * storage are delegated to {@link #recordResult} so the failure counters and the
+     * {@code testResults} structure stay consistent. Previously this method incremented
+     * {@code failedTests} itself, which double-counted when paired with a recordResult
+     * call for the same failure; that is now handled in one place.
+     */
     private void recordFailure(String handle, String name, String kw, String catName, String status, String error,
             List<String> returned) {
-        failedTests++;
-        Map<String, Object> failResult = new HashMap<>();
-        failResult.put("handle", handle);
-        failResult.put("name", name);
-        failResult.put("keyword", kw);
-        failResult.put("category", catName);
-        failResult.put("status", status);
-        failResult.put("error", error);
-        failResult.put("returned", returned);
-        testResults.add(failResult);
+        recordResult(catName, name, kw, status, error, returned);
         log.warn("  [FAIL] {} | Keyword: '{}' | Expected: '{}' | Got: {}", catName, kw, handle, returned);
+    }
+
+    /** Formats the API-returned handles list into a compact, table-safe cell. */
+    @SuppressWarnings("unchecked")
+    private String formatReturnedHandles(Object returnedObj) {
+        if (!(returnedObj instanceof List<?> list) || list.isEmpty()) {
+            return "—";
+        }
+        String joined = String.join(", ", ((List<String>) list));
+        if (joined.length() > 300) {
+            joined = joined.substring(0, 297) + "...";
+        }
+        return sanitizeCell(joined);
+    }
+
+    /** Escapes pipe/newline characters so a value cannot break the markdown table layout. */
+    private String sanitizeCell(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toString()
+                .replace("|", "\\|")
+                .replace("\r", " ")
+                .replace("\n", " ");
     }
 
     private void generateReport() {
@@ -691,8 +715,27 @@ public class SearchApiTest {
                                 r.get("name"),
                                 r.get("keyword"),
                                 r.get("status"),
-                                r.get("error"));
+                                sanitizeCell(r.get("error")));
                     }
+                }
+                pw.println();
+
+                // Full results detail — every executed query, regardless of pass/fail
+                pw.println("## Full Results");
+                pw.println();
+                pw.println("Every executed search query and its outcome, including the handles returned by the API.");
+                pw.println();
+                pw.println("| Group | Test Name | Keyword | Status | Returned Handles | Error |");
+                pw.println("| --- | --- | --- | --- | --- | --- |");
+
+                for (Map<String, Object> r : testResults) {
+                    pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
+                            r.get("group"),
+                            r.get("name"),
+                            r.get("keyword"),
+                            r.get("status"),
+                            formatReturnedHandles(r.get("returned")),
+                            sanitizeCell(r.get("error")));
                 }
             }
             log.info("Search analysis report successfully written to: {}", reportFile.getAbsolutePath());

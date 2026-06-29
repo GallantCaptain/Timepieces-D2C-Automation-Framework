@@ -27,4 +27,10 @@
             <class name="com.timepieces.automation.api.SearchApiTest" />
         </classes>
     </test>
+
+    <test name="Unit Executions">
+        <classes>
+            <class name="com.timepieces.automation.TwilioServiceTest" />
+        </classes>
+    </test>
 </suite>
