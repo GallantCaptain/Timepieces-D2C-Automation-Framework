@@ -24,7 +24,7 @@
 
     <test name="API Executions">
         <classes>
-            <class name="com.timepieces.automation.tests.SearchApiTest" />
+            <class name="com.timepieces.automation.api.SearchApiTest" />
         </classes>
     </test>
 </suite>

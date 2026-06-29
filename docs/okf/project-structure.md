@@ -42,7 +42,7 @@ timepieces-automation-framework/
 | `src/main/java/com/timepieces/automation/pages/components/FooterComponent.java` | Global footer component behavior for mobile and desktop layouts |
 | `src/test/java/com/timepieces/automation/hooks/Hooks.java` | Cucumber scenario setup/teardown |
 | `src/test/java/com/timepieces/automation/stepdefinitions/FooterSteps.java` | Cucumber glue for global footer visibility/link/navigation validation |
-| `src/test/java/com/timepieces/automation/tests/SearchApiTest.java` | TestNG/Rest-Assured storefront search keyword validation |
+| `src/test/java/com/timepieces/automation/api/SearchApiTest.java` | TestNG/Rest-Assured storefront search keyword validation |
 | `src/test/java/com/timepieces/automation/listeners/MetricsListener.java` | Metrics listener |
 | `src/test/java/com/timepieces/automation/utils/TestMetricsPublisher.java` | Postgres metrics publisher |
 | `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests |

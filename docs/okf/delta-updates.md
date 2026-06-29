@@ -7,7 +7,7 @@ Last updated: 2026-06-29
 ### Added Items
 
 - `src/test/resources/testdata/search_keywords.json` — Structured JSON test data resource extracted from `Timepieces_Search_Keywords.xlsx`.
-- `src/test/java/com/timepieces/automation/tests/SearchApiTest.java` — TestNG integration test verifying keywords against the staging search API.
+- `src/test/java/com/timepieces/automation/api/SearchApiTest.java` — TestNG integration test verifying keywords against the staging search API.
 - `Timepieces_Search_Keywords.xlsx` — Source spreadsheet used to derive the search keyword matrix.
 
 ### Modified Items

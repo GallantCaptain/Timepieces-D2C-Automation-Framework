@@ -43,7 +43,7 @@ This changelog is append-only. New entries must be added chronologically and mus
 
 - Designed and automated storefront search bar keyword tests using Rest Assured.
 - Converted `Timepieces_Search_Keywords.xlsx` into a structured test resource JSON (`search_keywords.json`) under `src/test/resources/testdata/` to keep tests fast and self-contained.
-- Implemented `SearchApiTest.java` as a pure TDD TestNG test class under `com.timepieces.automation.tests`, adhering to the standard that API tests run in TDD rather than BDD/Cucumber.
+- Implemented `SearchApiTest.java` as a pure TDD TestNG test class under `com.timepieces.automation.api`, adhering to the standard that API tests run in TDD rather than BDD/Cucumber.
 - Bypassed the gatekeeper password wall programmatically using `POST /api/verify-password` and extracted tokens/timestamps via `POST /api/request-token` to execute secure, headless search API requests.
 - Integrated the API executions suite into `testng.xml` under a new `<test name="API Executions">` block.
 - Logged key search engine bugs (e.g. searching 'wristwatch' returning nothing; searching 'watches' failing to return timepieces) and summarized a 59.38% baseline pass rate in a markdown report.

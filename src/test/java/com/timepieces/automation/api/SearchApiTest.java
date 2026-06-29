@@ -1,4 +1,4 @@
-package com.timepieces.automation.tests;
+package com.timepieces.automation.api;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
