@@ -2,6 +2,41 @@
 
 Last updated: 2026-06-30
 
+## 2026-06-30 Timepieces Framework Scaling & Refactoring
+
+### Added Items
+
+- `src/test/java/com/timepieces/automation/tdd/api/AuthenticationEngine.java` — REST-Assured integration helper class for backend authentication.
+- `src/test/java/com/timepieces/automation/tdd/api/IdempotencyApiTest.java` — TDD TestNG test validating API-level idempotency by replaying OTP generation calls with duplicate `Idempotency-Key` headers.
+- `src/test/resources/features/01_authentication_identity/API_Backed_UI_Session.feature` — BDD feature specifying cookie-injection login bypass behavior.
+- `src/test/resources/features/03_checkout_payments/Checkout_Idempotency.feature` — BDD feature specifying UI-level button disabling and double-click protection.
+- `src/test/java/com/timepieces/automation/bdd/stepdefinitions/AccountSteps.java` — Step definitions for the login bypass feature.
+- `src/test/java/com/timepieces/automation/bdd/stepdefinitions/CheckoutSteps.java` — Step definitions for the checkout idempotency feature.
+
+### Modified Items
+
+- `src/test/java/com/timepieces/automation/bdd/runners/*` — BaseRunner, SmokeRunner, RegressionRunner, and ProductionRunner relocated and package names updated.
+- `src/test/java/com/timepieces/automation/bdd/stepdefinitions/*` — FooterSteps, LoginSteps, SidebarLoginSteps, and StagingBypassSteps relocated and package names updated.
+- `src/test/java/com/timepieces/automation/tdd/api/*` — SearchApiTest, SearchApiExploratoryTest, and TwilioServiceTest relocated and package names updated.
+- `src/main/java/com/timepieces/automation/base/DriverFactory.java` — Added generic RemoteWebDriver `CLOUD` mode switch using environment variables.
+- `src/main/java/com/timepieces/automation/pages/web/payments/CheckoutPage.java` — Added `getPlaceOrderButton()` and processing indicator helpers.
+- `pom.xml` — Configured `SmokeSuite` and `RegressionSuite` profiles.
+- `testng*.xml` — Updated class packages to reflect directory segregation.
+- `docs/okf/task-backlog.md` — Added P3 `TASK-CI-005` (scheduled mid/end-July).
+- `docs/okf/CurrentStatus.md` — Added `STAT-017` and `STAT-018`.
+- `docs/okf/changelog.md` — Updated with refactoring entries.
+
+### Status Changes
+
+- Restructured codebase to fully segregate TDD (API & Unit) and BDD (Gherkin Scenarios) packages.
+- Added deconflicted profiles to POM and updated all TestNG XML files.
+- Completed POC for API-backed UI login bypass and UI double-click idempotency.
+
+### Verification
+
+- Successfully compiled the project: `.\mvnw.cmd test-compile` -> BUILD SUCCESS.
+- Executed the suite locally to verify renaming did not break runner executions.
+
 ## 2026-06-30 Exploratory Search API Nightly Test Suite
 
 ### Added Items

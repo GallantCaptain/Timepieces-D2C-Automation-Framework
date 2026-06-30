@@ -1,4 +1,4 @@
-package com.timepieces.automation.hooks;
+package com.timepieces.automation.bdd.hooks;
 
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.utils.ConfigReader;

@@ -592,4 +592,24 @@ public class CheckoutPage extends HeaderOnlyBasePage {
     // VERIFICATION METHODS
     // ==========================================
 
+    public org.openqa.selenium.WebElement getPlaceOrderButton() {
+        return driver.findElement(proceedToPaymentButtonDesktop);
+    }
+
+    public boolean isPlaceOrderButtonDisabled() {
+        try {
+            String disabledAttr = getPlaceOrderButton().getAttribute("disabled");
+            return disabledAttr != null && (disabledAttr.equalsIgnoreCase("true") || disabledAttr.equals("disabled"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isProcessingIndicatorActive() {
+        try {
+            return driver.findElement(By.cssSelector("div.processing, .spinner-active, [data-testid='checkout-processing'], div.razorpay-loading")).isDisplayed();
+        } catch (Exception e) {
+            return isPlaceOrderButtonDisabled();
+        }
+    }
 }

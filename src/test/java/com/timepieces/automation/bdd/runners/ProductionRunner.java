@@ -1,4 +1,4 @@
-package com.timepieces.automation.runners;
+package com.timepieces.automation.bdd.runners;
 
 import io.cucumber.testng.CucumberOptions;
 
@@ -24,7 +24,7 @@ import io.cucumber.testng.CucumberOptions;
  */
 @CucumberOptions(
     features = { "src/test/resources/features" },
-    glue = { "com.timepieces.automation.stepdefinitions", "com.timepieces.automation.hooks" },
+    glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
     tags = "@ProdReady",
     plugin = {
         "pretty",

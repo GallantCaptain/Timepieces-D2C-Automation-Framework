@@ -19,13 +19,13 @@
 
     <test name="Smoke Executions">
         <classes>
-            <class name="com.timepieces.automation.runners.SmokeRunner" />
+            <class name="com.timepieces.automation.bdd.runners.SmokeRunner" />
         </classes>
     </test>
 
     <test name="Regression Executions">
         <classes>
-            <class name="com.timepieces.automation.runners.RegressionRunner" />
+            <class name="com.timepieces.automation.bdd.runners.RegressionRunner" />
         </classes>
     </test>
 </suite>

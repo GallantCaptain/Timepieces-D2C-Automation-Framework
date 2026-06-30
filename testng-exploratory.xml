@@ -16,7 +16,7 @@
 
     <test name="Exploratory Search API Executions">
         <classes>
-            <class name="com.timepieces.automation.api.SearchApiExploratoryTest" />
+            <class name="com.timepieces.automation.tdd.api.SearchApiExploratoryTest" />
         </classes>
     </test>
 </suite>

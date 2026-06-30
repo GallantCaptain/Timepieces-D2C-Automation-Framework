@@ -1,4 +1,4 @@
-package com.timepieces.automation.stepdefinitions;
+package com.timepieces.automation.bdd.stepdefinitions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -18,6 +18,7 @@ import org.openqa.selenium.safari.SafariDriver;
 
 import com.timepieces.automation.utils.ConfigReader;
 import org.openqa.selenium.chromium.ChromiumDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +53,65 @@ public class DriverFactory {
     boolean isHeadless = Boolean.parseBoolean(ConfigReader.get("headless"));
     boolean disableChromeSandbox = Boolean.parseBoolean(ConfigReader.get("chrome.no.sandbox"));
     writeAllureEnvironmentInfo(browser, System.getProperty("env", "staging"));
+
+    String executionMode = System.getProperty("execution.mode");
+    if (executionMode == null) {
+      executionMode = ConfigReader.get("execution.mode");
+    }
+    if (executionMode == null) {
+      executionMode = "local";
+    }
+
+    if (executionMode.equalsIgnoreCase("CLOUD")) {
+      String gridHubUrl = System.getProperty("cloud.grid.hub.url");
+      if (gridHubUrl == null) {
+        gridHubUrl = System.getenv("CLOUD_GRID_HUB_URL");
+      }
+      if (gridHubUrl == null) {
+        gridHubUrl = ConfigReader.get("cloud.grid.hub.url");
+      }
+      if (gridHubUrl == null || gridHubUrl.isBlank()) {
+        gridHubUrl = "https://hub.lambdatest.com/wd/hub";
+      }
+
+      String user = System.getProperty("cloud.grid.username");
+      if (user == null) {
+        user = System.getenv("CLOUD_GRID_USERNAME");
+      }
+      if (user == null) {
+        user = ConfigReader.get("cloud.grid.username");
+      }
+
+      String key = System.getProperty("cloud.grid.access.key");
+      if (key == null) {
+        key = System.getenv("CLOUD_GRID_ACCESS_KEY");
+      }
+      if (key == null) {
+        key = ConfigReader.get("cloud.grid.access.key");
+      }
+
+      try {
+        org.openqa.selenium.chrome.ChromeOptions browserOptions = new org.openqa.selenium.chrome.ChromeOptions();
+        browserOptions.setPlatformName("Windows 11");
+        browserOptions.setBrowserVersion("latest");
+        Map<String, Object> cloudOptions = new HashMap<>();
+        cloudOptions.put("build", "Timepieces Scaling Suite");
+        cloudOptions.put("name", "E2E Checkout Run POC");
+        cloudOptions.put("user", user);
+        cloudOptions.put("accessKey", key);
+        browserOptions.setCapability("LT:Options", cloudOptions);
+        
+        log.info("Initializing RemoteWebDriver (CLOUD mode) against: {}", gridHubUrl);
+        WebDriver driver = new RemoteWebDriver(new java.net.URL(gridHubUrl), browserOptions);
+        tlDriver.set(driver);
+        applyCloudflareBypassHeader(driver);
+        return getDriver();
+      } catch (Exception e) {
+        log.error("Failed to initialize RemoteWebDriver for CLOUD mode: {}", e.getMessage(), e);
+        throw new RuntimeException("CLOUD mode driver initialization failure", e);
+      }
+    }
+
     WebDriver driver = switch (browser.toLowerCase()) {
       case "firefox" -> {
         FirefoxOptions firefoxOptions = new FirefoxOptions();

@@ -1,4 +1,4 @@
-package com.timepieces.automation.runners;
+package com.timepieces.automation.bdd.runners;
 
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;

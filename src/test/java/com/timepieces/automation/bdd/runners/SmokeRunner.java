@@ -1,10 +1,11 @@
-package com.timepieces.automation.runners;
+package com.timepieces.automation.bdd.runners;
 
 import io.cucumber.testng.CucumberOptions;
 
 @CucumberOptions(features = {
         "src/test/resources/features/01_authentication_identity/Staging_Password_Bypass.feature",
         "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature",
+        "src/test/resources/features/01_authentication_identity/API_Backed_UI_Session.feature",
         "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature"
         // NOTE: opt-in features (@OtpE2E, @OtpBruteForce) are registered ONLY in
         // RegressionRunner.
@@ -12,7 +13,7 @@ import io.cucumber.testng.CucumberOptions;
         // runners' tags;
         // registering them in one runner only keeps them single-execution under that
         // override.
-}, glue = { "com.timepieces.automation.stepdefinitions", "com.timepieces.automation.hooks" }, tags = "@Smoke", plugin = {
+}, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" }, tags = "@Smoke", plugin = {
         "pretty",
         "html:target/cucumber-reports/smoke-report.html",
         "json:target/cucumber-reports/SmokeCucumberTestReport.json",

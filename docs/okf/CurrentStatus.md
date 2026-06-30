@@ -22,6 +22,8 @@ Last updated: 2026-06-30
 | STAT-014 | Global footer navigation is now wired into smoke and regression BDD runner scope. | `Global_Footer_Navigation.feature`, `FooterSteps.java`, `SmokeRunner.java`, `RegressionRunner.java` | TASK-RUN-001 |
 | STAT-015 | `BasePage` exposes a shared responsive viewport helper used by footer component logic. | `BasePage.java`, `FooterComponent.java` | DEC-0003 |
 | STAT-016 | Nightly exploratory search API test suite implemented (50 randomized tests from pool), running at 6:00 AM IST on production by default. | `SearchApiExploratoryTest.java`, `testng-exploratory.xml`, `.github/workflows/exploratory-search-tests.yml` | TASK-CI-003 |
+| STAT-017 | Scaling refactoring complete: segregated TDD vs BDD directories, introduced SmokeSuite & RegressionSuite Maven profiles, and generic RemoteWebDriver CLOUD mode. | `BaseRunner.java`, `pom.xml`, `DriverFactory.java` | TASK-CI-005 |
+| STAT-018 | API-backed UI login session bypass and Idempotency verification TDD/BDD POCs implemented. | `AuthenticationEngine.java`, `IdempotencyApiTest.java`, features & stepdefinitions | TASK-CI-005 |
 
 ## In-Progress Features
 

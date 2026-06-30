@@ -20,13 +20,14 @@
 
     <test name="API Executions">
         <classes>
-            <class name="com.timepieces.automation.api.SearchApiTest" />
+            <class name="com.timepieces.automation.tdd.api.SearchApiTest" />
+            <class name="com.timepieces.automation.tdd.api.IdempotencyApiTest" />
         </classes>
     </test>
 
     <test name="Unit Executions">
         <classes>
-            <class name="com.timepieces.automation.TwilioServiceTest" />
+            <class name="com.timepieces.automation.tdd.api.TwilioServiceTest" />
         </classes>
     </test>
 </suite>

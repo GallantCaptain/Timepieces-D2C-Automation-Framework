@@ -17,7 +17,7 @@
 
     <test name="Production Non-Login Executions">
         <classes>
-            <class name="com.timepieces.automation.runners.ProductionRunner" />
+            <class name="com.timepieces.automation.bdd.runners.ProductionRunner" />
         </classes>
     </test>
 </suite>

@@ -12,25 +12,26 @@
 
     <test name="Smoke Executions">
         <classes>
-            <class name="com.timepieces.automation.runners.SmokeRunner" />
+            <class name="com.timepieces.automation.bdd.runners.SmokeRunner" />
         </classes>
     </test>
 
     <test name="Regression Executions">
         <classes>
-            <class name="com.timepieces.automation.runners.RegressionRunner" />
+            <class name="com.timepieces.automation.bdd.runners.RegressionRunner" />
         </classes>
     </test>
 
     <test name="API Executions">
         <classes>
-            <class name="com.timepieces.automation.api.SearchApiTest" />
+            <class name="com.timepieces.automation.tdd.api.SearchApiTest" />
+            <class name="com.timepieces.automation.tdd.api.IdempotencyApiTest" />
         </classes>
     </test>
 
     <test name="Unit Executions">
         <classes>
-            <class name="com.timepieces.automation.TwilioServiceTest" />
+            <class name="com.timepieces.automation.tdd.api.TwilioServiceTest" />
         </classes>
     </test>
 </suite>

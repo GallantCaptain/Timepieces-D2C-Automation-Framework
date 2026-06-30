@@ -70,3 +70,10 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Configured Cloudflare bypass header `x-automation-bypass` in `SearchApiExploratoryTest.java` and `SearchApiTest.java`.
 - Created `testng-exploratory.xml` to isolate the exploratory suite.
 - Created `.github/workflows/exploratory-search-tests.yml` to trigger execution nightly.
+- Restructured package directories to segregate BDD (`com.timepieces.automation.bdd`) and TDD (`com.timepieces.automation.tdd`) tests.
+- Replaced TestNG runner config and XML suite files to reflect the new package structure.
+- Introduced `SmokeSuite` and `RegressionSuite` Maven profiles in `pom.xml` to run TestNG groups and Cucumber tags together.
+- Enhanced `DriverFactory.java` to support generic RemoteWebDriver target under `CLOUD` mode.
+- Created `AuthenticationEngine.java` to generate fast session tokens via Rest-Assured, and added step definitions in `AccountSteps.java` to inject `"timepieces_session"` cookies for API-backed UI login bypass POC.
+- Created `IdempotencyApiTest.java` to test API-level idempotency, and added `Checkout_Idempotency.feature` / `CheckoutSteps.java` to verify button lockout after double-clicks to prevent duplicate payment submissions.
+

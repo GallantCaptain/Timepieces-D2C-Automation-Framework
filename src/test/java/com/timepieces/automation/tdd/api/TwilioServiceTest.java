@@ -1,4 +1,4 @@
-package com.timepieces.automation;
+package com.timepieces.automation.tdd.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

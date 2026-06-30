@@ -1,4 +1,4 @@
-package com.timepieces.automation.runners;
+package com.timepieces.automation.bdd.runners;
 
 import io.cucumber.testng.CucumberOptions;
 
@@ -7,8 +7,10 @@ import io.cucumber.testng.CucumberOptions;
         "src/test/resources/features/01_authentication_identity/User_Authentication_And_OTP_Verification.feature",
         "src/test/resources/features/01_authentication_identity/OTP_Login_End_To_End.feature",
         "src/test/resources/features/01_authentication_identity/OTP_Bruteforce_Security.feature",
+        "src/test/resources/features/01_authentication_identity/API_Backed_UI_Session.feature",
+        "src/test/resources/features/03_checkout_payments/Checkout_Idempotency.feature",
         "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature"
-}, glue = { "com.timepieces.automation.stepdefinitions", "com.timepieces.automation.hooks" },
+}, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
         // Disjointness with Smoke is enforced on the SmokeRunner side (tags = "@Smoke
         // and not
         // @Regression"), so this runner OWNS every @Regression scenario — including
