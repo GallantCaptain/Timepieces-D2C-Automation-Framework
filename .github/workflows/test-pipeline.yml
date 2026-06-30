@@ -10,17 +10,17 @@ on:
   workflow_dispatch:
     inputs:
       env:
-        description: 'Target Execution Environment'
+        description: "Target Execution Environment"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
         options:
           - staging
           - prod
       browser:
-        description: 'Browser Target'
+        description: "Browser Target"
         required: true
-        default: 'chrome'
+        default: "chrome"
         type: choice
         options:
           - chrome
@@ -34,9 +34,9 @@ on:
         # -Dcucumber.filter.tags, which OVERRIDES every runner's tags at once — so the same
         # scenario can execute under both runners (double OTP request → rate-limit). Only set
         # it for ad-hoc filtered runs, and prefer a single matching runner.
-        description: 'Optional Cucumber tag override (empty = use runner defaults; recommended)'
+        description: "Optional Cucumber tag override (empty = use runner defaults; recommended)"
         required: false
-        default: ''
+        default: ""
         type: string
 
 permissions:
@@ -54,9 +54,9 @@ jobs:
       - name: Setup Java JDK 25
         uses: actions/setup-java@v4
         with:
-          distribution: 'oracle'
-          java-version: '25'
-          cache: 'maven'
+          distribution: "temurin"
+          java-version: "25"
+          cache: "maven"
 
       - name: Install Browser Binaries
         run: |
@@ -110,7 +110,7 @@ jobs:
           mkdir -p deploy/runs/${{ github.run_number }}
           cp -r target/site/allure-maven-plugin/* deploy/runs/${{ github.run_number }}/
           cp -r target/site/allure-maven-plugin/* deploy/
-          
+
           # Maintain history directory for next runs
           mkdir -p allure-history
           cp -r target/site/allure-maven-plugin/history/* allure-history/ || true

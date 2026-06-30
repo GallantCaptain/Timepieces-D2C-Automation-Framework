@@ -1,6 +1,57 @@
 # Delta Updates
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
+
+## 2026-06-30 Exploratory Search API Nightly Test Suite
+
+### Added Items
+
+- `src/test/java/com/timepieces/automation/api/SearchApiExploratoryTest.java` — TestNG integration test implementing the 50 randomized search queries from the data pool.
+- `testng-exploratory.xml` — TestNG suite XML mapping the exploratory test class and defaulting env parameter to production.
+- `.github/workflows/exploratory-search-tests.yml` — GitHub Actions workflow executing nightly at 6:00 AM IST (00:30 UTC), defaulting env parameter to production.
+
+### Modified Items
+
+- `src/test/java/com/timepieces/automation/api/SearchApiTest.java` — Configured RestAssured socket/connection timeouts (10 seconds) and support for Cloudflare bypass header (`x-automation-bypass`).
+- `docs/okf/CurrentStatus.md` — Added `STAT-016` to Completed Features.
+- `docs/okf/task-backlog.md` — Added `TASK-CI-004` to completed tasks.
+- `docs/okf/changelog.md` — Logged the implementation details.
+
+### Status Changes
+
+- Implemented nightly exploratory search API tests running 50 randomized query-handle checks against production environment by default.
+- Shuffled keyword Matrix deterministic runs using time-based seeds (logged to Allure for full reproducibility).
+- Configured 10 seconds RestAssured timeout and bypass headers to prevent pipeline hangs on production and staging zones.
+
+### Verification
+
+- Successfully compiled the project: `.\mvnw.cmd test-compile` -> BUILD SUCCESS.
+- Ran tests locally: `.\mvnw.cmd test "-Dsurefire.suite=testng-exploratory.xml"` -> ran 50 tests, verified 23 passed, 27 failed (capturing expected search tuning bugs on production), and successfully generated the markdown analysis report.
+
+## 2026-06-30 CI/CD ↔ TestNG Mapping Audit & Cron Schedule Update
+
+### Modified Items
+
+- `.github/workflows/staging-tests.yml` — Cron schedule changed from `0 0 * * *` (00:00 UTC / 05:30 IST) to `30 20 * * *` (20:30 UTC / 02:00 IST).
+- `.github/workflows/production-tests.yml` — Cron schedule changed from `0 2 * * *` (02:00 UTC / 07:30 IST) to `30 22 * * *` (22:30 UTC / 04:00 IST).
+- `.github/workflows/test-pipeline.yml` — JDK distribution changed from `oracle` to `temurin` (consistency fix with other workflows and Docker).
+- `docs/okf/task-backlog.md` — Added `TASK-CI-003` for email report notifications (stashed, awaiting SMTP details from admin).
+
+### Audit Findings
+
+- Full mapping audit of TestNG suite XMLs ↔ GitHub Actions workflows ↔ Docker was performed.
+- All mappings are correct: `testng.xml` is the default suite for staging-tests, test-pipeline, and Docker; `testng-production.xml` is correctly selected via `-Dsurefire.suite` in production-tests; `testng-bdd.xml` and `testng-tdd.xml` are local-only convenience suites.
+- Runner class ↔ tag assignments confirmed: SmokeRunner (`@Smoke`), RegressionRunner (`@Regression`), ProductionRunner (`@ProdReady`).
+- Only issue found was the `oracle` → `temurin` JDK distribution mismatch in test-pipeline.yml (fixed).
+
+### Stashed Action Plan
+
+- Email report notifications for all 3 CI/CD workflows to `167759523+GallantCaptain@users.noreply.github.com`, `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example` using `dawidd6/action-send-mail@v5`. Blocked on SMTP credentials from admin. Tracked as `TASK-CI-003`.
+
+### Verification
+
+- Audited via file inspection, `git ls-files`, `git log`, and runner class review.
+- No Maven build or test run was performed for this OKF update.
 
 ## 2026-06-29 Search Bar API Keyword Test Automation
 

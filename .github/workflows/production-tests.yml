@@ -5,8 +5,8 @@ name: production-tests
 # exercised against the live site.
 on:
   schedule:
-    # 02:00 UTC nightly (07:30 IST). Staggered after staging-tests (00:00 UTC).
-    - cron: "0 2 * * *"
+    # 22:30 UTC nightly (04:00 IST). Staggered after staging-tests (20:30 UTC).
+    - cron: "30 22 * * *"
   workflow_dispatch:
 
 # Never run two production suites at once (they would hit the same login number and
@@ -32,9 +32,9 @@ jobs:
       - name: Java JDK Setup
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'maven'
+          distribution: "temurin"
+          java-version: "25"
+          cache: "maven"
 
       # Step 3: Install the browser binary the suite drives (default browser=chrome)
       - name: Install Browser Binaries

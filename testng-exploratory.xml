@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    Exploratory Search nightly suite. Selected by the exploratory-search-tests workflow via
+    -Dsurefire.suite=testng-exploratory.xml.
+    Runs exactly 50 randomized search queries from the keyword pool, defaulting to production.
+-->
+<suite name="Timepieces Exploratory Search Suite">
+    
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
+    </listeners>
+    
+    <!-- Set default environment parameter to production -->
+    <parameter name="environment" value="production" />
+
+    <test name="Exploratory Search API Executions">
+        <classes>
+            <class name="com.timepieces.automation.api.SearchApiExploratoryTest" />
+        </classes>
+    </test>
+</suite>

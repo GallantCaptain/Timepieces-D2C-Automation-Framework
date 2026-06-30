@@ -23,6 +23,8 @@ import org.testng.annotations.Test;
 import com.timepieces.automation.utils.ConfigReader;
 
 import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import lombok.extern.log4j.Log4j2;
@@ -55,6 +57,7 @@ public class SearchApiTest {
 
     private String baseUrl;
     private String userAgent;
+    private String cfBypassToken;
 
     @BeforeClass
     public void setUp() {
@@ -82,6 +85,17 @@ public class SearchApiTest {
         RestAssured.baseURI = baseUrl;
         log.info("Base URI set to: {}", RestAssured.baseURI);
 
+        // Configure RestAssured timeouts (10 seconds)
+        RestAssured.config = RestAssuredConfig.config().httpClient(HttpClientConfig.httpClientConfig()
+                .setParam("http.connection.timeout", 10000)
+                .setParam("http.socket.timeout", 10000));
+
+        // Resolve Cloudflare bypass token
+        cfBypassToken = System.getProperty("CF_BYPASS_TOKEN");
+        if (cfBypassToken == null || cfBypassToken.isEmpty()) {
+            cfBypassToken = System.getenv("CF_BYPASS_TOKEN");
+        }
+
         // 3. Set User Agent
         userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36";
 
@@ -93,10 +107,16 @@ public class SearchApiTest {
 
         log.info("Bypassing staging gate password wall...");
         try {
-            Response verifyResponse = given()
+            var reqSpec = given()
                     .header("User-Agent", userAgent)
                     .header("Content-Type", "application/json")
-                    .header("Referer", baseUrl + "/")
+                    .header("Referer", baseUrl + "/");
+
+            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                reqSpec.header("x-automation-bypass", cfBypassToken);
+            }
+
+            Response verifyResponse = reqSpec
                     .body(Map.of("password", password))
                     .post("/api/verify-password");
 
@@ -105,6 +125,7 @@ public class SearchApiTest {
         } catch (Exception e) {
             log.warn("Password verification request failed. Proceeding anyway (in case gate is disabled).", e);
         }
+
     }
 
     // ==================================================================================
@@ -121,10 +142,16 @@ public class SearchApiTest {
     private SearchResult performSearch(String keyword) {
         try {
             // 1. Request Search Token
-            Response tokenResponse = given()
+            var tokenReqSpec = given()
                     .header("User-Agent", userAgent)
                     .header("Content-Type", "application/json")
-                    .header("Referer", baseUrl + "/")
+                    .header("Referer", baseUrl + "/");
+
+            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                tokenReqSpec.header("x-automation-bypass", cfBypassToken);
+            }
+
+            Response tokenResponse = tokenReqSpec
                     .body(Map.of("identifier", keyword))
                     .post("/api/request-token");
 
@@ -142,13 +169,19 @@ public class SearchApiTest {
             }
 
             // 2. Perform search GET request
-            Response searchResponse = given()
+            var searchReqSpec = given()
                     .header("User-Agent", userAgent)
                     .header("Referer", baseUrl + "/")
                     .header("x-request-token", token)
                     .header("x-request-timestamp", timestamp)
-                    .queryParam("q", keyword)
-                    .get("/api/search");
+                    .queryParam("q", keyword);
+
+            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                searchReqSpec.header("x-automation-bypass", cfBypassToken);
+            }
+
+            Response searchResponse = searchReqSpec.get("/api/search");
+
 
             if (searchResponse.getStatusCode() != 200) {
                 return new SearchResult(searchResponse.getStatusCode(), List.of(), List.of(),

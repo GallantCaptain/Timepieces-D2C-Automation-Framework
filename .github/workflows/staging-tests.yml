@@ -16,8 +16,8 @@ on:
       - 'grafana-dashboards/**'
       - '**/*.md'
   schedule:
-    # 00:00 UTC nightly (05:30 IST). Staggered before production-tests (02:00 UTC).
-    - cron: "0 0 * * *"
+    # 20:30 UTC nightly (02:00 IST). Staggered before production-tests (22:30 UTC).
+    - cron: "30 20 * * *"
   workflow_dispatch:
 
 # Prevent overlapping staging runs on the same ref (a fresh nightly/PR push supersedes

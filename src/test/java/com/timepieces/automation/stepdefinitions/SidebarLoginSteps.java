@@ -13,7 +13,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
 import com.timepieces.automation.pages.components.HeaderComponent;
-import com.timepieces.automation.pages.components.SidebarMenuComponent;
+import com.timepieces.automation.pages.components.headerOptionsComponent.SidebarMenuComponent;
 import com.timepieces.automation.pages.web.account.LoginPage;
 import com.timepieces.automation.utils.ConfigReader;
 
@@ -28,7 +28,7 @@ public class SidebarLoginSteps {
     private final TestContext testContext;
     private final WebDriver driver;
     private final WebDriverWait wait;
-    
+
     private HeaderComponent headerComponent;
     private SidebarMenuComponent sidebarMenuComponent;
 
@@ -94,7 +94,9 @@ public class SidebarLoginSteps {
         }
 
         log.info("Verifying personalized element in sidebar matching: {}", accountMarker);
-        By accountElement = By.xpath("//div[@data-testid='nav-sidebar']//a[@href='/account' or contains(normalize-space(text()), '" + accountMarker + "') or contains(normalize-space(text()), 'Account')]");
+        By accountElement = By
+                .xpath("//div[@data-testid='nav-sidebar']//a[@href='/account' or contains(normalize-space(text()), '"
+                        + accountMarker + "') or contains(normalize-space(text()), 'Account')]");
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(accountElement));
         assertThat(element.isDisplayed())
                 .as("Personalized account element in sidebar was not displayed.")

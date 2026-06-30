@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## Completed Features
 
@@ -21,6 +21,7 @@ Last updated: 2026-06-29
 | STAT-013 | Storefront search API validation expanded to 100 TestNG/Rest-Assured tests across 6 groups including generic, collection, brand, misspelling, deep keyword, and edge case searches. | `SearchApiTest.java`, `search_keywords.json`, `testng.xml` | TASK-MOBILE-API-001 |
 | STAT-014 | Global footer navigation is now wired into smoke and regression BDD runner scope. | `Global_Footer_Navigation.feature`, `FooterSteps.java`, `SmokeRunner.java`, `RegressionRunner.java` | TASK-RUN-001 |
 | STAT-015 | `BasePage` exposes a shared responsive viewport helper used by footer component logic. | `BasePage.java`, `FooterComponent.java` | DEC-0003 |
+| STAT-016 | Nightly exploratory search API test suite implemented (50 randomized tests from pool), running at 6:00 AM IST on production by default. | `SearchApiExploratoryTest.java`, `testng-exploratory.xml`, `.github/workflows/exploratory-search-tests.yml` | TASK-CI-003 |
 
 ## In-Progress Features
 
