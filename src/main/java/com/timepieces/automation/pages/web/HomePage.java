@@ -20,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class HomePage extends BasePage {
+
     // ==========================================
     // Constructor
     // ==========================================
@@ -46,10 +47,14 @@ public class HomePage extends BasePage {
     // Hero "Discover" CTA — navigates to the current Astonia drop page.
     private final By redirectButton_To_AstoniaDropPage = By.cssSelector("button[data-testid='home-hero-discover-cta']");
 
-    // TODO(locators): the remaining homepage sections (featured collections, drop strip,
-    // brand story, footer CTA, etc.) still need their real data-testid selectors added here.
-    // The 'varNameN' placeholder stubs were removed because duplicate field names / "value"
-    // selectors broke compilation. Add one `private final By <descriptiveName> = By.cssSelector(...)`
+    // TODO(locators): the remaining homepage sections (featured collections, drop
+    // strip,
+    // brand story, footer CTA, etc.) still need their real data-testid selectors
+    // added here.
+    // The 'varNameN' placeholder stubs were removed because duplicate field names /
+    // "value"
+    // selectors broke compilation. Add one `private final By <descriptiveName> =
+    // By.cssSelector(...)`
     // per section, with a real data-testid, as the storefront markup is confirmed.
 
     // ==========================================
@@ -60,8 +65,10 @@ public class HomePage extends BasePage {
     // BUSINESS LIBRARY
     // ==========================================
     /**
-     * B.1 Waits until the homepage has rendered, using the root {@code <main>} container as the
-     * readiness signal. Use as a navigation guard after landing on the homepage before asserting
+     * B.1 Waits until the homepage has rendered, using the root {@code <main>}
+     * container as the
+     * readiness signal. Use as a navigation guard after landing on the homepage
+     * before asserting
      * on any child section.
      *
      * @return this HomePage for method chaining.
@@ -85,7 +92,8 @@ public class HomePage extends BasePage {
     }
 
     /**
-     * B.3 Clicks the hero "Discover" CTA, which redirects to the current Astonia drop page.
+     * B.3 Clicks the hero "Discover" CTA, which redirects to the current Astonia
+     * drop page.
      * Returns an {@link AstoniaDropPage} so callers can continue the flow fluently.
      *
      * @return a new AstoniaDropPage for the destination view.
@@ -101,11 +109,13 @@ public class HomePage extends BasePage {
     // ==========================================
     /*
      * These return boolean so step definitions can pass them to assertion libraries
-     * (AssertJ/TestNG) without the page object depending on any assertion framework.
+     * (AssertJ/TestNG) without the page object depending on any assertion
+     * framework.
      */
 
     /**
-     * V.1 Verifies the homepage root container is displayed — a reliable "page loaded" check.
+     * V.1 Verifies the homepage root container is displayed — a reliable "page
+     * loaded" check.
      *
      * @return true if the homepage root container is displayed, false otherwise.
      */

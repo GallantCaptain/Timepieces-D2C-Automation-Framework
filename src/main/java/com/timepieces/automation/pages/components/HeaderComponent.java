@@ -23,30 +23,30 @@ public class HeaderComponent extends BasePage {
     public HeaderComponent(WebDriver driver) {
         super(driver);
     }
-    
+
     // ==========================================
     // LOCATORS
     // ==========================================
-    // Site Header Container:
-    private final By siteHeaderContainer = By.cssSelector("[data-testid='site-header']");
-    
-    // Header Menu Toggle Button:
-    private final By headerMenuToggle = By.cssSelector("[data-testid='header-menu-toggle']");
-    
-    // Header Stories Toggle Button:
-    private final By headerStoriesToggle = By.cssSelector("[data-testid='header-stories-toggle']");
-    
-    // Header Logo Link:
-    private final By headerLogo = By.cssSelector("[data-testid='header-logo']");
-    
-    // Header Search Toggle Button:
-    private final By headerSearchToggle = By.cssSelector("[data-testid='header-search-toggle']");
-    
-    // Header Account Toggle Button:
-    private final By headerAccountToggle = By.cssSelector("[data-testid='header-account-toggle']");
-    
-    // Header Cart Toggle Button:
-    private final By headerCartToggle = By.cssSelector("[data-testid='header-cart-toggle']");
+    // Site Header Container: [Represents the entire Header section]
+    private final By siteHeaderContainer = By.cssSelector("header[data-testid='site-header']");
+
+    // Header Menu Toggle Button: [Opens the SidebarMenuComponent]
+    private final By headerMenuToggle = By.cssSelector("button[data-testid='header-menu-toggle']");
+
+    // Header Logo Link: [Navigates to the Home Page]
+    private final By headerLogo = By.cssSelector("a[data-testid='header-logo']");
+
+    // Header Stories Toggle Button: [Opens the StoriesPage]
+    private final By headerStoriesToggle = By.cssSelector("button[data-testid='header-stories-toggle']");
+
+    // Header Search Toggle Button: [Opens the Global Search Bar]
+    private final By headerSearchToggle = By.cssSelector("button[data-testid='header-search-toggle']");
+
+    // Header Account Toggle Button: [Opens the Account Page/Login Page]
+    private final By headerAccountToggle = By.cssSelector("button[data-testid='header-account-toggle']");
+
+    // Header Cart Toggle Button: [Opens the CartDrawerComponent]
+    private final By headerCartToggle = By.cssSelector("button[data-testid='header-cart-toggle']");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -57,6 +57,7 @@ public class HeaderComponent extends BasePage {
     // ==========================================
     /**
      * Clicks on the Menu toggle button to open the sidebar navigation menu.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickMenuToggle() {
@@ -67,6 +68,7 @@ public class HeaderComponent extends BasePage {
 
     /**
      * Clicks on the Stories toggle button.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickStoriesToggle() {
@@ -77,6 +79,7 @@ public class HeaderComponent extends BasePage {
 
     /**
      * Clicks on the brand logo link to navigate back to home.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickLogo() {
@@ -87,6 +90,7 @@ public class HeaderComponent extends BasePage {
 
     /**
      * Clicks on the Search toggle button.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickSearchToggle() {
@@ -97,6 +101,7 @@ public class HeaderComponent extends BasePage {
 
     /**
      * Clicks on the Account toggle button to open the account page/login.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickAccountToggle() {
@@ -107,6 +112,7 @@ public class HeaderComponent extends BasePage {
 
     /**
      * Clicks on the Cart toggle button to open the cart drawer.
+     * 
      * @return this HeaderComponent for method chaining.
      */
     public HeaderComponent clickCartToggle() {
@@ -120,6 +126,7 @@ public class HeaderComponent extends BasePage {
     // ==========================================
     /**
      * Verifies if the header container is displayed on the page.
+     * 
      * @return true if displayed, false otherwise.
      */
     public boolean isHeaderDisplayed() {

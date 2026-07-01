@@ -1,6 +1,44 @@
 # Delta Updates
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
+
+## 2026-07-01 Page Object Fluent Interface Comments Refactoring
+
+### Modified Items
+
+- `src/main/java/com/timepieces/automation/pages/web/products/timepieces/**/*.java` — Updated Fluent Interface javadoc comments to return correct page type instead of `LoginPage` and removed redundant final step comments.
+- `docs/okf/changelog.md` — Logged today's comment refactoring.
+- `docs/okf/delta-updates.md` — Logged the delta update.
+
+### Status Changes
+
+- All page objects under `timepieces` updated to have accurate Fluent Interface references in doc comments.
+
+### Verification
+
+- Successfully compiled the project: `.\mvnw.cmd test-compile` -> BUILD SUCCESS.
+
+## 2026-07-01 Storefront Test Case Roadmap & Cart Integration
+
+### Added Items
+
+- `docs/okf/test-case-roadmap.md` — Detailed test case coverage roadmap dividing storefront functions into 6 progressive phases.
+- `src/test/resources/features/03_cart_bag_management/Cart_Bag_Management.feature` — Gherkin BDD specifications outlining 6 scenarios for cart drawer, subtotal calculation, free shipping threshold, item removal, and session persistence.
+- `scripts/add_cart_tcs.py` — Python registration script integrating the cart scenarios as `QA-T44` through `QA-T49` in Zephyr Scale.
+
+### Modified Items
+
+- `docs/okf/OKF_INDEX.md` — Registered the new roadmap topic and updated the last reviewed timestamp.
+- `docs/okf/changelog.md` — Appended today's test roadmap and cart integration.
+
+### Status Changes
+
+- Officially registered 6 new test cases in Zephyr Scale (`QA-T44` to `QA-T49`) mapping directly to the Cart feature file.
+
+### Verification
+
+- Programmatic registration completed successfully with exit code 0.
+- Executed `list_zephyr_testcases.py` to confirm that all 6 cart test cases are present in the Zephyr Scale registry.
 
 ## 2026-06-30 Timepieces Framework Scaling & Refactoring
 

@@ -39,8 +39,9 @@ public class SidebarMenuComponent extends BasePage {
         // Website Major Pages Links Menu List: [Can use a list for this]
         private final By menuLinksList = By.cssSelector("ul[data-testid='nav-sidebar-menu']");
 
-        // Menu List Items: [Can use a list for this] (Not unique. Contains the 7 links. All the major links have been mapped as unique locators below.)
-        private final By menuListItems = By.cssSelector("[data-testid='nav-sidebar-menu-item']");
+        // Menu List Items: [Can use a list for this] (Not unique. Contains the 7 links.
+        // All the major links have been mapped as unique locators below.)
+        private final By menuListItems = By.cssSelector("li[data-testid='nav-sidebar-menu-item']");
 
         /*
          * The timepieces and accessories in the sidebar menu dont have direct links.
@@ -73,11 +74,13 @@ public class SidebarMenuComponent extends BasePage {
          */
         // The Timepieces Collection SubMenu Header Logo Link on the the Accessories
         // submenu
-        private final By timepiecesCollection_HeaderLogo_PageLinkDesktop = By.cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
+        private final By timepiecesCollection_HeaderLogo_PageLinkDesktop = By
+                        .cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
 
         // The Timepieces Collection SubMenu Header Logo Link on the the Accessories
         // submenu
-        private final By timepiecesCollection_HeaderLogo_PageLinkMobile = By.cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
+        private final By timepiecesCollection_HeaderLogo_PageLinkMobile = By
+                        .cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
 
         // The All Timepieces Collection Menu Link in SubMenu in desktop viewport
         private final By allTimepiecesCollectionPageLinkDesktop = By
@@ -113,23 +116,29 @@ public class SidebarMenuComponent extends BasePage {
          */
         // The Accessories Collection SubMenu Header Logo Link on the the Accessories
         // submenu
-        private final By accessoriesCollection_HeaderLogo_PageLinkDesktop = By.cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
+        private final By accessoriesCollection_HeaderLogo_PageLinkDesktop = By
+                        .cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
 
         // The Accessories Collection SubMenu Header Logo Link on the the Accessories
         // submenu
-        private final By accessoriesCollection_HeaderLogo_PageLinkMobile = By.cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
+        private final By accessoriesCollection_HeaderLogo_PageLinkMobile = By
+                        .cssSelector("a[href='/accessories/all'][data-testid='nav-submenu-parent-desktop']");
 
         // The straps collection page in the Accessories submenu in mobile viewport
         private final By watchCaseCollectionPageLinkMobile = By
                         .cssSelector("a[href='/accessories/watch-case'][data-testid='nav-submenu-link']");
 
         // Back Button from Products SubMenu to SidebarMenu desktop viewport
-        // Users can also get back to the SidebarMenu by clickling outside of the Sidebar overlay when in the SubMenu, but if clicking anywhere in the SidebarContainer, then it won't be dismissed
+        // Users can also get back to the SidebarMenu by clickling outside of the
+        // Sidebar overlay when in the SubMenu, but if clicking anywhere in the
+        // SidebarContainer, then it won't be dismissed
         private final By backButtonProductsSubMenu_To_SidebarMenu_Desktop = By
                         .cssSelector("button[data-testid='nav-submenu-back-desktop']");
 
         // Back Button from Products SubMenu to SidebarMenu mobile viewport
-        // Users can also get back to the SidebarMenu by clickling outside of the Sidebar overlay when in the SubMenu, but if clicking anywhere in the SidebarContainer, then it won't be dismissed
+        // Users can also get back to the SidebarMenu by clickling outside of the
+        // Sidebar overlay when in the SubMenu, but if clicking anywhere in the
+        // SidebarContainer, then it won't be dismissed
         private final By backButtonProductsSubMenu_To_SidebarMenu_Mobile = By
                         .cssSelector("button[data-testid='nav-submenu-back-mobile']");
 
@@ -155,24 +164,26 @@ public class SidebarMenuComponent extends BasePage {
                         .cssSelector("a[href='https://world.timepieces-d2c.example'][data-testid='nav-sidebar-menu-link']");
 
         // Menu Item Button: [Can use a list for this]
-        private final By menuItemButton = By.cssSelector("[data-testid='nav-sidebar-menu-button']");
+        private final By menuItemButton = By.cssSelector("button[data-testid='nav-sidebar-menu-button']");
 
         // Menu Item Link:
-        private final By menuItemLink = By.cssSelector("[data-testid='nav-sidebar-menu-link']");
+        private final By menuItemLink = By.cssSelector("a[data-testid='nav-sidebar-menu-link']");
 
         // Label: Become a Timepieces member label
         // This will be helpful in validating the user login status alongwith the
-        // sign-in container status, i.e., this label is only there when the user is not logged in. 
+        // sign-in container status, i.e., this label is only there when the user is not
+        // logged in.
         private final By becomeTimepiecesMember_Message_Label = By.xpath(
                         "//p[contains(normalize-space(),'Become a Timepieces member for the latest timepiece updates, inspiration and stories')]");
 
-        // Sign In Button:
+        // Sign In Button: -- When user is not logged in --
         // Button is replaced by logged in user container
-        private final By signInButton = By.cssSelector("[data-testid='nav-sidebar-signin']");
+        private final By signInButton = By.cssSelector("button[data-testid='nav-sidebar-signin']");
 
         /*
          * Logged In User Container. This contains the user name, designation, and
-         * profile picture. This container will be available only when the user has logged in. 
+         * profile picture. This container will be available only when the user has
+         * logged in.
          */
         // The Logged In User Container
         private final By loggedInUserProfileContainer = By.cssSelector("a[data-testid='nav-sidebar-account-link']");
@@ -279,7 +290,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Timepieces logo at the top of the sidebar (navigates to the homepage).
+         * Clicks the Timepieces logo at the top of the sidebar (navigates to the
+         * homepage).
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -290,8 +302,10 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Opens the Timepieces sub-menu overlay. Viewport-agnostic — the same button drives both
-         * the desktop and mobile sub-menu; assert on the matching sub-menu locator afterwards.
+         * Opens the Timepieces sub-menu overlay. Viewport-agnostic — the same button
+         * drives both
+         * the desktop and mobile sub-menu; assert on the matching sub-menu locator
+         * afterwards.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -302,8 +316,10 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Opens the Accessories sub-menu overlay. Viewport-agnostic — the same button drives both
-         * the desktop and mobile sub-menu. Only one products sub-menu is active at a time, so this
+         * Opens the Accessories sub-menu overlay. Viewport-agnostic — the same button
+         * drives both
+         * the desktop and mobile sub-menu. Only one products sub-menu is active at a
+         * time, so this
          * switches away from the Timepieces sub-menu if it was open.
          *
          * @return this SidebarMenuComponent for method chaining.
@@ -315,7 +331,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Returns from the products sub-menu back to the top-level sidebar menu (desktop button).
+         * Returns from the products sub-menu back to the top-level sidebar menu
+         * (desktop button).
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -337,7 +354,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Track Orders link (visible for guests only; logged-in users see the
+         * Clicks the Track Orders link (visible for guests only; logged-in users see
+         * the
          * Orders link instead — see {@link #clickOrders()}).
          *
          * @return this SidebarMenuComponent for method chaining.
@@ -349,7 +367,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Orders link (logged-in users only; redirects to the order history page).
+         * Clicks the Orders link (logged-in users only; redirects to the order history
+         * page).
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -360,8 +379,10 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the logged-in user's profile/account link in the sidebar (redirects to /account).
-         * Only present when a user is authenticated — guard with {@link #isUserLoggedIn()}.
+         * Clicks the logged-in user's profile/account link in the sidebar (redirects to
+         * /account).
+         * Only present when a user is authenticated — guard with
+         * {@link #isUserLoggedIn()}.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -408,7 +429,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies if the Sign In button is displayed. Present for guests; replaced by the
+         * Verifies if the Sign In button is displayed. Present for guests; replaced by
+         * the
          * logged-in user container after authentication.
          *
          * @return true if displayed, false otherwise.
@@ -420,14 +442,19 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Determines whether a user is currently logged in, from the sidebar's perspective.
+         * Determines whether a user is currently logged in, from the sidebar's
+         * perspective.
          *
-         * The sidebar swaps the Sign In button + "Become a Timepieces member" prompt for the
-         * logged-in user profile container once authenticated. This uses a fast, non-blocking
-         * {@code findElements} presence check on the profile container so it adds no wait when
+         * The sidebar swaps the Sign In button + "Become a Timepieces member" prompt for
+         * the
+         * logged-in user profile container once authenticated. This uses a fast,
+         * non-blocking
+         * {@code findElements} presence check on the profile container so it adds no
+         * wait when
          * the user is a guest.
          *
-         * @return true if the logged-in user profile container is present, false otherwise.
+         * @return true if the logged-in user profile container is present, false
+         *         otherwise.
          */
         public boolean isUserLoggedIn() {
                 boolean loggedIn = !driver.findElements(loggedInUserProfileContainer).isEmpty();
@@ -436,7 +463,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies the "Become a Timepieces member" prompt is displayed — the guest-state marker that
+         * Verifies the "Become a Timepieces member" prompt is displayed — the guest-state
+         * marker that
          * accompanies the Sign In button (absent once logged in).
          *
          * @return true if displayed, false otherwise.
@@ -459,7 +487,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies the products (Timepieces/Accessories) sub-menu overlay is displayed in the
+         * Verifies the products (Timepieces/Accessories) sub-menu overlay is displayed
+         * in the
          * desktop viewport. Call after {@link #openTimepiecesSubMenu()} /
          * {@link #openAccessoriesSubMenu()}.
          *
@@ -472,7 +501,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Returns the number of top-level menu items currently rendered in the sidebar. Useful for
+         * Returns the number of top-level menu items currently rendered in the sidebar.
+         * Useful for
          * asserting the navigation list is fully populated.
          *
          * @return the count of menu items (0 if none are present).

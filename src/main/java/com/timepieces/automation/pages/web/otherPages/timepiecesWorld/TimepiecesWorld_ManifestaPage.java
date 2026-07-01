@@ -1,4 +1,4 @@
-package com.timepieces.automation.pages.components.headerOptionsComponent;
+package com.timepieces.automation.pages.web.otherPages.timepiecesWorld;
 
 import org.openqa.selenium.WebDriver;
 
@@ -7,16 +7,14 @@ import com.timepieces.automation.pages.BasePage;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * StoriesComponent represents the stories modal overlay that appears when the
- * Stories header link is clicked.
+ * TimepiecesWorld_ManifestaPage: https://world.timepieces-d2c.example/products/manifesta
  */
 @Log4j2
-public class storiesComponent extends BasePage {
-
+public class TimepiecesWorld_ManifestaPage extends BasePage {
     // ==========================================
     // Constructor
     // ==========================================
-    public storiesComponent(WebDriver driver) {
+    public TimepiecesWorld_ManifestaPage(WebDriver driver) {
         super(driver);
     }
 

@@ -1,7 +1,7 @@
 # Organizational Knowledge File Index
 
 Status: Authoritative project memory  
-Last reviewed: 2026-06-29
+Last reviewed: 2026-07-01
 Project: Timepieces QA Automation
 
 ## Governance
@@ -22,6 +22,7 @@ Project: Timepieces QA Automation
 | System architecture | [system-architecture.md](system-architecture.md) |
 | Development standards | [development-standards.md](development-standards.md) |
 | Testing strategy | [testing-strategy.md](testing-strategy.md) |
+| Test case coverage roadmap | [test-case-roadmap.md](test-case-roadmap.md) |
 | Project structure | [project-structure.md](project-structure.md) |
 | Current implementation status | [CurrentStatus.md](CurrentStatus.md) |
 | Decisions log | [decisions-log.md](decisions-log.md) |

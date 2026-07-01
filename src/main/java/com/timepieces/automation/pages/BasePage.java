@@ -62,29 +62,70 @@ public abstract class BasePage {
                 timeoutSeconds);
     }
 
-    // Missing #1: presence (not visibility) — needed for hidden iframes like
-    // Cloudflare
+    // ==========================================
+    // PRIVATE HELPERS
+    // ==========================================
+    /**
+     * P.1 Provides clean structural support for dynamic locators (e.g.: selecting
+     * collections dynamically) Accepts a locator template with placeholders and
+     * a replacement value to generate a specific locator instance at runtime,
+     * enabling flexible and reusable locator strategies for elements that share
+     * common patterns but differ in specific identifiers (e.g., product names,
+     * user IDs).
+     *
+     * @param xPathTemplate    The By locator template containing placeholders for
+     *                         dynamic values.
+     * @param replacementValue The value to replace the placeholders in the
+     *                         locator template.
+     * @return A By locator instance with the placeholders replaced by the
+     *         specified value.
+     */
+    protected By formatLocator(By xPathTemplate, String replacementValue) {
+        return By.xpath(String.format(xPathTemplate.toString().replace("By.xpath: ", ""), replacementValue));
+    }
+
+    // ==========================================
+    // BUSINESS LIBRARY
+    // ==========================================
+    /**
+     * B.1 Missing #1: presence (not visibility) — needed for hidden iframes like
+     * Cloudflare
+     *
+     * @param locator The By locator used to identify the target element on the
+     *                page.
+     * @return The WebElement that matches the locator.
+     */
     protected WebElement getElementPresence(By locator) {
         log.debug("Awaiting DOM presence (not visibility) for locator: [{}]", locator);
         return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
     }
 
-    // Missing #2: pure "wait for visible" without returning the element —
-    // used as a navigation confirmation guard (e.g. after clickSendOtpButton)
+    /**
+     * B.2 Missing #2: pure "wait for visible" without returning the element —
+     * used as a navigation confirmation guard (e.g. after clickSendOtpButton)
+     *
+     * @param locator The By locator used to identify the target element on the
+     *                page.
+     */
     protected void waitForVisibility(By locator) {
         log.debug("Awaiting visibility confirmation for locator: [{}]", locator);
         wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    // Missing #3 (optional but clean): wait for invisibility/disappearance —
-    // you'll need this soon for loading spinners
+    /**
+     * B.3 Missing #3 (optional but clean): wait for invisibility/disappearance —
+     * you'll need this soon for loading spinners
+     *
+     * @param locator The By locator used to identify the target element on the
+     *                page.
+     */
     protected void waitForInvisibility(By locator) {
         log.debug("Awaiting invisibility/disappearance of locator: [{}]", locator);
         wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
     /**
-     * Synchronizes and isolates element retrieval using explicit visibility
+     * B.4 Synchronizes and isolates element retrieval using explicit visibility
      * constraints. Guardrails agains lazy loading elements on heavy animated
      * matrices and ensures that interactions are performed on elements that are
      * present and visible in the DOM.
@@ -100,7 +141,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Synchronizes and isolates multiple elements retrieval using explicit
+     * B.5 Synchronizes and isolates multiple elements retrieval using explicit
      * visibility constraints. Retrieves a list of elements based on the
      * provided locator. Ensures that all matching elements are visible and
      * interactable before returning them. Useful for scenarios where multiple
@@ -118,7 +159,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Centralized click wrapper with proactive clickability verification.
+     * B.6 Centralized click wrapper with proactive clickability verification.
      * Ensures that the element is not only visible but also interactable (i.e.,
      * enabled and not obscured) before performing the click action, reducing
      * the likelihood of ElementNotInteractableException and improving test
@@ -138,7 +179,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Centralized input wrapper. Flushes the existing text caches before
+     * B.7 Centralized input wrapper. Flushes the existing text caches before
      * injecting new input values to ensure clean state and prevent input
      * anomalies.
      *
@@ -163,7 +204,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Safely pulls inner text generator from validated DOM nodes. Guards
+     * B.8 Safely pulls inner text generator from validated DOM nodes. Guards
      * against stale element references and ensures that the text content is
      * accurately captured from the current state of the page.
      *
@@ -182,25 +223,7 @@ public abstract class BasePage {
     }
 
     /**
-     * Boolean Verification wrapper asserting active component status
-     *
-     * @param locator The By locator used to identify the target element on the
-     *                page.
-     * @return true if the element is displayed, false otherwise.
-     */
-    protected Boolean isDisplayed(By locator) {
-        log.debug("Verifying display status of target element: [{}]", locator);
-        try {
-            return getElement(locator).isDisplayed();
-        } catch (Exception e) {
-            log.warn("Display verification failed for target element: [{}]. Element may not be present or visible.",
-                    locator, e);
-            return false;
-        }
-    }
-
-    /**
-     * Centralized method for retrieving the attribute value of a target
+     * B.9 Centralized method for retrieving the attribute value of a target
      * element.
      *
      * @param locator       The By locator used to identify the target element the
@@ -218,27 +241,11 @@ public abstract class BasePage {
         }
     }
 
+    // ==========================================
+    // VERIFICATION METHODS
+    // ==========================================
     /**
-     * Provides clean structural support for dynamic locators (e.g.: selecting
-     * collections dynamically) Accepts a locator template with placeholders and
-     * a replacement value to generate a specific locator instance at runtime,
-     * enabling flexible and reusable locator strategies for elements that share
-     * common patterns but differ in specific identifiers (e.g., product names,
-     * user IDs).
-     *
-     * @param xPathTemplate    The By locator template containing placeholders for
-     *                         dynamic values.
-     * @param replacementValue The value to replace the placeholders in the
-     *                         locator template.
-     * @return A By locator instance with the placeholders replaced by the
-     *         specified value.
-     */
-    protected By formatLocator(By xPathTemplate, String replacementValue) {
-        return By.xpath(String.format(xPathTemplate.toString().replace("By.xpath: ", ""), replacementValue));
-    }
-
-    /**
-     * Checks if the current browser window is sized as a mobile viewport.
+     * V.1 Checks if the current browser window is sized as a mobile viewport.
      * 
      * @return true if the window width is less than 768 pixels, false otherwise.
      */
@@ -249,6 +256,24 @@ public abstract class BasePage {
             return width < 768; // Tailwind md breakpoint
         } catch (Exception e) {
             log.error("Failed to determine viewport size: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * V.2 Boolean Verification wrapper asserting active component status
+     *
+     * @param locator The By locator used to identify the target element on the
+     *                page.
+     * @return true if the element is displayed, false otherwise.
+     */
+    protected Boolean isDisplayed(By locator) {
+        log.debug("Verifying display status of target element: [{}]", locator);
+        try {
+            return getElement(locator).isDisplayed();
+        } catch (Exception e) {
+            log.warn("Display verification failed for target element: [{}]. Element may not be present or visible.",
+                    locator, e);
             return false;
         }
     }

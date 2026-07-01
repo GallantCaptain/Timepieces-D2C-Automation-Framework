@@ -23,10 +23,12 @@ import lombok.extern.log4j.Log4j2;
  * Selectors and the password are resolved through ConfigReader so the same code
  * works in staging today and can be repointed at another env-gated environment
  * later without touching this class:
- *   - staging.password                  (required when the gate is present)
- *   - staging.gate.passwordField        (defaults to input[type='password'])
- *   - staging.gate.submitButton         (defaults to button[type='submit'])
- *   - staging.gate.detection.timeout    (defaults to 4 seconds; should be long enough to allow the gate to appear but short enough to fail fast if it's not there)
+ * - staging.password (required when the gate is present)
+ * - staging.gate.passwordField (defaults to input[type='password'])
+ * - staging.gate.submitButton (defaults to button[type='submit'])
+ * - staging.gate.detection.timeout (defaults to 4 seconds; should be long
+ * enough to allow the gate to appear but short enough to fail fast if it's not
+ * there)
  *
  * Detection is intentionally fast and non-fatal: unlockIfPresent() probes for
  * the password input with a short wait; if absent (cookie already set, or env
@@ -39,6 +41,9 @@ public class StagingGatePage extends BasePage {
     private final By submitButton;
     private final int detectionTimeoutSeconds;
 
+    // ==========================================
+    // Constructor
+    // ==========================================
     public StagingGatePage(WebDriver driver) {
         super(driver);
         this.passwordField = By.cssSelector(
@@ -54,8 +59,11 @@ public class StagingGatePage extends BasePage {
                 .orElse(4);
     }
 
+    // ==========================================
+    // PRIVATE HELPERS
+    // ==========================================
     /**
-     * If the gate is on the current page, fill the password and submit.
+     * P.1 If the gate is on the current page, fill the password and submit.
      * Returns true if the gate was detected and unlocked, false if no gate
      * was present (so the caller can decide whether to re-navigate).
      */
@@ -65,7 +73,8 @@ public class StagingGatePage extends BasePage {
             input = new WebDriverWait(driver, Duration.ofSeconds(detectionTimeoutSeconds))
                     .until(ExpectedConditions.visibilityOfElementLocated(passwordField));
         } catch (TimeoutException | NoSuchElementException e) {
-            log.debug("No staging gate password field detected within {}s — assuming gate is absent or already cleared.",
+            log.debug(
+                    "No staging gate password field detected within {}s — assuming gate is absent or already cleared.",
                     detectionTimeoutSeconds);
             return false;
         }
@@ -83,7 +92,8 @@ public class StagingGatePage extends BasePage {
             input.clear();
             input.sendKeys(password);
             clickElement(submitButton);
-            // Wait until the password field is no longer visible — proxy for "gate dismissed".
+            // Wait until the password field is no longer visible — proxy for "gate
+            // dismissed".
             waitForInvisibility(passwordField);
             log.info("Staging gate unlocked.");
             return true;
@@ -93,23 +103,11 @@ public class StagingGatePage extends BasePage {
         }
     }
 
+    // ==========================================
+    // BUSINESS LIBRARY
+    // ==========================================
     /**
-     * Checks if the password gate field is present on the page.
-     *
-     * @return true if the password field is visible, false otherwise.
-     */
-    public boolean isPasswordGatePresent() {
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(detectionTimeoutSeconds))
-                    .until(ExpectedConditions.visibilityOfElementLocated(passwordField));
-            return true;
-        } catch (TimeoutException | NoSuchElementException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Enters the password into the gate password field.
+     * B.1 Enters the password into the gate password field.
      *
      * @param password The gatekeeper password to enter.
      * @return this StagingGatePage for method chaining.
@@ -121,7 +119,7 @@ public class StagingGatePage extends BasePage {
     }
 
     /**
-     * Clicks the submit button on the password gate.
+     * B.2 Clicks the submit button on the password gate.
      *
      * @return this StagingGatePage for method chaining.
      */
@@ -131,8 +129,11 @@ public class StagingGatePage extends BasePage {
         return this;
     }
 
+    // ==========================================
+    // VERIFICATION METHODS
+    // ==========================================
     /**
-     * Verifies if the password wall has cleared successfully by checking for
+     * V.1 Verifies if the password wall has cleared successfully by checking for
      * the invisibility of the password field.
      *
      * @return true if cleared, false if still visible.
@@ -144,6 +145,21 @@ public class StagingGatePage extends BasePage {
             return true;
         } catch (TimeoutException e) {
             log.warn("Staging gate password field is still visible.");
+            return false;
+        }
+    }
+
+    /**
+     * V.2 Checks if the password gate field is present on the page.
+     *
+     * @return true if the password field is visible, false otherwise.
+     */
+    public boolean isPasswordGatePresent() {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(detectionTimeoutSeconds))
+                    .until(ExpectedConditions.visibilityOfElementLocated(passwordField));
+            return true;
+        } catch (TimeoutException | NoSuchElementException e) {
             return false;
         }
     }

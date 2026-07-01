@@ -77,3 +77,13 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Created `AuthenticationEngine.java` to generate fast session tokens via Rest-Assured, and added step definitions in `AccountSteps.java` to inject `"timepieces_session"` cookies for API-backed UI login bypass POC.
 - Created `IdempotencyApiTest.java` to test API-level idempotency, and added `Checkout_Idempotency.feature` / `CheckoutSteps.java` to verify button lockout after double-clicks to prevent duplicate payment submissions.
 
+## 2026-07-01
+
+- Structured the storefront test case roadmap into a new OKF topic document `test-case-roadmap.md` covering 6 distinct functional phases.
+- Registered the new roadmap topic in `OKF_INDEX.md` and updated its review timestamp.
+- Created `Cart_Bag_Management.feature` under `src/test/resources/features/03_cart_bag_management/` detailing 6 Gherkin BDD test scenarios for cart drawer transitions, product additions, quantity modifications, item removal, free shipping progress indicators, and session persistence.
+- Implemented and executed `scripts/add_cart_tcs.py` to register the new BDD scenarios as official test cases `QA-T44` through `QA-T49` in Zephyr Scale using the SmartBear Connect API.
+- Verified successful registration of the test cases via `list_zephyr_testcases.py`.
+- Refactored FLUENT INTERFACE doc comments in all page objects under the `timepieces` directory to return the correct class type in `{@code this}` and removed redundant "final step" comments.
+
+

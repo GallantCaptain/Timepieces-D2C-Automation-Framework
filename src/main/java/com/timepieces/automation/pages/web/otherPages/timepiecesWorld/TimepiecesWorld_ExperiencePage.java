@@ -1,0 +1,46 @@
+package com.timepieces.automation.pages.web.otherPages.timepiecesWorld;
+
+import org.openqa.selenium.WebDriver;
+
+import com.timepieces.automation.pages.BasePage;
+
+/**
+ * ExperiencePage: https://world.timepieces-d2c.example/
+ * The experience page is the first page the user lands upon when clicking on
+ * Timepieces World. It scrolls through each of the 5 timepieces and has a CTA
+ * button for each of the them that takes them to their respecitve Timepieces World
+ * product showcase page. The canvas here is full of static images that is
+ * controlled by scripts. The images load forward giving the appearance of a
+ * video when scrolling down. When scrolling up it gives the appearance of a
+ * video playing in reverse. The speed of the canvas cannot be controlled and
+ * can only be nudged to go forward or back. The progress bars at the side are
+ * not interactable and showcase the progress of the RW canvas both forwards and
+ * backwards. The order of the Products in the canvas sections are in the order:
+ * Arvion, Monarch, Auriqua, Astonia, Manifesta, and then all the products in
+ * the product card containers together in a static carousel at the last
+ * section.
+ */
+public class TimepiecesWorld_ExperiencePage extends BasePage {
+    // ==========================================
+    // Constructor
+    // ==========================================
+    public TimepiecesWorld_ExperiencePage(WebDriver driver) {
+        super(driver);
+    }
+
+    // ==========================================
+    // LOCATORS
+    // ==========================================
+
+    // ==========================================
+    // PRIVATE HELPERS
+    // ==========================================
+
+    // ==========================================
+    // BUSINESS LIBRARY
+    // ==========================================
+
+    // ==========================================
+    // VERIFICATION METHODS
+    // ==========================================
+}

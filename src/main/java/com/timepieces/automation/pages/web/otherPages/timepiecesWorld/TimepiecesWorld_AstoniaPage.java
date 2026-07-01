@@ -1,4 +1,4 @@
-package com.timepieces.automation.pages.components.headerOptionsComponent;
+package com.timepieces.automation.pages.web.otherPages.timepiecesWorld;
 
 import org.openqa.selenium.WebDriver;
 
@@ -7,15 +7,15 @@ import com.timepieces.automation.pages.BasePage;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * SearchComponent represents the global search modal overlay.
+ * 
+ * TimepiecesWorld_AstoniaPage: https://world.timepieces-d2c.example/products/astonia
  */
 @Log4j2
-public class globalSearchComponent extends BasePage {
-
+public class TimepiecesWorld_AstoniaPage extends BasePage {
     // ==========================================
     // Constructor
     // ==========================================
-    public globalSearchComponent(WebDriver driver) {
+    public TimepiecesWorld_AstoniaPage(WebDriver driver) {
         super(driver);
     }
 
