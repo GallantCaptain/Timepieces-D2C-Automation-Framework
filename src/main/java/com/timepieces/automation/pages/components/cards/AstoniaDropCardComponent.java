@@ -36,13 +36,14 @@ import lombok.extern.log4j.Log4j2;
  * Clicking on the card redirects the user to: URL:
  * https://www.timepieces-d2c.example/new-release/astonia (AstoniaDropPage)
  */
+
 @Log4j2
-public class AstoniaCardComponent extends BasePage {
+public class AstoniaDropCardComponent extends BasePage {
 
     // ==========================================
     // Constructor
     // ==========================================
-    public AstoniaCardComponent(WebDriver driver) {
+    public AstoniaDropCardComponent(WebDriver driver) {
         super(driver);
     }
 
@@ -93,7 +94,7 @@ public class AstoniaCardComponent extends BasePage {
      *
      * @return this AstoniaCardComponent for method chaining.
      */
-    public AstoniaCardComponent clickAstoniaDropCard() {
+    public AstoniaDropCardComponent clickAstoniaDropCard() {
         log.info("Waiting for the Astonia drop card, then clicking it.");
         waitForVisibility(astoniaDropCard);
         clickElement(astoniaDropCard);
@@ -110,7 +111,7 @@ public class AstoniaCardComponent extends BasePage {
      *
      * @return this AstoniaCardComponent for method chaining.
      */
-    public AstoniaCardComponent dismissAstoniaCard() {
+    public AstoniaDropCardComponent dismissAstoniaCard() {
         log.info("Dismissing the Astonia drop card via its close button.");
         clickElement(dismissAstoniaCardButton);
         log.info("Astonia drop card dismissed.");
@@ -129,7 +130,7 @@ public class AstoniaCardComponent extends BasePage {
      * @throws NoSuchElementException if the card does not appear within the
      *                                timeout.
      */
-    public AstoniaCardComponent clickAstoniaDropCardWhenVisible(int timeoutSeconds) {
+    public AstoniaDropCardComponent clickAstoniaDropCardWhenVisible(int timeoutSeconds) {
         log.info("Waiting up to {}s for the Astonia card to (re)appear, then clicking it.", timeoutSeconds);
         if (!becomesVisibleWithin(timeoutSeconds)) {
             throw new NoSuchElementException(

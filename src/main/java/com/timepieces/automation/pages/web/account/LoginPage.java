@@ -37,25 +37,35 @@ import lombok.extern.log4j.Log4j2;
  * The iframe locator is present for environments where it must be waited on.
  *
  * SECURITY NOTE — current OTP controls (observed on staging):
- * 1. OTP VERIFICATION HAS NO ATTEMPT LIMIT. Continue can be pressed unlimited times, and the
- *    OTP fields can be cleared and re-tried with different combinations indefinitely — no
- *    lockout, no escalating backoff, no CAPTCHA on the verify step. The 6-digit (1,000,000
- *    value) space is therefore fully brute-forceable. See {@link #probeUnlimitedOtpAttempts(int)}
- *    and the @OtpBruteForce security scenario, which document this exposure.
- * 2. RESEND OTP is gated only by a fixed ~90s countdown, then re-enabled — with NO cap on the
- *    total number of resends as long as each 90s window is waited out. See {@link #clickResendOtp()}.
- * 3. A ~90s "Too many attempts" COOLDOWN ({@code login-cooldown}) is the only lockout, and it is
- *    triggered by phone-number churn (submit a wrong number then the correct one, or submit the
- *    correct number then go back to change it) — NOT by wrong OTP guesses. See
- *    {@link #clickChangePhoneNumber()} / {@link #waitOutOtpCooldown(int)}.
+ * 1. OTP VERIFICATION HAS NO ATTEMPT LIMIT. Continue can be pressed unlimited
+ * times, and the
+ * OTP fields can be cleared and re-tried with different combinations
+ * indefinitely — no
+ * lockout, no escalating backoff, no CAPTCHA on the verify step. The 6-digit
+ * (1,000,000
+ * value) space is therefore fully brute-forceable. See
+ * {@link #probeUnlimitedOtpAttempts(int)}
+ * and the @OtpBruteForce security scenario, which document this exposure.
+ * 2. RESEND OTP is gated only by a fixed ~90s countdown, then re-enabled — with
+ * NO cap on the
+ * total number of resends as long as each 90s window is waited out. See
+ * {@link #clickResendOtp()}.
+ * 3. A ~90s "Too many attempts" COOLDOWN ({@code login-cooldown}) is the only
+ * lockout, and it is
+ * triggered by phone-number churn (submit a wrong number then the correct one,
+ * or submit the
+ * correct number then go back to change it) — NOT by wrong OTP guesses. See
+ * {@link #clickChangePhoneNumber()} / {@link #waitOutOtpCooldown(int)}.
  *
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this} (LoginPage) to allow
  * method chaining in step definitions. The final step (completeLogin) returns
  * the next page object once navigation is confirmed.
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class LoginPage extends HeaderOnlyBasePage {
+
     // ==========================================
     // CONSTRUCTOR
     // ==========================================
@@ -125,17 +135,18 @@ public class LoginPage extends HeaderOnlyBasePage {
      */
     private final By cloudflareChallengeFrame = By
             .cssSelector("iframe[title*='Widget containing a Cloudflare security challenge']");
-    
+
     /*
      * Additional Messages & Feedback - Pre and Post OTP submission Before Phone
      * Number Submission
      */
     private final By additionalWhatsAppMessage = By.cssSelector("button[data-testid='login-send-otp'] + p");
-    //Invalid Phone Number [Only supported countries get the check - India, USA, UK, UAE]
+    // Invalid Phone Number [Only supported countries get the check - India, USA,
+    // UK, UAE]
     private final By invalidPhoneNumberMessage = By.cssSelector("div[data-testid='login-error']");
     // Unsupported Country Message when selecting a country not enabled for OTP:
     private final By unsupportedCountryMessage = By.cssSelector("div[data-testid='login-error']");
-    //Invalid OTP Message - Wrong OTP Submission
+    // Invalid OTP Message - Wrong OTP Submission
     /* The invalid OTP button has unlimited attempts */
     private final By invalidOtpMessage = By.cssSelector("div[data-testid='login-otp-error']");
 
@@ -145,10 +156,14 @@ public class LoginPage extends HeaderOnlyBasePage {
      */
     private final By tooManyAttemptsMessageLockout = By.cssSelector("div[data-testid='login-cooldown']");
 
-    // NOTE: an OTP-SEND rate-limit backoff toast ("Too many attempts / Please wait Ns") used to be
-    // mapped here, but that throttle is disabled on staging (sending is effectively unlimited with a
-    // short reset). The only real lockout is the post-OTP change-phone cooldown, mapped above as
-    // tooManyAttemptsMessageLockout (login-cooldown). Locators intentionally removed — see the
+    // NOTE: an OTP-SEND rate-limit backoff toast ("Too many attempts / Please wait
+    // Ns") used to be
+    // mapped here, but that throttle is disabled on staging (sending is effectively
+    // unlimited with a
+    // short reset). The only real lockout is the post-OTP change-phone cooldown,
+    // mapped above as
+    // tooManyAttemptsMessageLockout (login-cooldown). Locators intentionally
+    // removed — see the
     // class-level SECURITY NOTE.
 
     // Timepieces Data Secure Message [Ui Assertion Only, Always Visible on Login
@@ -195,12 +210,11 @@ public class LoginPage extends HeaderOnlyBasePage {
     // the phone number after submitting and before entering the OTP):
     private final By changePhoneNumber = By.cssSelector("button[data-testid='login-change-phone']");
 
-
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
     /**
-     * Opens the country code dropdown, types the search term, and clicks the
+     * P.1 Opens the country code dropdown, types the search term, and clicks the
      * first matching option. Extracted to eliminate the duplication that previously
      * existed across configureCountryCodeByName, configureCountryCodeByNumber,
      * and enterMobileNumber.
@@ -224,13 +238,11 @@ public class LoginPage extends HeaderOnlyBasePage {
          * The previous loop iterated the scroll container itself and called .click() on
          * it, which Chrome rejects with "element click intercepted" because the
          * styled-jsx wrapper inside is the real hit target. Target the leaf-most
-         * descendant
-         * whose normalized text contains the search term — that's the actual option
-         * item.
+         * descendant whose normalized text contains the search term — that's the
+         * actual option item.
          * Substring contains() picks up false positives: searching "India" also matched
          * "British Indian Ocean Territory" and document order returned +246 first. Use
          * a word-boundary check by wrapping both the haystack and the needle in spaces
-         * —
          * so "India" only matches when surrounded by whitespace (start/end of string
          * counts via the space-wrap), not when embedded inside "Indian" or similar.
          */
@@ -250,7 +262,7 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /*
-     * This is to ensure proper XPath literalization. It works for strings
+     * P.2 This is to ensure proper XPath literalization. It works for strings
      * containing single or double quotes.
      */
     private static String xpathLiteral(String value) {
@@ -270,8 +282,10 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * Polls until the element is present, enabled, and has no {@code disabled} attribute,
-     * or the timeout elapses. Used for buttons gated by a countdown (e.g. Resend OTP).
+     * P.3 Polls until the element is present, enabled, and has no {@code disabled}
+     * attribute,
+     * or the timeout elapses. Used for buttons gated by a countdown (e.g. Resend
+     * OTP).
      */
     private void waitForElementEnabled(By locator, int timeoutSeconds) {
         new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds)).until(d -> {
@@ -444,11 +458,15 @@ public class LoginPage extends HeaderOnlyBasePage {
         try {
             waitForVisibility(verifyAccessMessage);
         } catch (TimeoutException e) {
-            // The OTP-send "Too many attempts, wait Ns" backoff toast is DISABLED (sending is
-            // effectively unlimited with a short reset), so it is no longer the suspect here.
+            // The OTP-send "Too many attempts, wait Ns" backoff toast is DISABLED (sending
+            // is
+            // effectively unlimited with a short reset), so it is no longer the suspect
+            // here.
             // The only remaining send-OTP blocker is the ~90s "Too many attempts" COOLDOWN
-            // (login-cooldown), tripped by phone-number churn. Surface that distinctly so it is
-            // reported as a known cooldown and NOT blindly retried (RetryAnalyzer skips it).
+            // (login-cooldown), tripped by phone-number churn. Surface that distinctly so
+            // it is
+            // reported as a known cooldown and NOT blindly retried (RetryAnalyzer skips
+            // it).
             if (isOtpCooldownActive()) {
                 int cooldown = configuredOtpCooldownSeconds();
                 log.error("OTP send blocked by the ~{}s 'Too many attempts' cooldown (login-cooldown).", cooldown);
@@ -462,8 +480,10 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * Fast, non-blocking check for the ~90s "Too many attempts" cooldown lockout
-     * (the {@code login-cooldown} element). Uses {@code findElements} so it adds no wait.
+     * B. 8 Fast, non-blocking check for the ~90s "Too many attempts" cooldown
+     * lockout
+     * (the {@code login-cooldown} element). Uses {@code findElements} so it adds no
+     * wait.
      *
      * @return true if the cooldown lockout is currently on the page.
      */
@@ -479,7 +499,7 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.8 Enters the OTP across the individual digit input fields.
+     * B.9 Enters the OTP across the individual digit input fields.
      * The OTP page renders one input per digit (otpInputField). This method
      * distributes each character of the OTP string to its corresponding field.
      * Assumes the OTP length matches the number of input fields on the page.
@@ -514,7 +534,7 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.9 Clicks the Continue button to submit the entered OTP and complete login.
+     * B.10 Clicks the Continue button to submit the entered OTP and complete login.
      * This is the final action on the LoginPage. After a successful login,
      * the application redirects to the homepage (new users see OnboardingPage
      * first).
@@ -526,9 +546,12 @@ public class LoginPage extends HeaderOnlyBasePage {
         log.info("Clicking Continue button to submit OTP.");
         clickElement(continueButton);
         log.info("Continue clicked. Login flow submitted.");
-        // SECURITY: there is NO limit on how many times this can be pressed with wrong codes,
-        // and no lockout/backoff on the verify step — see probeUnlimitedOtpAttempts(int) and the
-        // @OtpBruteForce scenario. The only lockout (login-cooldown) comes from phone-number
+        // SECURITY: there is NO limit on how many times this can be pressed with wrong
+        // codes,
+        // and no lockout/backoff on the verify step — see
+        // probeUnlimitedOtpAttempts(int) and the
+        // @OtpBruteForce scenario. The only lockout (login-cooldown) comes from
+        // phone-number
         // churn, not from wrong OTP guesses.
         // TODO: Replace return type with AccountPage once AccountPage POM is created:
         // return new AccountPage(driver);
@@ -536,10 +559,11 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.10 Clicks the "Change phone number" link on the OTP entry screen.
+     * B.11 Clicks the "Change phone number" link on the OTP entry screen.
      * Returns the user to the phone number entry view.
      *
-     * SECURITY/REALITY: changing the number after submitting an OTP — or submitting a wrong
+     * SECURITY/REALITY: changing the number after submitting an OTP — or submitting
+     * a wrong
      * number then the correct one — trips the ~90s "Too many attempts" cooldown
      * ({@code login-cooldown}), during which Send OTP is blocked. Call
      * {@link #waitOutOtpCooldown(int)} if a test must continue through it.
@@ -555,11 +579,14 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.11 Clicks the "Resend OTP" link to request a new OTP code.
+     * B.12 Clicks the "Resend OTP" link to request a new OTP code.
      *
-     * REALITY/SECURITY: resend is gated only by a fixed ~90s countdown after each dispatch —
-     * the button is disabled until it elapses, then re-enabled, with NO cap on the total number
-     * of resends as long as each window is waited out. This method waits for the button to
+     * REALITY/SECURITY: resend is gated only by a fixed ~90s countdown after each
+     * dispatch —
+     * the button is disabled until it elapses, then re-enabled, with NO cap on the
+     * total number
+     * of resends as long as each window is waited out. This method waits for the
+     * button to
      * become enabled (cooldown + small buffer) before clicking.
      *
      * @return this LoginPage for method chaining.
@@ -576,20 +603,27 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.12 SECURITY PROBE — demonstrates the missing OTP attempt limit.
-     * Submits {@code attempts} deliberately-WRONG 6-digit codes back to back, clearing the
-     * fields between each (exactly what an attacker's script does). The verify step has no
-     * server-side cap, so each wrong code is merely rejected and the OTP screen stays usable.
+     * B.13 SECURITY PROBE — demonstrates the missing OTP attempt limit.
+     * Submits {@code attempts} deliberately-WRONG 6-digit codes back to back,
+     * clearing the
+     * fields between each (exactly what an attacker's script does). The verify step
+     * has no
+     * server-side cap, so each wrong code is merely rejected and the OTP screen
+     * stays usable.
      *
      * @param attempts how many wrong codes to try.
-     * @return the number of wrong submissions accepted for another try (i.e. NOT blocked).
-     *         Equal to {@code attempts} ⇒ the app never locked out ⇒ the brute-force exposure
-     *         is present. A value below {@code attempts} means a lockout finally appeared.
+     * @return the number of wrong submissions accepted for another try (i.e. NOT
+     *         blocked).
+     *         Equal to {@code attempts} ⇒ the app never locked out ⇒ the
+     *         brute-force exposure
+     *         is present. A value below {@code attempts} means a lockout finally
+     *         appeared.
      */
     public int probeUnlimitedOtpAttempts(int attempts) {
         int unblocked = 0;
         for (int i = 0; i < attempts; i++) {
-            // Deterministic wrong codes; for non-Twilio test numbers EVERY code is wrong anyway.
+            // Deterministic wrong codes; for non-Twilio test numbers EVERY code is wrong
+            // anyway.
             String wrongOtp = String.format("%06d", (i * 7 + 1) % 1_000_000);
             clearOtpFields();
             enterOtp(wrongOtp);
@@ -612,7 +646,8 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.13 Clears all six OTP digit input fields (used between brute-force attempts).
+     * B.14 Clears all six OTP digit input fields (used between brute-force
+     * attempts).
      *
      * @return this LoginPage for method chaining.
      */
@@ -630,9 +665,11 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * B.14 Waits for the ~90s "Too many attempts" cooldown to elapse (lockout to disappear).
+     * B.15 Waits for the ~90s "Too many attempts" cooldown to elapse (lockout to
+     * disappear).
      *
-     * @param maxSeconds upper bound to wait (use ~95 to cover the 90s window plus jitter).
+     * @param maxSeconds upper bound to wait (use ~95 to cover the 90s window plus
+     *                   jitter).
      * @return this LoginPage for method chaining.
      */
     public LoginPage waitOutOtpCooldown(int maxSeconds) {
@@ -705,8 +742,10 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * V.4 Verifies the 'invalid OTP' error ({@code login-otp-error}) is shown after a wrong
-     * code submission. NOTE: the app shows this error but does NOT lock the user out — wrong
+     * V.4 Verifies the 'invalid OTP' error ({@code login-otp-error}) is shown after
+     * a wrong
+     * code submission. NOTE: the app shows this error but does NOT lock the user
+     * out — wrong
      * codes can be retried without limit (see the @OtpBruteForce scenario).
      *
      * @return true if the invalid-OTP error is displayed, false otherwise.
@@ -721,7 +760,8 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * V.4b Verifies the 'invalid phone number' error ({@code login-error}) is shown for an
+     * V.4b Verifies the 'invalid phone number' error ({@code login-error}) is shown
+     * for an
      * unsupported/malformed number (supported countries only: India, USA, UK, UAE).
      *
      * @return true if the invalid phone number error is displayed, false otherwise.
@@ -773,9 +813,12 @@ public class LoginPage extends HeaderOnlyBasePage {
     /**
      * V.7 Verifies that the ~90s "Too many attempts" cooldown lockout
      * ({@code login-cooldown}) is displayed.
-     * REALITY: this cooldown is triggered by phone-number churn — submitting a wrong number
-     * then the correct one, or submitting the correct number then going back to change it. It is
-     * NOT triggered by wrong OTP guesses (those are unlimited; see the @OtpBruteForce scenario).
+     * REALITY: this cooldown is triggered by phone-number churn — submitting a
+     * wrong number
+     * then the correct one, or submitting the correct number then going back to
+     * change it. It is
+     * NOT triggered by wrong OTP guesses (those are unlimited; see
+     * the @OtpBruteForce scenario).
      *
      * @return true if the cooldown lockout message is displayed, false otherwise.
      */
@@ -860,7 +903,8 @@ public class LoginPage extends HeaderOnlyBasePage {
     }
 
     /**
-     * V.13 Verifies that the login phone heading ({@code login-phone-heading}) is displayed.
+     * V.13 Verifies that the login phone heading ({@code login-phone-heading}) is
+     * displayed.
      *
      * @return true if the login phone heading is displayed, false otherwise.
      */
