@@ -1,6 +1,35 @@
 # Delta Updates
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
+
+## 2026-07-02 Maven Profiles Alignment & Page Object Revamp
+
+### Added Items
+
+- `src/main/java/com/timepieces/automation/pages/web/otherPages/TimepiecesHousePage.java` — Renamed/added page object class representing the experience center storefront page.
+- `src/main/java/com/timepieces/automation/pages/web/otherPages/SiteMapPage.java` — Renamed/added sitemap page object.
+- `src/main/java/com/timepieces/automation/pages/web/otherPages/TimepiecesWallPage.java` — Renamed/added polaroid wall canvas page object.
+- `src/main/java/com/timepieces/automation/pages/web/otherPages/timepieces_world/` — Segregated world showcase page objects (Arvion, Monarch, Astonia, Auriqua, Manifesta) and components.
+
+### Modified Items
+
+- `src/main/java/com/timepieces/automation/utils/BrowserUtils.java` — Refactored readyState wait, fixed parameters ordering, and changed return type to boolean.
+- `src/test/java/com/timepieces/automation/bdd/runners/SmokeRunner.java` — Added `@Test(groups = "smoke")`.
+- `src/test/java/com/timepieces/automation/bdd/runners/RegressionRunner.java` — Added `@Test(groups = "regression")`.
+- `src/test/java/com/timepieces/automation/tdd/api/SearchApiTest.java` — Added `@Test(groups = {"regression"})` to align the 100 search tests.
+- Entire codebase page objects, step definitions, and utilities — Formatted code, aligned imports, added standard Javadoc headers (`@version 1.0` and `@author Avinash Rath`).
+- `docs/okf/changelog.md` — Logged the updates.
+- `docs/okf/delta-updates.md` — Logged today's changes.
+
+### Status Changes
+
+- Resolved TestNG / Surefire group alignment issue; `SmokeSuite` and `RegressionSuite` Maven profiles now successfully discover and execute runners and API tests.
+- Reorganized `otherPages` and product categories to resolve stale Javadoc and obsolete class files.
+
+### Verification
+
+- Successfully compiled the project: `.\mvnw.cmd test-compile` -> BUILD SUCCESS.
+- Ran BDD smoke tests with profile: `.\mvnw.cmd test -PSmokeSuite` -> BUILD SUCCESS (2 scenarios passed).
 
 ## 2026-07-01 Page Object Fluent Interface Comments Refactoring
 

@@ -1,7 +1,6 @@
 package com.timepieces.automation.pages.web.account;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 
 import org.openqa.selenium.By;
@@ -13,24 +12,43 @@ import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.timepieces.automation.pages.HeaderOnlyBasePage;
-import com.timepieces.automation.pages.web.StagingGatePage;
-import com.timepieces.automation.utils.BrowserUtils;
 import com.timepieces.automation.utils.ConfigReader;
-import com.timepieces.automation.utils.WindowUtils;
 
 import lombok.extern.log4j.Log4j2;
 
 /**
- * OnboardingPage — Page Object Repository for the Timepieces Onboarding Page.
+ * OnboardingPage: https://www.timepieces-d2c.example/becomemore
+ * The Page Object Repository for the Timepieces Onboarding Page.
  *
  * Displayed once for first-time users immediately after successful OTP
  * verification on the LoginPage. Collects the user's personal details
  * (name, email, gender, DOB, profession, description) and copies them
  * to the Account and Profile pages upon submission.
  *
- * After clicking "Enter Timepieces", the user is redirected to the homepage.
- * This page is never shown again — subsequent profile edits go through
- * the ProfilePage (/account/profile).
+ * The 'new' onboarding experience is triggered though two different ways. A
+ * first time user can signup via any of the wishlist/register interest forms
+ * and is then prompted to go to the onboarding or they can directly signup via
+ * the login page and have their number verified via otp, after which the new
+ * onbaording process will trigger.
+ * Currently there are 7-8 steps for the user to fill when they get to the
+ * onboarding journey. They will need to the need to fill the mandatory steps to
+ * have the profile completed. There are progress bars for each step that turn
+ * green when filled. There is an llm option to help fill the description and
+ * other details. The last step before submitting/completing the onboarding
+ * journey is to upload a profile photo. There are two ways a user can go on
+ * the onboarding journey. They can choose the manual path to fill all the
+ * details manually or they may choose the import from LinkedIn path that
+ * automatically fills in most of the fields when the user confirms the valid
+ * linkedin url profile link that they paste is theirs.
+ * 
+ * 
+ * -- Only Happy Path testing done so far. Need to do negative and edge testing
+ * with profanities and other cases to check the llm restrictions. --
+ * "There is still a major defect with the new onboarding for first time users,
+ * and it is being worked on."
+ * All the locators in this page are now useless, although the methods can
+ * be reworked a bit.
+ * -- Will update this part with version 1.0 --
  *
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this} (OnboardingPage)
@@ -40,9 +58,17 @@ import lombok.extern.log4j.Log4j2;
  * For UI language verification, locale-specific .properties files
  * (en.properties, es.properties) contain expected label text keyed
  * by the same locator identifiers.
+ * 
+ * The onboarding experience has been completely revamped, so this page is
+ * outdated and will be replaced for the revamp.
+ * 
+ * @version 0.1
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class OnboardingPage extends HeaderOnlyBasePage {
+
 	// ==========================================
 	// Constructor
 	// ==========================================
@@ -73,7 +99,10 @@ public class OnboardingPage extends HeaderOnlyBasePage {
 	// ==========================================
 	// LOCATORS
 	// ==========================================
-
+	/*
+	 * These locators are redundant and will be replaced with the new onboarding
+	 * page ones.
+	 */
 	// Login Page {First Time Setup}: https://www.timepieces-d2c.example/login
 	// Timepieces Image (Left Side): timepiecesLoginPageImage [Shared with LoginPage]
 

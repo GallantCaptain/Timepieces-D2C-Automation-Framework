@@ -11,14 +11,24 @@ import lombok.extern.log4j.Log4j2;
  * ActionUtils class provides utility methods for performing complex user
  * interactions using Selenium WebDriver's Actions class.
  * It includes methods for hovering over elements, dragging and dropping, and
- * sending keys with modifiers
+ * sending keys with modifiers.
  * Scope: This class handles multistep and gesture based browser interactions,
  * that goes beyond a simple .click() or .sendKeys().
  * All the methods here are stateless, and receive a driver instance explicitly
  * for thread safety in parallel runs.
+ * 
+ * FLUENT INTERFACE:
+ * All methods return {@code void} to allow method
+ * chaining in step definitions, as this is used to perform actions on
+ * webelements.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class ActionsUtils {
+
     // ==========================================
     // 1. MOUSE ACTIONS
     // ==========================================

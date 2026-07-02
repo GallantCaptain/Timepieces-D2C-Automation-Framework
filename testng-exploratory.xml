@@ -6,11 +6,11 @@
     Runs exactly 50 randomized search queries from the keyword pool, defaulting to production.
 -->
 <suite name="Timepieces Exploratory Search Suite">
-    
+
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
     </listeners>
-    
+
     <!-- Set default environment parameter to production -->
     <parameter name="environment" value="production" />
 

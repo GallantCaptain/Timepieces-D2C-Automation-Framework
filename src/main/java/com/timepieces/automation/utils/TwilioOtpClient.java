@@ -16,31 +16,42 @@ import lombok.extern.log4j.Log4j2;
 /**
  * Reads the most recent inbound OTP SMS for the test phone number from Twilio.
  *
- * <p>This is a legitimate, single-credential client: it authenticates with ONE
+ * <p>
+ * This is a legitimate, single-credential client: it authenticates with ONE
  * Account SID + Auth Token (yours) and reads messages delivered to ONE Twilio
  * number you own. It is the read-back side of an end-to-end "log in with the
  * real OTP" test. (It deliberately replaces the previous TwilioValidator, which
- * brute-forced credentials by enumerating SID/token permutations — never do that.)
+ * brute-forced credentials by enumerating SID/token permutations — never do
+ * that.)
  *
- * <p>Credentials and the inbox number are supplied via environment (never
+ * <p>
+ * Credentials and the inbox number are supplied via environment (never
  * committed). All three are required:
+ * 
  * <pre>
  *   TWILIO_ACCOUNT_SID   - your Account SID (AC...)
  *   TWILIO_AUTH_TOKEN    - your Auth Token (rotate it if it has ever been shared)
  *   TWILIO_PHONE_NUMBER  - the Twilio number (E.164, e.g. +15551234567) that
  *                          receives the OTP, i.e. the number you log in with
  * </pre>
- * Reads fall back to ConfigReader keys (twilio.account.sid / twilio.auth.token /
- * twilio.phone.number) for local runs that prefer a gitignored *.local.properties.
+ * 
+ * Reads fall back to ConfigReader keys (twilio.account.sid / twilio.auth.token
+ * /
+ * twilio.phone.number) for local runs that prefer a gitignored
+ * *.local.properties.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public final class TwilioOtpClient {
 
-    private static final String MESSAGES_API =
-            "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json?To=%s&PageSize=20";
+    private static final String MESSAGES_API = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json?To=%s&PageSize=20";
 
     // Grabs each message body from the Messages list JSON, newest first (Twilio
-    // returns them date-sent descending), so the first one with a 6-digit code wins.
+    // returns them date-sent descending), so the first one with a 6-digit code
+    // wins.
     private static final Pattern BODY_FIELD = Pattern.compile("\"body\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
     private static final Pattern SIX_DIGIT = Pattern.compile("\\b(\\d{6})\\b");
 
@@ -52,11 +63,11 @@ public final class TwilioOtpClient {
      * Polls Twilio for up to {@code maxWaitSeconds} until an inbound SMS containing
      * a 6-digit code arrives for the configured number, then returns that code.
      *
-     * @param maxWaitSeconds total time to wait for the OTP SMS to land
+     * @param maxWaitSeconds   total time to wait for the OTP SMS to land
      * @param pollEverySeconds delay between polls
      * @return the 6-digit OTP
      * @throws IllegalStateException if Twilio is not configured
-     * @throws RuntimeException if no OTP arrives within the budget
+     * @throws RuntimeException      if no OTP arrives within the budget
      */
     public String fetchLatestOtp(int maxWaitSeconds, int pollEverySeconds) {
         String sid = require("TWILIO_ACCOUNT_SID", "twilio.account.sid");
@@ -121,7 +132,8 @@ public final class TwilioOtpClient {
         if (value == null || value.isBlank()) {
             value = ConfigReader.get(configKey);
         }
-        // ConfigReader returns the literal "${TWILIO_...}" placeholder from staging.properties
+        // ConfigReader returns the literal "${TWILIO_...}" placeholder from
+        // staging.properties
         // when nothing is wired — treat that as unset rather than a real value.
         if (value == null || value.isBlank() || value.startsWith("${")) {
             throw new IllegalStateException("Twilio is not configured: set the " + envName

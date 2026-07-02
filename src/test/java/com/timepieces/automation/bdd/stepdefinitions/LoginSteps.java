@@ -15,6 +15,10 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * LoginSteps
+ */
+
 // Assertions belong in Step Definitions, NEVER in Page Objects
 @Log4j2
 public class LoginSteps {
@@ -29,7 +33,10 @@ public class LoginSteps {
 
     @Given("a user navigates to the Timepieces login page")
     public void a_user_navigates_to_the_timepieces_login_page() {
-        /* Initialize the page object using the ThreadLocal driver instantiated by Hooks.java */
+        /*
+         * Initialize the page object using the ThreadLocal driver instantiated by
+         * Hooks.java
+         */
         loginPage = new LoginPage(DriverFactory.getDriver());
 
         // Use the fluent POM to navigate
@@ -51,17 +58,23 @@ public class LoginSteps {
         loginPage.enterPhoneNumber(phoneNumber);
     }
 
-    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key is active, otherwise need to create one in test bed.
+    // This step assumes that staging has CAPTCHA bypassed or a Turnstile test key
+    // is active, otherwise need to create one in test bed.
     @And("clicks the send OTP button")
     public void clicks_the_send_otp_button() {
         try {
             loginPage.clickSendOtpButton();
         } catch (OtpRateLimitException e) {
-            // Parallel scenarios and back-to-back automation runs reuse the same login number, so
-            // the ~90s "Too many attempts" cooldown (login-cooldown) can be active when this step
-            // runs. That is an environment timing artifact, not a product defect — so instead of
-            // failing, wait the cooldown out (its duration + a small buffer) and retry the send
-            // ONCE so the scenario can proceed. A second cooldown means the number is genuinely
+            // Parallel scenarios and back-to-back automation runs reuse the same login
+            // number, so
+            // the ~90s "Too many attempts" cooldown (login-cooldown) can be active when
+            // this step
+            // runs. That is an environment timing artifact, not a product defect — so
+            // instead of
+            // failing, wait the cooldown out (its duration + a small buffer) and retry the
+            // send
+            // ONCE so the scenario can proceed. A second cooldown means the number is
+            // genuinely
             // stuck, and we let it surface.
             int waitSeconds = (e.getWaitSeconds() >= 0 ? e.getWaitSeconds() : 90) + 10;
             log.warn("Send OTP hit the ~{}s cooldown (parallel/automation churn). Waiting it out and "
@@ -84,11 +97,13 @@ public class LoginSteps {
         loginPage.enterOtp(otp);
     }
 
-    // --- End-to-end OTP read-back via Twilio (tagged @OtpE2E; excluded from default runs) ---
+    // --- End-to-end OTP read-back via Twilio (tagged @OtpE2E; excluded from
+    // default runs) ---
 
     @When("the user enters their Twilio-registered phone number")
     public void the_user_enters_their_twilio_registered_phone_number() {
-        // Country name + national digits for the Twilio number, supplied via env/local config so
+        // Country name + national digits for the Twilio number, supplied via env/local
+        // config so
         // the real number is never committed. e.g. TWILIO_TEST_COUNTRY="United States".
         String country = resolve("TWILIO_TEST_COUNTRY", "twilio.test.country");
         String phone = resolve("TWILIO_TEST_PHONE", "twilio.test.phone");
@@ -99,12 +114,16 @@ public class LoginSteps {
 
     @When("the user enters the OTP retrieved from Twilio")
     public void the_user_enters_the_otp_retrieved_from_twilio() {
-        // Wait up to 60s for the SMS to land, polling every 5s — OTP delivery has real latency.
+        // Wait up to 60s for the SMS to land, polling every 5s — OTP delivery has real
+        // latency.
         String otp = new TwilioOtpClient().fetchLatestOtp(60, 5);
         loginPage.enterOtp(otp);
     }
 
-    /** Reads an env var first, then a ConfigReader key; fails clearly if neither is set. */
+    /**
+     * Reads an env var first, then a ConfigReader key; fails clearly if neither is
+     * set.
+     */
     private String resolve(String envName, String configKey) {
         String value = System.getenv(envName);
         if (value == null || value.isBlank()) {
@@ -122,7 +141,8 @@ public class LoginSteps {
         loginPage.clickContinueButton();
     }
 
-    // --- OTP brute-force security probe (tagged @OtpBruteForce; opt-in, not in smoke/regression) ---
+    // --- OTP brute-force security probe (tagged @OtpBruteForce; opt-in, not in
+    // smoke/regression) ---
 
     @When("the user submits {int} incorrect OTP codes in a row")
     public void the_user_submits_incorrect_otp_codes_in_a_row(int attempts) {
@@ -135,9 +155,12 @@ public class LoginSteps {
     public void the_otp_entry_is_never_locked_or_rate_limited() {
         int attempts = (int) testContext.getContextData("otpBruteForceAttempts");
         int allowed = (int) testContext.getContextData("otpBruteForceAllowed");
-        // This assertion PASSES today because the verify step has no attempt limit — i.e. it
-        // documents a real vulnerability. Once a server-side cap/lockout is added (the fix),
-        // `allowed` will be < attempts and this scenario will START FAILING, signalling that the
+        // This assertion PASSES today because the verify step has no attempt limit —
+        // i.e. it
+        // documents a real vulnerability. Once a server-side cap/lockout is added (the
+        // fix),
+        // `allowed` will be < attempts and this scenario will START FAILING, signalling
+        // that the
         // exposure is closed and the test should be inverted to assert the lockout.
         assertThat(allowed)
                 .as("SECURITY: expected all %s wrong OTP submissions to be accepted with no lockout "

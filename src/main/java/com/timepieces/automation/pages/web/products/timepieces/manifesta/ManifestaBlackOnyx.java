@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.timepieces.manifesta;
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -30,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class ManifestaBlackOnyx extends StoreFrontBasePage {
+public class ManifestaBlackOnyx extends SharedTemplate_Manifesta {
 
     // ==========================================
     // Constructor

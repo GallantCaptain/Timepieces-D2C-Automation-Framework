@@ -14,9 +14,18 @@ import lombok.extern.log4j.Log4j2;
  * submitting the form. For email, a support number is given with the
  * auto-generated reply that the support team will get back within a business
  * day.
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this} (ContactPage)
+ * to allow method chaining in step definitions.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class ContactPage extends StoreFrontBasePage {
+
     // ==========================================
     // Constructor
     // ==========================================

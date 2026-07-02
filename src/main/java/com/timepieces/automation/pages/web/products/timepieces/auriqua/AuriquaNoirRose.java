@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.timepieces.auriqua;
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -27,8 +25,9 @@ import lombok.extern.log4j.Log4j2;
  * @version 1.0
  * @author Avinash Rath
  */
+
 @Log4j2
-public class AuriquaNoirRose extends StoreFrontBasePage {
+public class AuriquaNoirRose extends SharedTemplate_Auriqua {
 
     // ==========================================
     // Constructor

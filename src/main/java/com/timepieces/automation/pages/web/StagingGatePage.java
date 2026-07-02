@@ -33,7 +33,15 @@ import lombok.extern.log4j.Log4j2;
  * Detection is intentionally fast and non-fatal: unlockIfPresent() probes for
  * the password input with a short wait; if absent (cookie already set, or env
  * has no gate at all) it returns false and the caller continues normally.
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this} (StagingGatePage)
+ * to allow method chaining in step definitions.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class StagingGatePage extends BasePage {
 

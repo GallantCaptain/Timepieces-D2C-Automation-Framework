@@ -24,12 +24,21 @@ import lombok.extern.log4j.Log4j2;
  * Initialises a shared WebDriverWait that all page methods inherit. Timeout is
  * read from config (explicit.wait.timeout), defaulting to 10s, so it can be
  * overridden per environment without touching code. 3. Runs
- * BY Plain Objects, e.g. private final By webElementName = By.....
+ * By Plain Objects,
+ * e.g. private final By webElementName = By.cssSelector("button[id='clear']");
  *
  * WHAT DOES NOT BELONG HERE: - Business logic (belongs in individual page
  * objects) - Assertions (belong in step definitions or test classes) - Driver
  * initialisation or teardown (belongs in DriverFactory + Hooks)
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this} (Appropriate Page
+ * Object) to allow method chaining in step definitions.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public abstract class BasePage {
 

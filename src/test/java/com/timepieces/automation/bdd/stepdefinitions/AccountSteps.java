@@ -14,6 +14,10 @@ import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 
+/**
+ * AccountSteps
+ */
+
 @Log4j2
 public class AccountSteps {
 
@@ -29,11 +33,11 @@ public class AccountSteps {
     @Given("the customer bypasses the UI login using API identity {string}")
     public void the_customer_bypasses_the_ui_login_using_api_identity(String emailOrPhone) {
         WebDriver driver = DriverFactory.getDriver();
-        
+
         // 1. Fetch token via API and save to context
         authEngine.loginViaBackendApi(emailOrPhone);
         String token = (String) testContext.getContextData("AUTH_TOKEN");
-        
+
         // 2. Open page on target domain before setting cookies
         String baseUrl = ConfigReader.get("base.url");
         if (baseUrl == null || baseUrl.isEmpty()) {

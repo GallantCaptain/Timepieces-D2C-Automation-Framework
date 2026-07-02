@@ -11,26 +11,34 @@ import com.timepieces.automation.utils.ConfigReader;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * AccountPage — Page Object Repository for the Timepieces Account Page (/account).
+ * AccountPage: https://www.timepieces-d2c.example/account
+ * This is the Page Object Repository for the Timepieces Account Page (/account).
  *
  * This page is displayed after a successful login (returning users) or after
  * completing the onboarding flow (new users). It shows the user's profile
  * summary, profile completion status, and provides navigation to the
  * profile edit page.
  *
- * KEY STATES:
- * 1. Profile Incomplete — shows a banner prompting the user to complete their
- * profile
- * 2. Profile Complete — shows the user's uploaded profile image and account
- * details
- *
+ * Contains links to the Profile Page, Order History page,
+ * Owned Timepieces page, and Wishlist Page. There is an option to logout of
+ * the website using the logout button. The progile photo, Name, Designation,
+ * brief description are showcased in the account page if filled prior during
+ * the onboarding journey.
+ * 
+ * This page only contains the Header.
+ * 
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this} (AccountPage) to
  * allow
  * method chaining in step definitions.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
-@Log4j2 // Lombok logger annotation, Takes care of the logger instances
+
+@Log4j2
 public class AccountPage extends HeaderOnlyBasePage {
+
     // ==========================================
     // Constructor
     // ==========================================

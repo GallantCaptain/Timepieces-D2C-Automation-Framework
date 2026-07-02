@@ -10,7 +10,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
-//import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -25,8 +24,32 @@ import java.time.format.DateTimeFormatter;
 
 import lombok.extern.log4j.Log4j2;
 
-@Log4j2 // Lombok logger annotation, Takes care of the logger instances
+/**
+ * BrowserUtils class provides utility methods for performing complex user
+ * interactions using Selenium WebDriver's Advanced Synchronization 'Fluent
+ * Waits',
+ * complex browser related actions like switching between windows/tabs, iframes,
+ * etc.
+ * Also there are methods using Javascript Executor or Direct WebDriver methods
+ * to perform actions,
+ * as well as Screenshot Utility methods to capture screenshots of the browser
+ * at different stages of the test execution.
+ * All the methods here are stateless, and receive a driver instance explicitly
+ * for thread safety in parallel runs.
+ * 
+ * FLUENT INTERFACE:
+ * All methods return {@code Object} to allow method
+ * chaining in step definitions, as this is used to perform actions on
+ * browser windows, iframes, tabs, etc. when chaining is desired
+ * in other cases just return void (example screenshot methods).
+ * 
+ * @version 1.0
+ * @author Avinash Rath
+ */
+
+@Log4j2
 public class BrowserUtils {
+
     // ==========================================
     // 1. ADVANCED SYNCHRONIZATION UTILITIES
     // ==========================================
@@ -37,21 +60,24 @@ public class BrowserUtils {
      * This prevents timing flakiness in tests by synchronizing actions with the
      * actual state of the page, rather than relying on fixed wait times.
      * 
-     * @param timeoutInSeconds The maximum time to wait for the page to load, in
-     *                         seconds.
      * @param driver           The WebDriver instance to use for executing
      *                         JavaScript.
+     * @param timeoutInSeconds The maximum time to wait for the page to load, in
+     *                         seconds.
+     * @return true if the page loads within the timeout, false otherwise.
      */
-    public static void waitForPageLoad(WebDriver driver, int timeoutInSeconds) {
+    public static boolean waitForPageLoad(WebDriver driver, int timeoutInSeconds) {
         log.debug("Verifying full DOM initialization via document.readyState state sync.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-                    .until(webDriver -> ((JavascriptExecutor) webDriver)
-                            .executeScript("return document.readyState").equals("complete"));
+                    .until(webDriver -> "complete".equals(((JavascriptExecutor) webDriver)
+                            .executeScript("return document.readyState")));
             log.info("Page has fully loaded with document.readyState: complete");
+            return true;
         } catch (Exception e) {
             log.error("Timed out after {} seconds waiting for page to load with document.readyState: complete",
                     timeoutInSeconds, e);
+            return false;
         }
     }
 

@@ -6,12 +6,19 @@ import java.lang.reflect.Method;
 import org.testng.IAnnotationTransformer;
 import org.testng.annotations.ITestAnnotation;
 
+import lombok.extern.log4j.Log4j2;
+
 /**
- * TestNG IAnnotationTransformer implementation to globally inject the custom 
+ * TestNG IAnnotationTransformer implementation to globally inject the custom
  * RetryAnalyzer to all dynamically compiled test methods at runtime.
- * This is crucial for Cucumber where test methods are dynamically executed 
+ * This is crucial for Cucumber where test methods are dynamically executed
  * by the runner from Gherkin scenarios.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
+@Log4j2
 public class RetryAnnotationTransformer implements IAnnotationTransformer {
 
     @Override

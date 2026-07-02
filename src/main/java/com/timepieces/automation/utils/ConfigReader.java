@@ -6,12 +6,26 @@ import java.util.Properties;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * ConfigReader class provides utility methods for loading and accessing
+ * configuration properties for the automation framework.
+ * It manages different environment-specific configuration files and allows
+ * reading properties from them.
+ * 
+ * All the methods here are stateless, and receive a driver instance explicitly
+ * for thread safety in parallel runs.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
+ */
+
 @Log4j2
 public class ConfigReader {
-    
+
     private static Properties prop;
 
-    // Static initialization block runs exactly once when the class is first loaded into memory
+    // Static initialization block runs exactly once when the class is first loaded
+    // into memory
     static {
         loadFrameworkConfiguration();
     }
@@ -20,7 +34,8 @@ public class ConfigReader {
         if (prop == null) {
             prop = new Properties();
 
-            // Step 1: Detect environment profile passed from Maven CLI (e.g., -Denv=staging). Defaults to staging.
+            // Step 1: Detect environment profile passed from Maven CLI (e.g.,
+            // -Denv=staging). Defaults to staging.
             String env = System.getProperty("env", "staging").trim().toLowerCase();
             String configFile = "config/" + env + ".properties";
             String localOverrideFile = "config/" + env + ".local.properties";
@@ -40,8 +55,10 @@ public class ConfigReader {
                 throw new RuntimeException("Property memory hydration failed for: " + configFile, e);
             }
 
-            // Step 3: If a gitignored <env>.local.properties exists on the classpath, layer its
-            // keys on top of the base file. Lets developers keep secrets (e.g., staging.password)
+            // Step 3: If a gitignored <env>.local.properties exists on the classpath, layer
+            // its
+            // keys on top of the base file. Lets developers keep secrets (e.g.,
+            // staging.password)
             // out of source control without changing committed config.
             try (InputStream local = ConfigReader.class.getClassLoader().getResourceAsStream(localOverrideFile)) {
                 if (local != null) {
@@ -57,7 +74,9 @@ public class ConfigReader {
 
     /**
      * Resolves configuration queries across a 3-tier precedence ladder.
-     * Precedence: 1. Runtime JVM Arguments (-D) -> 2. System Environment Variables -> 3. Target Properties File
+     * Precedence: 1. Runtime JVM Arguments (-D) -> 2. System Environment Variables
+     * -> 3. Target Properties File
+     * 
      * @param key The target configuration parameter key
      * @return The trimmed configuration string value, or null if unmapped
      */
@@ -65,16 +84,18 @@ public class ConfigReader {
         if (key == null || key.trim().isEmpty()) {
             return null;
         }
-        
+
         String cleanKey = key.trim();
 
-        // Tier 1: Check Runtime Command-Line System Overrides (e.g., mvn test -Dbrowser=firefox)
+        // Tier 1: Check Runtime Command-Line System Overrides (e.g., mvn test
+        // -Dbrowser=firefox)
         String value = System.getProperty(cleanKey);
         if (value != null) {
             return value.trim();
         }
 
-        // Tier 2: Check OS Environment Configurations (e.g., local machine variables like BRAVE_PATH)
+        // Tier 2: Check OS Environment Configurations (e.g., local machine variables
+        // like BRAVE_PATH)
         value = System.getenv(cleanKey);
         if (value != null) {
             return value.trim();

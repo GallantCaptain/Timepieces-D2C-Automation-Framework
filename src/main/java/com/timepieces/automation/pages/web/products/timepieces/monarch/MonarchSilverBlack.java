@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.timepieces.monarch;
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -43,7 +41,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class MonarchSilverBlack extends StoreFrontBasePage {
+public class MonarchSilverBlack extends SharedTemplate_Monarch {
 
     // ==========================================
     // Constructor

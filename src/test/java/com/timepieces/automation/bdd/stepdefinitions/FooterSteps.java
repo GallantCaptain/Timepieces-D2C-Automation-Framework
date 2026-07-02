@@ -22,6 +22,10 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * FooterSteps
+ */
+
 @Log4j2
 public class FooterSteps {
     private final TestContext testContext;
@@ -78,7 +82,8 @@ public class FooterSteps {
             String expectedPath = footerComponent.getLinkHref(linkText);
             log.info("Expected target URL/path: {}", expectedPath);
 
-            // Retrieve the anchor element via FooterComponent (delegates to BasePage.getElement())
+            // Retrieve the anchor element via FooterComponent (delegates to
+            // BasePage.getElement())
             WebElement element = footerComponent.getLinkElement(linkText);
 
             // Ctrl/Cmd+Click to open in a new tab without navigating the current page

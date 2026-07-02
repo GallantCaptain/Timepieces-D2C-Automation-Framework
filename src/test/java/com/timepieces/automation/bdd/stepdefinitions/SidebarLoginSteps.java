@@ -13,7 +13,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
 import com.timepieces.automation.pages.components.HeaderComponent;
-import com.timepieces.automation.pages.components.headerOptionsComponent.SidebarMenuComponent;
+import com.timepieces.automation.pages.components.SidebarMenuComponent;
 import com.timepieces.automation.pages.web.account.LoginPage;
 import com.timepieces.automation.utils.ConfigReader;
 
@@ -22,6 +22,10 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.extern.log4j.Log4j2;
+
+/**
+ * SidebarLoginSteps
+ */
 
 @Log4j2
 public class SidebarLoginSteps {

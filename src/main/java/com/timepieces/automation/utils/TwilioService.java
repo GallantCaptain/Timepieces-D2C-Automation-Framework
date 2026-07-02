@@ -16,7 +16,11 @@ import lombok.extern.log4j.Log4j2;
  * TwilioService provides helper utilities to connect to the Twilio REST API,
  * fetch incoming SMS/WhatsApp messages, extract OTP verification codes,
  * and poll with retries during automation executions.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class TwilioService {
 
@@ -33,13 +37,14 @@ public class TwilioService {
         this.authToken = ConfigReader.get("twilio.auth.token");
         this.twilioPhoneNumber = ConfigReader.get("twilio.phone.number");
         this.httpClient = HttpClient.newBuilder().build();
-        
-        log.info("TwilioService initialized. Account SID: [{}], Target Phone Number: [{}]", 
+
+        log.info("TwilioService initialized. Account SID: [{}], Target Phone Number: [{}]",
                 accountSid, twilioPhoneNumber);
     }
 
     /**
-     * Custom constructor allowing dynamic parameter injection (useful for tests or runtime overrides).
+     * Custom constructor allowing dynamic parameter injection (useful for tests or
+     * runtime overrides).
      */
     public TwilioService(String accountSid, String authToken, String twilioPhoneNumber) {
         this.accountSid = accountSid;
@@ -49,13 +54,15 @@ public class TwilioService {
     }
 
     /**
-     * Calls Twilio REST API to fetch the most recent message body received by the configured number.
+     * Calls Twilio REST API to fetch the most recent message body received by the
+     * configured number.
      * 
-     * @return the raw message body of the latest message, or null if no messages exist or request fails.
+     * @return the raw message body of the latest message, or null if no messages
+     *         exist or request fails.
      */
     public String getLatestMessageBody() {
         if (accountSid == null || authToken == null || accountSid.isBlank() || authToken.isBlank() ||
-            accountSid.contains("${") || authToken.contains("${")) {
+                accountSid.contains("${") || authToken.contains("${")) {
             log.warn("Twilio credentials are unresolved or missing. Skipping API request.");
             return null;
         }
@@ -68,7 +75,7 @@ public class TwilioService {
 
         // Standardize phone number formatting (Twilio API likes url-encoded + prefix)
         String encodedToNum = toNum.replace("+", "%2B");
-        String uriStr = String.format("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json?To=%s&PageSize=1", 
+        String uriStr = String.format("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json?To=%s&PageSize=1",
                 accountSid, encodedToNum);
 
         log.info("Requesting latest message from Twilio endpoint: {}", uriStr);
@@ -88,14 +95,14 @@ public class TwilioService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                log.error("Failed to query Twilio API. Status code: {}. Response body: {}", 
+                log.error("Failed to query Twilio API. Status code: {}. Response body: {}",
                         response.statusCode(), response.body());
                 return null;
             }
 
             log.debug("Twilio response received successfully: {}", response.body());
             JsonPath jsonPath = JsonPath.from(response.body());
-            
+
             int messageCount = jsonPath.getList("messages").size();
             if (messageCount == 0) {
                 log.warn("No messages found for phone number: {}", toNum);
@@ -136,14 +143,14 @@ public class TwilioService {
     /**
      * Polling method that waits for a new OTP to arrive within a timeout period.
      * 
-     * @param timeoutSeconds maximum wait time in seconds
+     * @param timeoutSeconds      maximum wait time in seconds
      * @param pollIntervalSeconds interval between polls in seconds
      * @return the extracted OTP code, or null if it timed out
      */
     public String getMostRecentOtpWithRetry(int timeoutSeconds, int pollIntervalSeconds) {
-        log.info("Awaiting new OTP code from Twilio (Timeout: {}s, Poll Interval: {}s)...", 
+        log.info("Awaiting new OTP code from Twilio (Timeout: {}s, Poll Interval: {}s)...",
                 timeoutSeconds, pollIntervalSeconds);
-        
+
         long endTime = System.currentTimeMillis() + (timeoutSeconds * 1000L);
         String lastSeenMessage = getLatestMessageBody();
         log.info("Initial snapshot of latest message: [{}]", lastSeenMessage);

@@ -23,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
  * @version 1.0
  * @author Avinash Rath
  */
+
 @Log4j2
 public class AllAccessoriesPage extends StoreFrontBasePage {
 

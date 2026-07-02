@@ -7,18 +7,29 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * TestMetricsPublisher. This will publish the Test Results to the Test
+ * Analytics Dashboard after every test run, helping keep a record of the
+ * application health and the test repostitory.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
+ */
+
 @Log4j2
 public class TestMetricsPublisher {
 
-    public static void publish(String buildId, String env, String browser, int total, int passed, int failed, int durationSeconds) {
+    public static void publish(String buildId, String env, String browser, int total, int passed, int failed,
+            int durationSeconds) {
         String dbUrl = System.getenv("NEON_DATABASE_URL");
         if (dbUrl == null || dbUrl.isEmpty()) {
             dbUrl = System.getenv("DATABASE_URL");
         }
-        
+
         // Fallback to local Docker postgres if no environment variable is provided
         if (dbUrl == null || dbUrl.isEmpty()) {
-            log.warn("Database connection string (NEON_DATABASE_URL / DATABASE_URL) not found in environment. Defaulting to local dev PostgreSQL.");
+            log.warn(
+                    "Database connection string (NEON_DATABASE_URL / DATABASE_URL) not found in environment. Defaulting to local dev PostgreSQL.");
             dbUrl = "jdbc:postgresql://localhost:5432/timepieces_metrics?user=postgres&password=devpassword";
         }
 
@@ -39,12 +50,12 @@ public class TestMetricsPublisher {
                 }
                 String path = uri.getPath();
                 String userInfo = uri.getUserInfo();
-                
+
                 jdbcUrl = "jdbc:postgresql://" + host + ":" + port + path;
                 if (uri.getQuery() != null) {
                     jdbcUrl += "?" + uri.getQuery();
                 }
-                
+
                 if (userInfo != null && userInfo.contains(":")) {
                     String[] parts = userInfo.split(":", 2);
                     user = parts[0];
@@ -64,21 +75,22 @@ public class TestMetricsPublisher {
             // Create table if not exists
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("CREATE TABLE IF NOT EXISTS test_runs (" +
-                             "id SERIAL PRIMARY KEY," +
-                             "build_id VARCHAR(50)," +
-                             "environment VARCHAR(50)," +
-                             "run_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                             "browser VARCHAR(50)," +
-                             "total_scenarios INT," +
-                             "passed_scenarios INT," +
-                             "failed_scenarios INT," +
-                             "duration_seconds INT" +
-                             ")");
+                        "id SERIAL PRIMARY KEY," +
+                        "build_id VARCHAR(50)," +
+                        "environment VARCHAR(50)," +
+                        "run_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                        "browser VARCHAR(50)," +
+                        "total_scenarios INT," +
+                        "passed_scenarios INT," +
+                        "failed_scenarios INT," +
+                        "duration_seconds INT" +
+                        ")");
             }
 
             // Insert metrics
-            String sql = "INSERT INTO test_runs (build_id, environment, browser, total_scenarios, passed_scenarios, failed_scenarios, duration_seconds) " +
-                         "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO test_runs (build_id, environment, browser, total_scenarios, passed_scenarios, failed_scenarios, duration_seconds) "
+                    +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, buildId);
                 pstmt.setString(2, env);

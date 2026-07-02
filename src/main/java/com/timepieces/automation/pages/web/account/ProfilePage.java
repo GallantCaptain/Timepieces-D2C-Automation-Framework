@@ -1,25 +1,18 @@
 package com.timepieces.automation.pages.web.account;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.timepieces.automation.pages.HeaderOnlyBasePage;
 import com.timepieces.automation.pages.web.StagingGatePage;
 import com.timepieces.automation.utils.BrowserUtils;
 import com.timepieces.automation.utils.ConfigReader;
-import com.timepieces.automation.utils.WindowUtils;
 
 import lombok.extern.log4j.Log4j2;
 
 /**
- * ProfilePage: /account/profile
+ * ProfilePage: https://www.timepieces-d2c.example/account/profile
  * This page is for profile edits after account creation, and is gated behind
  * OTP verification, where the user is taken to the Account Details page after
  * clicking on the profile icon on the global header.
@@ -29,9 +22,14 @@ import lombok.extern.log4j.Log4j2;
  * for first-time users after login, which is gated behind OTP verification.
  * Hence, we are modeling this page separately in the ProfilePage class, while
  * the onboarding flow is modeled in the OnboardingPage class.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class ProfilePage extends HeaderOnlyBasePage {
+
     // ==========================================
     // Constructor
     // ==========================================

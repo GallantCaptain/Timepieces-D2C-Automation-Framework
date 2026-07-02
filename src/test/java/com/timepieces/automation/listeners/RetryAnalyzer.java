@@ -9,7 +9,11 @@ import org.testng.ITestResult;
 /**
  * TestNG IRetryAnalyzer implementation that allows failed tests to be retried.
  * Dynamically resolves retry limits via ConfigReader or defaults to 1 retry.
+ * 
+ * @verison 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class RetryAnalyzer implements IRetryAnalyzer {
 
@@ -21,9 +25,13 @@ public class RetryAnalyzer implements IRetryAnalyzer {
      */
     @Override
     public boolean retry(ITestResult result) {
-        // Never retry an OTP rate-limit failure: the backoff is keyed on the phone number and
-        // ESCALATES with each request (≈9s → up to 180s). Retrying re-requests the OTP for the
-        // same number and guarantees a slower failure. Surface it as a real failure instead.
+        /*
+         * Never retry an OTP rate-limit failure: the backoff is keyed on the phone
+         * number and ESCALATES with each request (≈9s → up to 180s). Retrying
+         * re-requests the OTP for the same number and guarantees a slower failure.
+         * Surface it as a real failure instead.
+         */
+
         if (isOtpRateLimit(result.getThrowable())) {
             log.warn("=== NOT RETRYING [{}]: failure is an OTP rate-limit; retrying would escalate the backoff. ===",
                     result.getName());
@@ -32,7 +40,7 @@ public class RetryAnalyzer implements IRetryAnalyzer {
         int maxRetryLimit = getMaxRetryLimit();
         if (retryCount < maxRetryLimit) {
             retryCount++;
-            log.warn("=== RETRYING TEST SCENARIO: [{}] | Attempt: [{}/{}] ===", 
+            log.warn("=== RETRYING TEST SCENARIO: [{}] | Attempt: [{}/{}] ===",
                     result.getName(), retryCount, maxRetryLimit);
             return true; // Rerun test
         }

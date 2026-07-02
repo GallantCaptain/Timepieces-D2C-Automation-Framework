@@ -17,12 +17,13 @@ import lombok.extern.log4j.Log4j2;
  * 'Q-Matic' timepiece movement types.
  * 
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this} (AllTimepiecesPage) to allow
- * method chaining in step definitions.
+ * All methods that remain on this page return {@code this} (AllTimepiecesPage)
+ * to allow method chaining in step definitions.
  * 
  * @version 1.0
  * @author Avinash Rath
  */
+
 @Log4j2
 public class AllTimepiecesPage extends StoreFrontBasePage {
 

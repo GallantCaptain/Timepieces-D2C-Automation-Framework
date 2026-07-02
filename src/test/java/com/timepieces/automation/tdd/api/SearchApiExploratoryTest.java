@@ -35,14 +35,20 @@ import lombok.extern.log4j.Log4j2;
  * Timepieces Search API Exploratory Test Suite — 50 randomized tests.
  * <p>
  * This class reads all keywords from search_keywords.json, shuffles them
- * using a time-based seed (or configured seed), selects exactly 50 combinations,
+ * using a time-based seed (or configured seed), selects exactly 50
+ * combinations,
  * and executes them against the target environment (defaulting to production).
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class SearchApiExploratoryTest {
 
     static {
-        // Set env system property to production BEFORE ConfigReader loads, if not already set.
+        // Set env system property to production BEFORE ConfigReader loads, if not
+        // already set.
         if (System.getProperty("env") == null) {
             System.setProperty("env", "production");
         }
@@ -143,7 +149,6 @@ public class SearchApiExploratoryTest {
             }
         }
 
-
         // 5. Build and shuffle the exploratory pool
         buildAndShufflePool();
     }
@@ -157,7 +162,8 @@ public class SearchApiExploratoryTest {
 
             addInstances(allInstances, (List<String>) product.get("names_keywords"), handle, name, "NAMES");
             addInstances(allInstances, (List<String>) product.get("attributes_keywords"), handle, name, "ATTRIBUTES");
-            addInstances(allInstances, (List<String>) product.get("misspellings_keywords"), handle, name, "MISSPELLINGS");
+            addInstances(allInstances, (List<String>) product.get("misspellings_keywords"), handle, name,
+                    "MISSPELLINGS");
             addInstances(allInstances, (List<String>) product.get("related_keywords"), handle, name, "RELATED");
         }
 
@@ -191,7 +197,8 @@ public class SearchApiExploratoryTest {
         log.info("Selected 50 exploratory keyword combinations for execution.");
     }
 
-    private void addInstances(List<KeywordTestInstance> list, List<String> kws, String handle, String name, String category) {
+    private void addInstances(List<KeywordTestInstance> list, List<String> kws, String handle, String name,
+            String category) {
         if (kws != null) {
             for (String kw : kws) {
                 if (kw != null && !kw.trim().isEmpty()) {
@@ -243,7 +250,6 @@ public class SearchApiExploratoryTest {
             }
 
             Response searchResponse = searchReqSpec.get("/api/search");
-
 
             if (searchResponse.getStatusCode() != 200) {
                 return new SearchResult(searchResponse.getStatusCode(), List.of(), List.of(),
@@ -334,7 +340,9 @@ public class SearchApiExploratoryTest {
 
         recordResult(instance.category, instance.productName, instance.keyword, status,
                 result.error != null ? result.error
-                        : (found ? null : "Expected handle '" + instance.expectedHandle + "' not in results (got: " + result.allHandles() + ")"),
+                        : (found ? null
+                                : "Expected handle '" + instance.expectedHandle + "' not in results (got: "
+                                        + result.allHandles() + ")"),
                 result.allHandles());
 
         log.info("[Exploratory] [{}] {} — '{}' {} expected handle '{}' for '{}'",
@@ -395,7 +403,8 @@ public class SearchApiExploratoryTest {
             try (PrintWriter pw = new PrintWriter(reportFile, StandardCharsets.UTF_8)) {
                 pw.println("# Timepieces Exploratory Search Bar Keyword API Test Analysis");
                 pw.println();
-                pw.println("This report summarizes the verification of randomly sampled search keywords against the search API.");
+                pw.println(
+                        "This report summarizes the verification of randomly sampled search keywords against the search API.");
                 pw.println();
                 pw.println("## Executive Summary");
                 pw.println();

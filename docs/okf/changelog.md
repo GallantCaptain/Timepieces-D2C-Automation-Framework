@@ -86,4 +86,11 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified successful registration of the test cases via `list_zephyr_testcases.py`.
 - Refactored FLUENT INTERFACE doc comments in all page objects under the `timepieces` directory to return the correct class type in `{@code this}` and removed redundant "final step" comments.
 
+## 2026-07-02
+
+- **Refactored Browser Synchronization:** Refactored `waitForPageLoad` in `BrowserUtils.java` to return `boolean` (consistent with other wait methods), aligned Javadoc `@param` ordering, and used a safe readyState check `"complete".equals(...)` to prevent potential NPEs.
+- **Aligned TestNG Maven Profiles:** Added TestNG `@Test(groups = "smoke")` to `SmokeRunner.java` and `@Test(groups = "regression")` to `RegressionRunner.java` and `SearchApiTest.java`. This ensures the runner classes are correctly resolved and executed by the `SmokeSuite` and `RegressionSuite` Maven profiles in `pom.xml`.
+- **Page Object Restructuring & Cleaning:** Reorganized the `otherPages` directory structure, renaming `TimepiecesHouse.java` -> `TimepiecesHousePage.java`, `SiteMap.java` -> `SiteMapPage.java`, and `TheWallPage.java` -> `TimepiecesWallPage.java`. Created the `timepieces_world` directory to house `TimepiecesWorld_ArvionPage.java` etc., and cleaned up unused classes.
+- **Codebase-wide Javadoc & Formatting:** Refactored class Javadoc blocks across all page objects, test runners, step definitions, and utility classes to standard templates (adding `@version 1.0` and `@author Avinash Rath`), normalized import sections, and formatted indentation.
+
 

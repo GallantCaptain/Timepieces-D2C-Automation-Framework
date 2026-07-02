@@ -2,6 +2,7 @@ package com.timepieces.automation.utils;
 
 import static org.monte.media.FormatKeys.EncodingKey;
 import static org.monte.media.FormatKeys.FrameRateKey;
+import static org.monte.media.FormatKeys.KeyFrameIntervalKey;
 import static org.monte.media.FormatKeys.MIME_AVI;
 import static org.monte.media.FormatKeys.MediaTypeKey;
 import static org.monte.media.FormatKeys.MimeTypeKey;
@@ -37,7 +38,11 @@ import org.monte.screenrecorder.ScreenRecorder;
  * Recorder operates on the full desktop, so concurrent recordings on the same
  * machine all capture the same pixels — useful only for headed, ideally serial,
  * executions. Headless JVMs short-circuit safely with no recording produced.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public final class ScreenRecorderUtil {
 
@@ -63,34 +68,32 @@ public final class ScreenRecorderUtil {
                 return;
             }
 
-            GraphicsConfiguration gc
-                    = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                            .getDefaultScreenDevice()
-                            .getDefaultConfiguration();
+            GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getDefaultScreenDevice()
+                    .getDefaultConfiguration();
 
             Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
             Rectangle captureArea = new Rectangle(0, 0, screen.width, screen.height);
 
-            NamedScreenRecorder recorder
-                    = new NamedScreenRecorder(
-                            gc,
-                            captureArea,
-                            new Format(MediaTypeKey, MediaType.FILE, MimeTypeKey, MIME_AVI),
-                            new Format(
-                                    MediaTypeKey, MediaType.VIDEO,
-                                    EncodingKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
-                                    CompressorNameKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
-                                    DepthKey, 24,
-                                    FrameRateKey, Rational.valueOf(15),
-                                    QualityKey, 1.0f,
-                                    KeyFrameIntervalKey, 15 * 60),
-                            new Format(
-                                    MediaTypeKey, MediaType.VIDEO,
-                                    EncodingKey, "black",
-                                    FrameRateKey, Rational.valueOf(30)),
-                            null,
-                            outputDir,
-                            fileName);
+            NamedScreenRecorder recorder = new NamedScreenRecorder(
+                    gc,
+                    captureArea,
+                    new Format(MediaTypeKey, MediaType.FILE, MimeTypeKey, MIME_AVI),
+                    new Format(
+                            MediaTypeKey, MediaType.VIDEO,
+                            EncodingKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
+                            CompressorNameKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
+                            DepthKey, 24,
+                            FrameRateKey, Rational.valueOf(15),
+                            QualityKey, 1.0f,
+                            KeyFrameIntervalKey, 15 * 60),
+                    new Format(
+                            MediaTypeKey, MediaType.VIDEO,
+                            EncodingKey, "black",
+                            FrameRateKey, Rational.valueOf(30)),
+                    null,
+                    outputDir,
+                    fileName);
 
             recorder.start();
             TL_RECORDER.set(recorder);

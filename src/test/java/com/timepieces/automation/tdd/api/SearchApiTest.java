@@ -31,22 +31,22 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * Timepieces Search API Test Suite — 100 tests total.
- * <p>
  * Groups:
- * <ul>
- * <li>G1 — Product Matrix (40): Each product tested with first keyword per
- * category</li>
- * <li>G2 — Generic Watch Keywords (20): High-intent terms like "watches",
- * "watch", etc.</li>
- * <li>G3 — Collection Search (8): Collection-level searches (Auriqua, Monarch,
- * etc.)</li>
- * <li>G4 — Brand & Misspellings (12): Brand name variants and global
- * misspellings</li>
- * <li>G5 — Deep Keywords (15): 2nd/3rd keywords from select products</li>
- * <li>G6 — Edge Cases (5): Empty, nonsense, special chars</li>
- * </ul>
+ * G1 — Product Matrix (40): Each product tested with first keyword per category
+ * G2 — Generic Watch Keywords (20): High-intent terms like "watches", "watch",
+ * etc.
+ * G3 — Collection Search (8): Collection-level searches (Auriqua, Monarch,
+ * etc.)
+ * G4 — Brand & Misspellings (12): Brand name variants and global misspellings
+ * G5 — Deep Keywords (15): 2nd/3rd keywords from select products
+ * G6 — Edge Cases (5): Empty, nonsense, special chars
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
+@Test(groups = { "regression" })
 public class SearchApiTest {
 
     private List<Map<String, Object>> testMatrix;
@@ -181,7 +181,6 @@ public class SearchApiTest {
             }
 
             Response searchResponse = searchReqSpec.get("/api/search");
-
 
             if (searchResponse.getStatusCode() != 200) {
                 return new SearchResult(searchResponse.getStatusCode(), List.of(), List.of(),
@@ -643,12 +642,17 @@ public class SearchApiTest {
     // ==================================================================================
 
     /**
-     * Records a failed result with extra handle-level detail and emits a warning log.
+     * Records a failed result with extra handle-level detail and emits a warning
+     * log.
      * <p>
-     * Currently unused — retained for future per-keyword failure tracking. Counting and
-     * storage are delegated to {@link #recordResult} so the failure counters and the
-     * {@code testResults} structure stay consistent. Previously this method incremented
-     * {@code failedTests} itself, which double-counted when paired with a recordResult
+     * Currently unused — retained for future per-keyword failure tracking. Counting
+     * and
+     * storage are delegated to {@link #recordResult} so the failure counters and
+     * the
+     * {@code testResults} structure stay consistent. Previously this method
+     * incremented
+     * {@code failedTests} itself, which double-counted when paired with a
+     * recordResult
      * call for the same failure; that is now handled in one place.
      */
     private void recordFailure(String handle, String name, String kw, String catName, String status, String error,
@@ -670,7 +674,10 @@ public class SearchApiTest {
         return sanitizeCell(joined);
     }
 
-    /** Escapes pipe/newline characters so a value cannot break the markdown table layout. */
+    /**
+     * Escapes pipe/newline characters so a value cannot break the markdown table
+     * layout.
+     */
     private String sanitizeCell(Object value) {
         if (value == null) {
             return "";

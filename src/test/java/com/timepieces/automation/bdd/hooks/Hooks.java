@@ -18,7 +18,11 @@ import org.openqa.selenium.WebDriverException;
  * Cucumber lifecycle hooks: provisions a fresh ThreadLocal WebDriver and screen
  * recorder per scenario; on failure, attaches a PNG screenshot and the captured
  * AVI to the Allure report.
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
 public class Hooks {
 

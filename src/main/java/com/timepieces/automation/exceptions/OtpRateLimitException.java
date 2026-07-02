@@ -1,17 +1,27 @@
 package com.timepieces.automation.exceptions;
 
+import lombok.extern.log4j.Log4j2;
+
 /**
  * Thrown when OTP send is blocked by the ~90s "Too many attempts" cooldown
  * ({@code login-cooldown}) — the OTP verify screen never appears because the
  * number is in a cooldown window (triggered by phone-number churn, not by wrong
  * OTP guesses).
  *
- * <p>The cooldown is a fixed window (~90s), so an immediate retry just fails again.
- * {@code RetryAnalyzer} therefore treats this exception as non-retryable, and tests
- * that must proceed should instead wait it out (see {@code LoginPage.waitOutOtpCooldown}).
- * It is a distinct type (not a bare Selenium {@code TimeoutException}) so the failure
- * is reported honestly as a cooldown, not a generic "element not visible".
+ * The cooldown is a fixed window (~90s), so an immediate retry just fails
+ * again.
+ * {@code RetryAnalyzer} therefore treats this exception as non-retryable, and
+ * tests that must proceed should instead wait it out (see
+ * {@code LoginPage.waitOutOtpCooldown}).
+ * It is a distinct type (not a bare Selenium {@code TimeoutException}) so the
+ * failure is reported honestly as a cooldown, not a generic
+ * "element not visible".
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
+@Log4j2
 public class OtpRateLimitException extends RuntimeException {
 
     /** The cooldown to wait out, in seconds; -1 if it could not be determined. */

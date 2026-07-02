@@ -21,9 +21,14 @@ import lombok.extern.log4j.Log4j2;
  * Users can also navigate to this page by clicking on the
  * ManifestaDropCardComponent (not yet implemented) as well as the Discover
  * button (In the next version in July) in the Homepage (still to be mapped).
+ * 
+ * @version 0.1
+ * @author Avinash Rath
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class ManifestaDropPage extends StoreFrontBasePage {
+
     // ==========================================
     // Constructor
     // ==========================================
@@ -36,8 +41,9 @@ public class ManifestaDropPage extends StoreFrontBasePage {
     // ==========================================
     // Manifesta Product Model Canvas - Watch animation that moves down to up to
     // showcase the product
-    // This will fail, it is yet to be implemented. Will be implemented by the week 2 of next month. 
-    //Will replace the locator with a better data-testid when it is implemented.
+    // This will fail, it is yet to be implemented. Will be implemented by the week
+    // 2 of next month.
+    // Will replace the locator with a better data-testid when it is implemented.
     private final By manifestaWatchDropCanvas = By.cssSelector("canvas[aria-label='Manifesta chronograph']");
 
     // ==========================================

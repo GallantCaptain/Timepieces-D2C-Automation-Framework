@@ -22,9 +22,14 @@ import lombok.extern.log4j.Log4j2;
  * Users can also navigate to this page by clicking on the
  * AstoniaDropCardComponent as well as the Discover button in the Homepage
  * (still to be mapped).
+ * 
+ * @version 0.1
+ * @author Avinash Rath
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class AstoniaDropPage extends StoreFrontBasePage {
+
     // ==========================================
     // Constructor
     // ==========================================

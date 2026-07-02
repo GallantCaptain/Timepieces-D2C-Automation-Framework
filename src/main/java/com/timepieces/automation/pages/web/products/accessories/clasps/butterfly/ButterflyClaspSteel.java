@@ -7,23 +7,35 @@ import com.timepieces.automation.pages.StoreFrontBasePage;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Premium Watch Case Black:
- * https://www.timepieces-d2c.example/products/premium-watch-case-black
- * The Premium Watch Case Black PDP page. This page contains details about the
- * Premium Watch Case Black. It is a shared template for the Premium Watch Case
- * family of accessories. The other watch cases can be navigated to in the PDP
- * page with a card to toggle between each. The page also has a sticky header
- * and footer and scroll-to-section functionality. The videos are on autoplay
- * and for those that support 'loom' functionality like Arvion, Astonia,
- * Astonia Sports, and Monarch, i.e., all except Manifesta. There is a 3D view
- * toggle on the top-most product image showcase that opens the 3D viewer canvas
- * and is used to view the product models in better detail in 3D. All product
- * except Astonia Trophy Gold has the 3D viewer toggle. There is also a planned
- * AR functionality 'tbd' sometime around the end of the year.
+ * Butterfly Clasp Steel:
+ * https://www.timepieces-d2c.example/accessories/clasp/butterfly-clasp-steel-18mm
+ * The Butterfly Clasp Steel PDP page. This page contains details about
+ * the Butterfly Clasp Steel. It is a shared template for the Butterfly
+ * Clasp family of accessories. The other clasps can be navigated to
+ * in the PDP page with a card to toggle between each. The page also has a
+ * sticky header and footer and scroll-to-section functionality. There are
+ * Accordion panels that with accordion toggles to hide/show the product
+ * details.
+ * There are feature/category card-buttons to switch between the different
+ * clasp variants based on the model color and in some cases the size. For now
+ * the clasp size variant is available only for Single Deployment Rose Gold
+ * clasp (choose between the 20mm or 22mm variants). All other Single Deployment
+ * Clasps offer only one size option, 20mm. Butterfly Clasps also offer only
+ * one size option, 18mm. Clicking on the Return & Refund or the Guarantee
+ * links opens a side drawer with the full details. The side drawer can be
+ * closed by clicking on the anywhere outside the drawer or on the 'X' button in
+ * the top-right corner of the drawer. At the bottom, the there is a carousel of
+ * the all the clasps models and variants in a scrollable card list. Clicking on
+ * any of the cards takes the user to that pdp.
+ * The clasps are of two types: Butterfly, and Single Deployment Clasps.
+ * 
+ * Compatiblity List:
+ * Butterfly Clasp: Leather Straps (Teju Lizard, Ostrich & Suede Leather Straps)
+ * Single Deployment Clasp: Hybrid & Rubber Straps (Hybrid & FKM Rubber Straps)
  * 
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this}
- * (PremiumWatchCaseBlack) to allow method chaining in step definitions.
+ * (ButterflyClaspSteel) to allow method chaining in step definitions.
  * 
  * @version 1.0
  * @author Avinash Rath

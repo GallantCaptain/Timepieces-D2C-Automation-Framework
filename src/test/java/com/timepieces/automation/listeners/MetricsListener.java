@@ -8,6 +8,13 @@ import com.timepieces.automation.utils.TestMetricsPublisher;
 import lombok.extern.log4j.Log4j2;
 import java.util.Map;
 
+/**
+ * MetricsListener
+ * 
+ * @version 1.0
+ * @author Avinash Rath
+ */
+
 @Log4j2
 public class MetricsListener implements ISuiteListener {
 
@@ -19,7 +26,7 @@ public class MetricsListener implements ISuiteListener {
     @Override
     public void onFinish(ISuite suite) {
         log.info("=== Suite execution finished: " + suite.getName() + ". Processing metrics... ===");
-        
+
         int passed = 0;
         int failed = 0;
         int skipped = 0;
@@ -31,7 +38,7 @@ public class MetricsListener implements ISuiteListener {
             passed += context.getPassedTests().size();
             failed += context.getFailedTests().size();
             skipped += context.getSkippedTests().size();
-            
+
             long start = context.getStartDate().getTime();
             long end = context.getEndDate().getTime();
             totalDurationMs += (end - start);

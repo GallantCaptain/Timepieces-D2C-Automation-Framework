@@ -13,11 +13,21 @@ import lombok.extern.log4j.Log4j2;
  * HomePage. The Homepage in production: https://www.timepieces-d2c.example/,
  * The Homepage in staging: https://staging.timepieces-d2c.example/
  * 
+ * The homepage is filled with videos, animations, and modals to entice the
+ * users with a premium experience. The hero section of the homepage acts as
+ * the landing page to generate excitement and funnel conversion of the
+ * upcoming timepiece drop. As this is a D2C business, this is the primary
+ * conversion funnel.
+ * 
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this} (Homepage) to allow
+ * All methods that remain on this page return {@code this} (HomePage) to allow
  * method chaining in step definitions. The chained step returns
  * the next page object once navigation is confirmed (for all the linked pages).
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class HomePage extends BasePage {
 

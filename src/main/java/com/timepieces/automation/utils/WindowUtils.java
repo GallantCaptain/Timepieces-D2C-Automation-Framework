@@ -1,7 +1,6 @@
 package com.timepieces.automation.utils;
 
 import org.openqa.selenium.Alert;
-//import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.NoSuchFrameException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -20,7 +19,6 @@ import lombok.extern.log4j.Log4j2;
  * WindowUtils - Frame switching, window/tab management, and alert handling.
  *
  * Scope Decisions for the Timepieces application:
- *
  * NextJS modals (MUI Dialog, Headless UI, Radix, custom) are DOM portals
  * rendered via createPortal() into <body>. They live in the SAME browsing
  * context as the host page. You do NOT need switchTo() for these — use
@@ -40,10 +38,14 @@ import lombok.extern.log4j.Log4j2;
  * - Page load / element waits → BrowserUtils.java
  * - JS interactions / scrolling → BrowserUtils.java
  * - Hover / drag / keyboard → ActionUtils.java
+ * 
+ * @version 1.0
+ * @author Avinash Rath
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class WindowUtils {
+
     // ==========================================
     // 1. FRAME / IFRAME SWITCHING
     // ==========================================
@@ -55,7 +57,7 @@ public class WindowUtils {
      *
      * @param driver     The WebDriver instance.
      * @param frameIndex Zero-based index of the iframe in the current DOM.
-     */ 
+     */
     public static void switchToFrame(WebDriver driver, int frameIndex) {
         log.debug("Switching to frame at index: {}", frameIndex);
         try {
@@ -68,12 +70,13 @@ public class WindowUtils {
     }
 
     /**
-     * 1.2 Switches WebDriver context into an iframe identified by its name or id attribute.
+     * 1.2 Switches WebDriver context into an iframe identified by its name or id
+     * attribute.
      * Prefer this over index-based switching — it is resistant to DOM reordering
      * and is more readable in test code.
      *
-     * @param driver        The WebDriver instance.
-     * @param nameOrId      The name or id attribute value of the target iframe.
+     * @param driver   The WebDriver instance.
+     * @param nameOrId The name or id attribute value of the target iframe.
      */
     public static void switchToFrameByNameOrId(WebDriver driver, String nameOrId) {
         log.debug("Switching to frame by name/id: {}", nameOrId);
@@ -120,10 +123,11 @@ public class WindowUtils {
         log.debug("Waiting for frame to be available and switching: {}", iFrameElement);
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(iFrameElement));
+                    .until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(iFrameElement));
             log.info("Successfully switched to frame after waiting: {}", iFrameElement);
         } catch (TimeoutException e) {
-            log.error("Timed out after {} seconds waiting for frame {}: {}", timeoutInSeconds, iFrameElement, e.getMessage(), e);
+            log.error("Timed out after {} seconds waiting for frame {}: {}", timeoutInSeconds, iFrameElement,
+                    e.getMessage(), e);
             throw e;
         }
     }
@@ -205,13 +209,13 @@ public class WindowUtils {
      * a payment gateway, or a third-party widget). This is an alternative to
      * title-based switching when titles are dynamic or non-unique.
      *
-     * @param driver    The WebDriver instance.
+     * @param driver      The WebDriver instance.
      * @param urlFragment A unique substring of the target window's URL.
      */
     public static String switchToWindowByUrlFragment(WebDriver driver, String urlFragment) {
         log.debug("Switching to window by URL fragment: {}", urlFragment);
         Set<String> windowHandles = driver.getWindowHandles();
-        for (String handle : windowHandles) {   
+        for (String handle : windowHandles) {
             driver.switchTo().window(handle);
             if (driver.getCurrentUrl().contains(urlFragment)) {
                 log.info("Successfully switched to window with URL containing: {}", urlFragment);
@@ -241,7 +245,7 @@ public class WindowUtils {
         }
         driver.switchTo().window(windowHandles.get(windowIndex));
         log.info("Successfully switched to window at index: {}", windowIndex);
-    }   
+    }
 
     /**
      * 2.4 Closes the current window or tab and switches back to the original one.
@@ -293,7 +297,7 @@ public class WindowUtils {
      * @param windowHandle The handle String of the window to switch to.
      */
     public static void switchToWindow(WebDriver driver, String windowHandle) {
-        log.debug("Switch to window handle: {}",windowHandle);
+        log.debug("Switch to window handle: {}", windowHandle);
         try {
             driver.switchTo().window(windowHandle);
             log.info("Successfully switched to window with handle: {}", windowHandle);
@@ -303,33 +307,34 @@ public class WindowUtils {
         }
     }
 
-    /** 
+    /**
      * 2.7 Waits for a new window or tab to open and then switches into it.
      * Use after clicking any element that opens a new browser context
      * (e.g., target="_blank" links, OAuth / SSO login popups, share windows).
      * Returns the handle of the newly opened window so the caller can
      * switch back to the original window after test assertions.
      *
-     * @param driver              The WebDriver instance.
-     * @param originalHandle      The handle of the window that was active before.
-     * @param timeoutInSeconds    Maximum time to wait for the new window to appear.
+     * @param driver           The WebDriver instance.
+     * @param originalHandle   The handle of the window that was active before.
+     * @param timeoutInSeconds Maximum time to wait for the new window to appear.
      * @return The window handle of the newly opened window.
      */
     public static String waitAndSwitchToNewWindow(WebDriver driver, String originalHandle, int timeoutInSeconds) {
         log.debug("Waiting for new window and switching: {}", originalHandle);
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(d -> d.getWindowHandles().size() > 1);
+                    .until(d -> d.getWindowHandles().size() > 1);
             for (String handle : driver.getWindowHandles()) {
                 if (!handle.equals(originalHandle)) {
                     driver.switchTo().window(handle);
                     log.info("Successfully switched to new window: {}", handle);
                     return handle;
                 }
-            } 
+            }
         } catch (TimeoutException e) {
-                log.error("Timed out after {} seconds waiting for new window: {}", timeoutInSeconds, originalHandle, e.getMessage(), e);
-                throw e;
+            log.error("Timed out after {} seconds waiting for new window: {}", timeoutInSeconds, originalHandle,
+                    e.getMessage(), e);
+            throw e;
         }
         throw new IllegalStateException("New window did not appear within timeout");
     }
@@ -340,7 +345,8 @@ public class WindowUtils {
      * assertions are done and resume the main test flow.
      *
      * @param driver         The WebDriver instance.
-     * @param returnToHandle The handle of the window to return focus to after closing.
+     * @param returnToHandle The handle of the window to return focus to after
+     *                       closing.
      */
     public static void closeCurrentWindowAndReturn(WebDriver driver, String returnToHandle) {
         log.debug("Closing current window and returning to handle: {}", returnToHandle);
@@ -367,7 +373,7 @@ public class WindowUtils {
     // ==========================================
     // 3. ALERT / CONFIRM / PROMPT HANDLING
     // ==========================================
-    /** 
+    /**
      * 3.1 Waits for a native browser alert to appear and accepts it (clicks OK).
      * Native alert() dialogs are outside the DOM — only switchTo().alert()
      * can interact with them. These are rarely used in NextJS apps but can
@@ -380,7 +386,7 @@ public class WindowUtils {
         log.debug("Waiting for alert to appear before accepting it.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             Alert alert = driver.switchTo().alert();
             alert.accept();
             log.info("Alert accepted.");
@@ -402,16 +408,16 @@ public class WindowUtils {
         log.debug("Waiting for the alert to appear before dismissing it.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             Alert alert = driver.switchTo().alert();
             alert.dismiss();
             log.info("Alert dismissed.");
-        } catch(TimeoutException e) {
+        } catch (TimeoutException e) {
             log.error("Timed out after {} seconds waiting for alert.", timeoutInSeconds, e);
             throw e;
         }
     }
-    
+
     /**
      * 3.3 Retrieves the text displayed in the current native browser alert.
      * Capture the alert text before accepting or dismissing it for use in
@@ -425,7 +431,7 @@ public class WindowUtils {
         log.debug("Retrieving alert text after waiting for it to appear.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             Alert alert = driver.switchTo().alert();
             String alertText = alert.getText();
             log.info("Alert text: {}", alertText);
@@ -449,7 +455,7 @@ public class WindowUtils {
         log.debug("Typing into the prompt dialog: '{}'", text);
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             Alert alertPrompt = driver.switchTo().alert();
             alertPrompt.sendKeys(text);
             alertPrompt.accept();
@@ -460,7 +466,6 @@ public class WindowUtils {
         }
     }
 
-    
     /**
      * 3.5 Checks whether a native browser alert is currently present on the page.
      * Use this as a guard before calling any other alert method when the presence
@@ -473,7 +478,7 @@ public class WindowUtils {
         log.debug("Checking for presence of alert.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             log.info("Alert is present.");
             return true;
         } catch (TimeoutException e) {
@@ -483,8 +488,10 @@ public class WindowUtils {
     }
 
     /**
-     * 3.6 Waits for a native browser alert to appear, retrieves its text, and then accepts it.
-     * Use this when you want to assert the content of an alert and then close it in one step (e.g., verifying an error message in an alert dialog).
+     * 3.6 Waits for a native browser alert to appear, retrieves its text, and then
+     * accepts it.
+     * Use this when you want to assert the content of an alert and then close it in
+     * one step (e.g., verifying an error message in an alert dialog).
      * 
      * @param driver           The WebDriver instance.
      * @param timeoutInSeconds Maximum time to wait for the alert.
@@ -493,7 +500,7 @@ public class WindowUtils {
         log.debug("Waiting for alert, retrieving text, and accepting it.");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
-            .until(ExpectedConditions.alertIsPresent());
+                    .until(ExpectedConditions.alertIsPresent());
             Alert alert = driver.switchTo().alert();
             String alertText = alert.getText();
             alert.accept();

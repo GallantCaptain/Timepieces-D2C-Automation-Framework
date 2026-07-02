@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.timepieces.astonia;
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -30,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class AstoniaTrophyGold extends StoreFrontBasePage {
+public class AstoniaTrophyGold extends SharedTemplate_Astonia {
 
     // ==========================================
     // Constructor

@@ -15,6 +15,10 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * StagingBypassSteps
+ */
+
 @Log4j2
 public class StagingBypassSteps {
 
@@ -30,7 +34,7 @@ public class StagingBypassSteps {
     public void the_user_navigates_to_the_staging_environment_application_url(String url) {
         stagingGatePage = new StagingGatePage(DriverFactory.getDriver());
         homePage = new HomePage(DriverFactory.getDriver());
-        
+
         String resolvedUrl = resolvePlaceholder(url);
         log.info("Navigating to staging environment URL: {}", resolvedUrl);
         BrowserUtils.navigateTo(DriverFactory.getDriver(), resolvedUrl, 15);
@@ -42,7 +46,8 @@ public class StagingBypassSteps {
             String resolvedPassword = resolvePlaceholder(password);
             stagingGatePage.enterPassword(resolvedPassword);
         } else {
-            log.info("Staging gate password field is not present (likely already bypassed). Skipping entering password.");
+            log.info(
+                    "Staging gate password field is not present (likely already bypassed). Skipping entering password.");
         }
     }
 

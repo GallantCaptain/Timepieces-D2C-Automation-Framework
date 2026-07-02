@@ -13,6 +13,10 @@ import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.interactions.Actions;
 
+/**
+ * CheckoutSteps
+ */
+
 @Log4j2
 public class CheckoutSteps {
 
@@ -25,7 +29,7 @@ public class CheckoutSteps {
         if (baseUrl == null || baseUrl.isEmpty()) {
             baseUrl = "https://staging.timepieces-d2c.example";
         }
-        
+
         // Open the checkout page directly for verification
         driver.get(baseUrl + "/checkout");
         checkoutPage = new CheckoutPage(driver);
@@ -35,18 +39,20 @@ public class CheckoutSteps {
     public void they_execute_a_rapid_double_click_on_the_trigger_element(String buttonText) {
         WebDriver driver = DriverFactory.getDriver();
         log.info("Simulating rapid double-click on button: {}", buttonText);
-        
+
         Actions actionBuilder = new Actions(driver);
         try {
             actionBuilder.doubleClick(checkoutPage.getPlaceOrderButton()).perform();
         } catch (Exception e) {
-            log.warn("Place Order button double-click action had exception (expected on mock/empty state): {}", e.getMessage());
+            log.warn("Place Order button double-click action had exception (expected on mock/empty state): {}",
+                    e.getMessage());
         }
     }
 
     @Then("the system should process exactly one transaction pipeline")
     public void the_system_should_process_exactly_one_transaction_pipeline() {
-        // Assert that either the processing indicator is active or we did not raise double processing
+        // Assert that either the processing indicator is active or we did not raise
+        // double processing
         boolean isProcessing = checkoutPage.isProcessingIndicatorActive();
         log.info("Is checkout processing active: {}", isProcessing);
         // For a POC we can log or perform soft assertion
