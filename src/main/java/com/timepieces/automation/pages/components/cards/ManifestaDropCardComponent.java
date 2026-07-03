@@ -40,7 +40,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class ManifestaDropCardComponent extends BasePage {
+public class ManifestaDropCardComponent extends BasePage<ManifestaDropCardComponent> {
 
     // ==========================================
     // Constructor

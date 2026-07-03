@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SharedTemplate_ButterflyClasp extends StoreFrontBasePage {
+public class SharedTemplate_ButterflyClasp extends StoreFrontBasePage<SharedTemplate_ButterflyClasp> {
 
     // ==========================================
     // Constructor

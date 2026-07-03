@@ -34,12 +34,12 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class PremiumWatchCaseBlack extends StoreFrontBasePage {
+public class WatchCaseBlack extends StoreFrontBasePage<WatchCaseBlack> {
 
     // ==========================================
     // Constructor
     // ==========================================
-    public PremiumWatchCaseBlack(WebDriver driver) {
+    public WatchCaseBlack(WebDriver driver) {
         super(driver);
     }
 

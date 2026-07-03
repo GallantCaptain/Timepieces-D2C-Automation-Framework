@@ -26,18 +26,41 @@ import lombok.extern.log4j.Log4j2;
  * All methods that remain on this page return {@code this}
  * (ShareYourMomentsPage) to allow method chaining in step definitions.
  * 
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
 @Log4j2
-public class ShareYourMomentPage extends HeaderOnlyBasePage {
+public class ShareYourMomentPage extends HeaderOnlyBasePage<ShareYourMomentPage> {
+
+    // ==========================================
+    // Page Constants
+    // ==========================================
+    // The Page Path Variable
+    private static final String PAGE_PATH = "/timepieces-wall/share";
+
+    // The Page Title Variable {Unique or Not}
+    private static final String PAGE_TITLE = "Timepieces Watches | Early Access to Limited Edition Pieces";
 
     // ==========================================
     // Constructor
     // ==========================================
     public ShareYourMomentPage(WebDriver driver) {
         super(driver);
+    }
+
+    // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     // ==========================================

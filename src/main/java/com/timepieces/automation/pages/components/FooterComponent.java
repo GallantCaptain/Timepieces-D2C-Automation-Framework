@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
  * created.
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class FooterComponent extends BasePage {
+public class FooterComponent extends BasePage<FooterComponent> {
 
         // ==========================================
         // Constructor

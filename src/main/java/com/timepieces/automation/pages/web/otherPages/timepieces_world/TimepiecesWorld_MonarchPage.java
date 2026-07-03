@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class TimepiecesWorld_MonarchPage extends BasePage {
+public class TimepiecesWorld_MonarchPage extends BasePage<TimepiecesWorld_MonarchPage> {
 
     // ==========================================
     // Constructor

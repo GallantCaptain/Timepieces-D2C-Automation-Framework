@@ -30,7 +30,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class ManifestaMotherOfPearl extends SharedTemplate_Manifesta {
+public class ManifestaMotherOfPearl extends SharedTemplate_Manifesta<ManifestaMotherOfPearl> {
 
     // ==========================================
     // Constructor

@@ -20,18 +20,39 @@ import lombok.extern.log4j.Log4j2;
  * All methods that remain on this page return {@code this} (AllTimepiecesPage)
  * to allow method chaining in step definitions.
  * 
+ * @since 2026-7-03
  * @version 1.0
  * @author Avinash Rath
  */
 
 @Log4j2
-public class AllTimepiecesPage extends StoreFrontBasePage {
+public class AllTimepiecesPage extends StoreFrontBasePage<AllTimepiecesPage> {
+
+    // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    // The Page Path Variable
+    private static final String PAGE_PATH = "/collections/timepieces";
+
+    // The Page Title Variable {Keep whether Unique or Not}
+    // Decide if it needs to be added to assertions if not unique
+    private static final String PAGE_TITLE = "Timepieces Collection | Timepieces Watches";
 
     // ==========================================
     // Constructor
     // ==========================================
     public AllTimepiecesPage(WebDriver driver) {
         super(driver);
+    }
+
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     // ==========================================

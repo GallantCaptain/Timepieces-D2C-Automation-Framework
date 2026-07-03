@@ -22,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SharedTemplate_Monarch extends StoreFrontBasePage {
+public abstract class SharedTemplate_Monarch<SELF extends SharedTemplate_Monarch<SELF>> extends StoreFrontBasePage<SELF> {
 
     // ==========================================
     // Constructor

@@ -9,9 +9,25 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * SidebarMenuComponent represents the navigation sidebar menu card drawer.
+ * 
+ * The Sidebar Menu overlay contains:
+ * - The Timepieces logo at the top.
+ * - A close button.
+ * - The main website page links.
+ * - A sub-menu for Timepieces.
+ * - A sub-menu for Accessories.
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this}
+ * (SidebarMenuComponent) to allow method chaining in step definitions.
+ * 
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
-public class SidebarMenuComponent extends BasePage {
+public class SidebarMenuComponent extends BasePage<SidebarMenuComponent> {
 
         // ==========================================
         // Constructor
@@ -257,7 +273,7 @@ public class SidebarMenuComponent extends BasePage {
         // BUSINESS LIBRARY
         // ==========================================
         /**
-         * Clicks the close button to dismiss the sidebar.
+         * B.1 Clicks the close button to dismiss the sidebar.
          * 
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -268,7 +284,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks on the Sign In button inside the sidebar.
+         * B.2 Clicks on the Sign In button inside the sidebar.
          * 
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -279,7 +295,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks on the Contact Us link inside the sidebar.
+         * B.3 Clicks on the Contact Us link inside the sidebar.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -290,7 +306,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Timepieces logo at the top of the sidebar (navigates to the
+         * B.4 Clicks the Timepieces logo at the top of the sidebar (navigates to the
          * homepage).
          *
          * @return this SidebarMenuComponent for method chaining.
@@ -302,10 +318,9 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Opens the Timepieces sub-menu overlay. Viewport-agnostic — the same button
-         * drives both
-         * the desktop and mobile sub-menu; assert on the matching sub-menu locator
-         * afterwards.
+         * B.5 Opens the Timepieces sub-menu overlay. Viewport-agnostic — the same
+         * button drives both the desktop and mobile sub-menu; assert on the
+         * matching sub-menu locator afterwards.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -316,11 +331,10 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Opens the Accessories sub-menu overlay. Viewport-agnostic — the same button
-         * drives both
-         * the desktop and mobile sub-menu. Only one products sub-menu is active at a
-         * time, so this
-         * switches away from the Timepieces sub-menu if it was open.
+         * B.6 Opens the Accessories sub-menu overlay. Viewport-agnostic — the same
+         * button drives both the desktop and mobile sub-menu. Only one products
+         * sub-menu is active at a time, so this switches away from the Timepieces
+         * sub-menu if it was open.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -331,7 +345,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Returns from the products sub-menu back to the top-level sidebar menu
+         * B.7 Returns from the products sub-menu back to the top-level sidebar menu
          * (desktop button).
          *
          * @return this SidebarMenuComponent for method chaining.
@@ -343,7 +357,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Wishlist link inside the sidebar.
+         * B.8 Clicks the Wishlist link inside the sidebar.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -354,9 +368,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Track Orders link (visible for guests only; logged-in users see
-         * the
-         * Orders link instead — see {@link #clickOrders()}).
+         * B.9 Clicks the Track Orders link (visible for guests only; logged-in users
+         * see the Orders link instead — see {@link #clickOrders()}).
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -367,8 +380,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the Orders link (logged-in users only; redirects to the order history
-         * page).
+         * B.10 Clicks the Orders link (logged-in users only; redirects to the order
+         * history page).
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -379,8 +392,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Clicks the logged-in user's profile/account link in the sidebar (redirects to
-         * /account).
+         * B.11 Clicks the logged-in user's profile/account link in the sidebar
+         * (redirects to /account).
          * Only present when a user is authenticated — guard with
          * {@link #isUserLoggedIn()}.
          *
@@ -393,7 +406,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Opens the country/region selector dropdown inside the sidebar.
+         * B.12 Opens the country/region selector dropdown inside the sidebar.
          *
          * @return this SidebarMenuComponent for method chaining.
          */
@@ -407,7 +420,7 @@ public class SidebarMenuComponent extends BasePage {
         // VERIFICATION METHODS
         // ==========================================
         /**
-         * Verifies if the sidebar container is displayed.
+         * V.1 Verifies if the sidebar container is displayed.
          * 
          * @return true if displayed, false otherwise.
          */
@@ -418,7 +431,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies if the close button is displayed.
+         * V.2 Verifies if the close button is displayed.
          *
          * @return true if displayed, false otherwise.
          */
@@ -429,9 +442,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies if the Sign In button is displayed. Present for guests; replaced by
-         * the
-         * logged-in user container after authentication.
+         * V.3 Verifies if the Sign In button is displayed. Present for guests; replaced
+         * by the logged-in user container after authentication.
          *
          * @return true if displayed, false otherwise.
          */
@@ -442,16 +454,13 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Determines whether a user is currently logged in, from the sidebar's
+         * V.4 Determines whether a user is currently logged in, from the sidebar's
          * perspective.
          *
          * The sidebar swaps the Sign In button + "Become a Timepieces member" prompt for
-         * the
-         * logged-in user profile container once authenticated. This uses a fast,
-         * non-blocking
-         * {@code findElements} presence check on the profile container so it adds no
-         * wait when
-         * the user is a guest.
+         * the logged-in user profile container once authenticated. This uses a fast,
+         * non-blocking {@code findElements} presence check on the profile container
+         * so it adds no wait when the user is a guest.
          *
          * @return true if the logged-in user profile container is present, false
          *         otherwise.
@@ -463,9 +472,9 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies the "Become a Timepieces member" prompt is displayed — the guest-state
-         * marker that
-         * accompanies the Sign In button (absent once logged in).
+         * V.5 Verifies the "Become a Timepieces member" prompt is displayed — the
+         * guest-state marker that accompanies the
+         * Sign In button (absent once logged in).
          *
          * @return true if displayed, false otherwise.
          */
@@ -476,7 +485,7 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies the Timepieces logo inside the sidebar is displayed.
+         * V.6 Verifies the Timepieces logo inside the sidebar is displayed.
          *
          * @return true if displayed, false otherwise.
          */
@@ -487,10 +496,9 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Verifies the products (Timepieces/Accessories) sub-menu overlay is displayed
-         * in the
-         * desktop viewport. Call after {@link #openTimepiecesSubMenu()} /
-         * {@link #openAccessoriesSubMenu()}.
+         * V.7 Verifies the products (Timepieces/Accessories) sub-menu overlay is
+         * displayed in the desktop viewport. Call after
+         * {@link #openTimepiecesSubMenu()} or {@link #openAccessoriesSubMenu()}.
          *
          * @return true if displayed, false otherwise.
          */
@@ -501,9 +509,8 @@ public class SidebarMenuComponent extends BasePage {
         }
 
         /**
-         * Returns the number of top-level menu items currently rendered in the sidebar.
-         * Useful for
-         * asserting the navigation list is fully populated.
+         * V.8 Returns the number of top-level menu items currently rendered in the
+         * sidebar. Useful for asserting the navigation list is fully populated.
          *
          * @return the count of menu items (0 if none are present).
          */

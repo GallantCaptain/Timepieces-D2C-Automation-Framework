@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class TimepiecesWorld_ManifestaPage extends BasePage {
+public class TimepiecesWorld_ManifestaPage extends BasePage<TimepiecesWorld_ManifestaPage> {
 
     // ==========================================
     // Constructor

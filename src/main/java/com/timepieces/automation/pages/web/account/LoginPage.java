@@ -64,7 +64,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class LoginPage extends HeaderOnlyBasePage {
+public class LoginPage extends HeaderOnlyBasePage<LoginPage> {
 
     // ==========================================
     // CONSTRUCTOR

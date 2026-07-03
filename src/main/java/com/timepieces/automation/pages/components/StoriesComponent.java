@@ -23,9 +23,22 @@ import lombok.extern.log4j.Log4j2;
  * performing actions and validations on the page. Additionally, this class uses
  * the {@code log4j2} annotation to automatically generate a logger instance,
  * which is used for logging information about the test execution.
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this}
+ * (StoriesComponent) to allow method chaining in step definitions.
+ * 
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
-public class StoriesComponent extends BasePage {
+public class StoriesComponent extends BasePage<StoriesComponent> {
+
+    // ==========================================
+    // Constructor
+    // ==========================================
     public StoriesComponent(WebDriver driver) {
         super(driver);
     }
@@ -76,9 +89,6 @@ public class StoriesComponent extends BasePage {
 
     // Stories Progress Bar: (Desktop viewport)
     private final By storiesProgressBar_Desktop = By.cssSelector("div[data-testid='stories-progress-bar']");
-    // ==========================================
-    // PRIVATE HELPERS
-    // ==========================================
 
     // ==========================================
     // BUSINESS LIBRARY
@@ -203,7 +213,8 @@ public class StoriesComponent extends BasePage {
     }
 
     /**
-     * B.9 Waits for the last card's story timer to run out and the Stories modal to be dismissed automatically.
+     * B.9 Waits for the last card's story timer to run out and the Stories modal to
+     * be dismissed automatically.
      *
      * @return HeaderComponent representing the page behind the dismissed modal.
      */
@@ -214,11 +225,12 @@ public class StoriesComponent extends BasePage {
     }
 
     // ==========================================
-    // PRIVATE HELPERS FOR STORY TRACKING
+    // PRIVATE HELPERS (FOR STORY TRACKING)
     // ==========================================
     /**
-     * Helper method to get the index of the currently active story card.
-     * It scans the progress bars and returns the index of the one with the 'active' state.
+     * H.1 Helper method to get the index of the currently active story card.
+     * It scans the progress bars and returns the index of the one with the 'active'
+     * state.
      *
      * @return index of the active card, or -1 if not found.
      */
@@ -228,15 +240,32 @@ public class StoriesComponent extends BasePage {
         for (int i = 0; i < progressBars.size(); i++) {
             String className = progressBars.get(i).getAttribute("class");
             String dataStatus = progressBars.get(i).getAttribute("data-status");
-            if ((className != null && className.contains("active")) || (dataStatus != null && "active".equalsIgnoreCase(dataStatus))) {
+            if ((className != null && className.contains("active"))
+                    || (dataStatus != null && "active".equalsIgnoreCase(dataStatus))) {
                 return i;
             }
         }
         return -1;
     }
 
+    // ==========================================
+    // VERIFICATION METHODS
+    // ==========================================
+
     /**
-     * Verifies if the currently displayed card is the last card in the Stories component.
+     * V.1 Verifies if the StoriesPage is displayed on the page.
+     *
+     * @return true if displayed, false otherwise.
+     */
+    public boolean isStoriesDisplayed() {
+        boolean displayed = isDisplayed(storiesPageContainer);
+        log.info("StoriesPage displayed check: {}", displayed);
+        return displayed;
+    }
+
+    /**
+     * V.2 Verifies if the currently displayed card is the last card in the Stories
+     * component.
      *
      * @return true if it is the last card, false otherwise.
      */
@@ -253,20 +282,5 @@ public class StoriesComponent extends BasePage {
             log.warn("Failed to determine if last card: {}", e.getMessage());
             return false;
         }
-    }
-
-    // ==========================================
-    // VERIFICATION METHODS
-    // ==========================================
-
-    /**
-     * V.1 Verifies if the StoriesPage is displayed on the page.
-     *
-     * @return true if displayed, false otherwise.
-     */
-    public boolean isStoriesDisplayed() {
-        boolean displayed = isDisplayed(storiesPageContainer);
-        log.info("StoriesPage displayed check: {}", displayed);
-        return displayed;
     }
 }

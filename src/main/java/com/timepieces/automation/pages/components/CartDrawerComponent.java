@@ -11,7 +11,7 @@ import lombok.extern.log4j.Log4j2;
  * CartDrawerComponent — Component Object Model for the Cart Drawer Component.
  */
 @Log4j2
-public class CartDrawerComponent extends BasePage {
+public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
 
     // ==========================================
     // Constructor

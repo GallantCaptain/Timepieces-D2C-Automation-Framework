@@ -19,13 +19,36 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class TimepiecesWorld_ArvionPage extends BasePage {
+public class TimepiecesWorld_ArvionPage extends BasePage<TimepiecesWorld_ArvionPage> {
+
+    // ==========================================
+    // Page Constants
+    // ==========================================
+    // The Page Path Variable
+    private static final String PAGE_PATH = "/products/arvion";
+
+    // The Page Title Variable {Keep whether Unique or Not}
+    // Decide if it needs to be added to assertions if not unique
+    private static final String PAGE_TITLE = "Timepieces Watches | Early Access to Limited Edition Pieces";
 
     // ==========================================
     // Constructor
     // ==========================================
     public TimepiecesWorld_ArvionPage(WebDriver driver) {
         super(driver);
+    }
+
+    // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     // ==========================================

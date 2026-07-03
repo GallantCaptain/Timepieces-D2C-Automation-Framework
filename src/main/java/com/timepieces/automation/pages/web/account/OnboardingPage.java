@@ -67,7 +67,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class OnboardingPage extends HeaderOnlyBasePage {
+public class OnboardingPage extends HeaderOnlyBasePage<OnboardingPage> {
 
 	// ==========================================
 	// Constructor

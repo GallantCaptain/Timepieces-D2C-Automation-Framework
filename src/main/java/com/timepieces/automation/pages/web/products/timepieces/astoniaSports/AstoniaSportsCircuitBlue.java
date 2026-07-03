@@ -28,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class AstoniaSportsCircuitBlue extends SharedTemplate_AstoniaSports {
+public class AstoniaSportsCircuitBlue extends SharedTemplate_AstoniaSports<AstoniaSportsCircuitBlue> {
 
     // ==========================================
     // Constructor

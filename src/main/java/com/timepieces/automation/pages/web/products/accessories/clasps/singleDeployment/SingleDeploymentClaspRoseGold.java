@@ -44,7 +44,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SingleDeploymentClaspRoseGold extends StoreFrontBasePage {
+public class SingleDeploymentClaspRoseGold extends StoreFrontBasePage<SingleDeploymentClaspRoseGold> {
 
     // ==========================================
     // Constructor

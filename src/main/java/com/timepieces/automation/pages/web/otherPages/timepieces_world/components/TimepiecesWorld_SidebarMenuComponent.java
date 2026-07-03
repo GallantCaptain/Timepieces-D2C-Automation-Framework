@@ -26,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class TimepiecesWorld_SidebarMenuComponent extends BasePage {
+public class TimepiecesWorld_SidebarMenuComponent extends BasePage<TimepiecesWorld_SidebarMenuComponent> {
 
     // ==========================================
     // Constructor

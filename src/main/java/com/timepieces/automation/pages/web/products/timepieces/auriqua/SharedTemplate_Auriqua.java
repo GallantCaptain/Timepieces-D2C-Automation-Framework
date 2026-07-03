@@ -22,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SharedTemplate_Auriqua extends StoreFrontBasePage {
+public abstract class SharedTemplate_Auriqua<SELF extends SharedTemplate_Auriqua<SELF>> extends StoreFrontBasePage<SELF> {
 
     // ==========================================
     // Constructor

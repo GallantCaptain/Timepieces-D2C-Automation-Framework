@@ -17,12 +17,13 @@ import lombok.extern.log4j.Log4j2;
  * return {@code this} (SharedTemplate_Manifesta) to allow method chaining in
  * step definitions.
  * 
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
 @Log4j2
-public class SharedTemplate_Manifesta extends StoreFrontBasePage {
+public abstract class SharedTemplate_Manifesta<SELF extends SharedTemplate_Manifesta<SELF>> extends StoreFrontBasePage<SELF> {
 
     // ==========================================
     // Constructor

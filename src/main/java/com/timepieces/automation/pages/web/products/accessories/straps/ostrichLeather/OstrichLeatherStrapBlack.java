@@ -52,7 +52,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class OstrichLeatherStrapBlack extends StoreFrontBasePage {
+public class OstrichLeatherStrapBlack extends StoreFrontBasePage<OstrichLeatherStrapBlack> {
 
     // ==========================================
     // Constructor

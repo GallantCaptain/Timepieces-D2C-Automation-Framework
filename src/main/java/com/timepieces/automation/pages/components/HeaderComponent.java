@@ -19,12 +19,13 @@ import lombok.extern.log4j.Log4j2;
  * All methods that remain on this page return {@code this}
  * (HeaderComponent) to allow method chaining in step definitions.
  * 
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
-@Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class HeaderComponent extends BasePage {
+@Log4j2
+public class HeaderComponent extends BasePage<HeaderComponent> {
 
     // ==========================================
     // Constructor

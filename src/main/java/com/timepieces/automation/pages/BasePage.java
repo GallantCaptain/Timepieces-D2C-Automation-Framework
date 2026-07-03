@@ -34,14 +34,28 @@ import lombok.extern.log4j.Log4j2;
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this} (Appropriate Page
  * Object) to allow method chaining in step definitions.
- * 
+ *
+ * GENERIC SELF-TYPE (CRTP):
+ * The class is parameterised with a recursive self-type {@code SELF} — the
+ * "Curiously Recurring Template Pattern". Every concrete page declares itself as
+ * the type argument (e.g. {@code class UpdatesPage extends StoreFrontBasePage<UpdatesPage>}).
+ * This lets inherited fluent methods such as {@link #open()} return the CONCRETE
+ * page type instead of a bare {@code BasePage}, so chains like
+ * {@code new UpdatesPage(driver).open().verifyUpdatesLoaded()} compile WITHOUT
+ * every subclass having to override {@code open()} purely to narrow the return type.
+ *
+ * @param <SELF> the concrete page/component subtype, used for fluent return typing
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
-@Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public abstract class BasePage {
+@Log4j2
+public abstract class BasePage<SELF extends BasePage<SELF>> {
 
+    // ==========================================
+    // GLOBAL VARIABLES
+    // ==========================================
     protected final WebDriver driver;
     protected final WebDriverWait wait;
 
@@ -248,6 +262,60 @@ public abstract class BasePage {
             log.error("Attribute extraction failed for target element: [{}]", locator, e);
             throw e;
         }
+    }
+
+    /**
+     * B.10 Returns the base url for navigation.
+     * Defaults to the base.url property from configuration, but can be
+     * overridden in child classes if needed.
+     * 
+     * @return The base url of the page
+     */
+    public String getBaseUrl() {
+        return ConfigReader.get("base.url");
+    }
+
+    /**
+     * B.11 Returns the page path (appended to the base URL by {@link #open()}).
+     * <p>
+     * Non-abstract on purpose: defaults to an empty string so components and
+     * scaffold pages that have no dedicated endpoint compile without ceremony.
+     * Pages that map to a specific endpoint override this to return their
+     * {@code PAGE_PATH} constant.
+     *
+     * @return The path of the page (empty by default)
+     */
+    protected String getPagePath() {
+        return "";
+    }
+
+    /**
+     * B.12 Returns the page title for assertions.
+     * <p>
+     * Non-abstract on purpose (see {@link #getPagePath()}): defaults to an empty
+     * string; pages with a known title override this to return their
+     * {@code PAGE_TITLE} constant.
+     *
+     * @return The title of the page (empty by default)
+     */
+    protected String getPageTitle() {
+        return "";
+    }
+
+    /**
+     * B.13 Opens the page by navigating to {@code baseUrl + pagePath}.
+     * <p>
+     * Returns the concrete subtype ({@code SELF}) rather than {@code BasePage},
+     * so callers can keep chaining page-specific methods without any subclass
+     * having to override this method just to fix the return type. The cast is
+     * safe by the CRTP contract: every subclass binds {@code SELF} to itself.
+     *
+     * @return this page instance, typed as the concrete subclass, for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public SELF open() {
+        driver.get(getBaseUrl() + getPagePath());
+        return (SELF) this;
     }
 
     // ==========================================

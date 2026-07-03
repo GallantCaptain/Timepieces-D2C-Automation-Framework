@@ -34,7 +34,7 @@ import lombok.extern.log4j.Log4j2;
  * the website (domestic and international).
  */
 @Log4j2
-public class CheckoutPage extends HeaderOnlyBasePage {
+public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
 
     public CheckoutPage(WebDriver driver) {
         super(driver);

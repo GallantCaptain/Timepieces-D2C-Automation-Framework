@@ -22,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SharedTemplate_Arvion extends StoreFrontBasePage {
+public abstract class SharedTemplate_Arvion<SELF extends SharedTemplate_Arvion<SELF>> extends StoreFrontBasePage<SELF> {
 
     // ==========================================
     // Constructor

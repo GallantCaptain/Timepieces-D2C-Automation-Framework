@@ -43,7 +43,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class StagingGatePage extends BasePage {
+public class StagingGatePage extends BasePage<StagingGatePage> {
 
     private final By passwordField;
     private final By submitButton;

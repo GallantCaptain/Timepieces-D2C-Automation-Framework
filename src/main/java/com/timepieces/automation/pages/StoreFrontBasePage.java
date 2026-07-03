@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public abstract class StoreFrontBasePage extends HeaderOnlyBasePage {
+public abstract class StoreFrontBasePage<SELF extends StoreFrontBasePage<SELF>> extends HeaderOnlyBasePage<SELF> {
 
     public final FooterComponent footer;
 

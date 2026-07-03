@@ -52,7 +52,7 @@ import lombok.extern.log4j.Log4j2;
  * @author Avinash Rath
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class TejuLizardLeatherStrapBlue extends StoreFrontBasePage {
+public class TejuLizardLeatherStrapBlue extends StoreFrontBasePage<TejuLizardLeatherStrapBlue> {
 
     // ==========================================
     // Constructor

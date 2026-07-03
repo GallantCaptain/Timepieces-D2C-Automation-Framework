@@ -14,9 +14,19 @@ import lombok.extern.log4j.Log4j2;
  * appears when the user clicks the Search toggle button in the site header.
  * It extends the BasePage class which provides common wait, click, and
  * input helper methods for all page components.
+ * 
+ * FLUENT INTERFACE:
+ * All methods that remain on this page return {@code this}
+ * (GlobalSearchComponent) to allow method chaining in step definitions.
+ * 
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
  */
+
 @Log4j2
-public class GlobalSearchComponent extends BasePage {
+public class GlobalSearchComponent extends BasePage<GlobalSearchComponent> {
+
     // ==========================================
     // Constructor
     // ==========================================

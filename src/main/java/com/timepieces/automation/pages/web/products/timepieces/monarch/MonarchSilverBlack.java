@@ -41,7 +41,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class MonarchSilverBlack extends SharedTemplate_Monarch {
+public class MonarchSilverBlack extends SharedTemplate_Monarch<MonarchSilverBlack> {
 
     // ==========================================
     // Constructor

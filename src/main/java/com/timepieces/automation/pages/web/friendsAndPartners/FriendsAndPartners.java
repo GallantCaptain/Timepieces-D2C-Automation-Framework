@@ -43,7 +43,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class FriendsAndPartners extends StoreFrontBasePage {
+public class FriendsAndPartners extends StoreFrontBasePage<FriendsAndPartners> {
 
     // ==========================================
     // Constructor

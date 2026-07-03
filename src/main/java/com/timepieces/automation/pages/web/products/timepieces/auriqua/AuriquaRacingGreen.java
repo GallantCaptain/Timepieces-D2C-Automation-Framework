@@ -27,7 +27,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class AuriquaRacingGreen extends SharedTemplate_Auriqua {
+public class AuriquaRacingGreen extends SharedTemplate_Auriqua<AuriquaRacingGreen> {
 
     // ==========================================
     // Constructor

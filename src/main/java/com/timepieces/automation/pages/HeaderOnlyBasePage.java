@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public abstract class HeaderOnlyBasePage extends BasePage {
+public abstract class HeaderOnlyBasePage<SELF extends HeaderOnlyBasePage<SELF>> extends BasePage<SELF> {
 
     public final HeaderComponent header;
 

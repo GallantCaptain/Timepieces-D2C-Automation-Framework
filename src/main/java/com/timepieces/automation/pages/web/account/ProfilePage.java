@@ -28,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class ProfilePage extends HeaderOnlyBasePage {
+public class ProfilePage extends HeaderOnlyBasePage<ProfilePage> {
 
     // ==========================================
     // Constructor
