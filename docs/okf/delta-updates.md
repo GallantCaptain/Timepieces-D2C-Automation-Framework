@@ -1,6 +1,25 @@
 # Delta Updates
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
+
+## 2026-07-03 Javadoc Refactoring & Staging Gate Alignment
+
+### Modified Items
+
+- `src/main/java/**/*.java` & `src/test/java/**/*.java` — Added/updated class-level Documentation Comments containing `@Description`, `@since 2026-07-03`, `@version 1.0`, and `@author Avinash Rath` across all 131 Java files using a comment-aware state machine.
+- `StagingBypassSteps.java` — Implemented missing step definitions `Given the user bypasses the staging password gate` and `Given the user is on the storefront homepage`.
+- `CheckoutSteps.java` — Added `StagingGatePage.unlockIfPresent()` staging gate UI bypass logic to `the_user_is_on_the_final_payment_verification_checkout_module()`.
+- `AccountSteps.java` — Added `StagingGatePage.unlockIfPresent()` staging gate UI bypass logic to `/404` and `/account` navigations.
+- `AuthenticationEngine.java` — Injected the `x-automation-bypass` header in API requests when `CF_BYPASS_TOKEN` is present.
+- `IdempotencyApiTest.java` — Injected the `x-automation-bypass` header in API requests when `CF_BYPASS_TOKEN` is present.
+
+### Status Changes
+
+- All BDD and TDD test suites updated with consistent Cloudflare WAF bypass and password gatekeeper bypass logic.
+
+### Verification
+
+- Framework compilation verified (`mvnw clean test-compile` -> BUILD SUCCESS).
 
 ## 2026-07-02 Maven Profiles Alignment & Page Object Revamp
 

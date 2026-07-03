@@ -1,6 +1,6 @@
 # Decisions Log
 
-Last reviewed: 2026-06-25
+Last reviewed: 2026-07-03
 
 Architecture and framework decisions are stored as ADRs under `docs/adr/`. This file is the OKF index for decision traceability.
 

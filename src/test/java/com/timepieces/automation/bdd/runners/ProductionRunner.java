@@ -36,6 +36,12 @@ import io.cucumber.testng.CucumberOptions;
                 "rerun:target/cucumber-reports/production-rerun.txt",
                 "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
         }, monochrome = true, dryRun = false)
+/**
+ * @Description "Description of ProductionRunner"
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
+ */
 public class ProductionRunner extends BaseRunner {
     // Inherits parallel execution and global hooks from BaseRunner
 }

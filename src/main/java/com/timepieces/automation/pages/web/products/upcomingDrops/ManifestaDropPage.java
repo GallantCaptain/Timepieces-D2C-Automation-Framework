@@ -24,6 +24,8 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @version 0.1
  * @author Avinash Rath
+* @Description "Description of ManifestaDropPage"
+* @since 2026-07-03
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances

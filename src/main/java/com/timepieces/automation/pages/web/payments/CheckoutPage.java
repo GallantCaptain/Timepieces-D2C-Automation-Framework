@@ -32,6 +32,10 @@ import lombok.extern.log4j.Log4j2;
  * RazorpayModalComponent is triggered again.
  * The RazorpayModalComponent is the final gateway to make any purchases from
  * the website (domestic and international).
+* @Description "Description of CheckoutPage"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 @Log4j2
 public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {

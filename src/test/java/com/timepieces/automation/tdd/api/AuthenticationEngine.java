@@ -12,6 +12,12 @@ import lombok.extern.log4j.Log4j2;
 
 import java.util.HashMap;
 import java.util.Map;
+/**
+ * @Description "Description of AuthenticationEngine"
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
+ */
 
 @Log4j2
 public class AuthenticationEngine {
@@ -29,6 +35,22 @@ public class AuthenticationEngine {
         if (baseUrl == null || baseUrl.isEmpty()) {
             baseUrl = "https://staging.timepieces-d2c.example";
         }
+
+        // Resolve Cloudflare bypass token
+        String tempToken = System.getProperty("CF_BYPASS_TOKEN");
+        if (tempToken == null || tempToken.isEmpty()) {
+            tempToken = System.getenv("CF_BYPASS_TOKEN");
+        }
+        final String cfBypassToken = tempToken;
+
+        // Helper to initialize request with CF bypass header if present
+        java.util.function.Supplier<io.restassured.specification.RequestSpecification> requestBuilder = () -> {
+            var spec = given();
+            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                spec = spec.header("x-automation-bypass", cfBypassToken);
+            }
+            return spec;
+        };
         
         // 1. Bypass Staging password gate if applicable
         if (baseUrl.contains("staging")) {
@@ -37,7 +59,7 @@ public class AuthenticationEngine {
                 password = "CHANGE_ME";
             }
             try {
-                given()
+                requestBuilder.get()
                     .contentType(ContentType.JSON)
                     .body(Map.of("password", password))
                     .post(baseUrl + "/api/verify-password")
@@ -60,7 +82,7 @@ public class AuthenticationEngine {
                 sendOtpBody.put("phone", emailOrPhone);
             }
             
-            Response otpResponse = given()
+            Response otpResponse = requestBuilder.get()
                 .contentType(ContentType.JSON)
                 .body(sendOtpBody)
                 .post(baseUrl + "/api/auth/send-otp");
@@ -72,7 +94,7 @@ public class AuthenticationEngine {
             requestTokenBody.put("username", emailOrPhone);
             requestTokenBody.put("otp", "123456"); // Staging default/bypass OTP
             
-            Response tokenResponse = given()
+            Response tokenResponse = requestBuilder.get()
                 .contentType(ContentType.JSON)
                 .body(requestTokenBody)
                 .post(baseUrl + "/api/request-token");
@@ -92,7 +114,7 @@ public class AuthenticationEngine {
 
         // 3. Verify Session via API
         try {
-            Response verifyResponse = given()
+            Response verifyResponse = requestBuilder.get()
                 .header("Authorization", "Bearer " + token)
                 .post(baseUrl + "/api/auth/verify-session");
             log.info("Session verification status: {}", verifyResponse.getStatusCode());

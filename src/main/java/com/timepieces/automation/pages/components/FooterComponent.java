@@ -18,6 +18,10 @@ import lombok.extern.log4j.Log4j2;
  * interact with the web elements in the footer section. The constructor
  * initializes the WebDriver instance when an object of FooterComponent is
  * created.
+* @Description "Description of FooterComponent"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class FooterComponent extends BasePage<FooterComponent> {

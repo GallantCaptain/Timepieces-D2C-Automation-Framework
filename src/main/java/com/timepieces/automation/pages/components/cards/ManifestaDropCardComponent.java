@@ -37,6 +37,10 @@ import lombok.extern.log4j.Log4j2;
  * 
  * This is yet to be implemented. Will happen around end of July or beginning of
  * August.
+* @Description "Description of ManifestaDropCardComponent"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 
 @Log4j2

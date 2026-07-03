@@ -93,4 +93,13 @@ This changelog is append-only. New entries must be added chronologically and mus
 - **Page Object Restructuring & Cleaning:** Reorganized the `otherPages` directory structure, renaming `TimepiecesHouse.java` -> `TimepiecesHousePage.java`, `SiteMap.java` -> `SiteMapPage.java`, and `TheWallPage.java` -> `TimepiecesWallPage.java`. Created the `timepieces_world` directory to house `TimepiecesWorld_ArvionPage.java` etc., and cleaned up unused classes.
 - **Codebase-wide Javadoc & Formatting:** Refactored class Javadoc blocks across all page objects, test runners, step definitions, and utility classes to standard templates (adding `@version 1.0` and `@author Avinash Rath`), normalized import sections, and formatted indentation.
 
+## 2026-07-03
+
+- **Codebase Javadoc Refactoring**: Scanned all 131 Java files and added/updated class-level Documentation Comments containing `@Description`, `@since 2026-07-03`, `@version 1.0`, and `@author Avinash Rath`. Built and ran a parsing state machine to ensure comments/Javadocs are not nested or broken.
+- **BDD/TDD Staging Gate Alignment**: Verified and aligned staging gate bypass logic across BDD and TDD test layers.
+  - Implemented missing step definitions `Given the user bypasses the staging password gate` and `Given the user is on the storefront homepage` in `StagingBypassSteps.java` to support background scenarios in feature files.
+  - Added UI staging gate unlock hooks (`StagingGatePage.unlockIfPresent()`) in `CheckoutSteps.java` and `AccountSteps.java` directly after navigating.
+  - Added the `x-automation-bypass` header in RestAssured requests within `AuthenticationEngine.java` and `IdempotencyApiTest.java` to prevent Cloudflare edge blocking on GHA runners.
+- **Verification**: Ran `./mvnw clean test-compile` successfully.
+
 

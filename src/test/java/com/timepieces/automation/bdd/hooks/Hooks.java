@@ -21,6 +21,8 @@ import org.openqa.selenium.WebDriverException;
  * 
  * @version 1.0
  * @author Avinash Rath
+* @Description "Description of Hooks"
+* @since 2026-07-03
  */
 
 @Log4j2

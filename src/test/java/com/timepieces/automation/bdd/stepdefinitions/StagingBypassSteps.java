@@ -17,6 +17,10 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * StagingBypassSteps
+* @Description "Description of StagingBypassSteps"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 
 @Log4j2
@@ -28,6 +32,30 @@ public class StagingBypassSteps {
 
     public StagingBypassSteps(TestContext testContext) {
         this.testContext = testContext;
+    }
+
+    @Given("the user bypasses the staging password gate")
+    public void the_user_bypasses_the_staging_password_gate() {
+        org.openqa.selenium.WebDriver driver = DriverFactory.getDriver();
+        String baseUrl = ConfigReader.get("base.url");
+        if (baseUrl == null || baseUrl.isEmpty()) {
+            baseUrl = "https://staging.timepieces-d2c.example";
+        }
+        log.info("Bypassing staging gate for storefront: {}", baseUrl);
+        driver.get(baseUrl);
+        new StagingGatePage(driver).unlockIfPresent();
+    }
+
+    @Given("the user is on the storefront homepage")
+    public void the_user_is_on_the_storefront_homepage() {
+        org.openqa.selenium.WebDriver driver = DriverFactory.getDriver();
+        String baseUrl = ConfigReader.get("base.url");
+        if (baseUrl == null || baseUrl.isEmpty()) {
+            baseUrl = "https://staging.timepieces-d2c.example";
+        }
+        log.info("Navigating to storefront homepage: {}", baseUrl);
+        driver.get(baseUrl);
+        new HomePage(driver).waitUntilLoaded();
     }
 
     @Given("the user navigates to the staging environment application URL {string}")

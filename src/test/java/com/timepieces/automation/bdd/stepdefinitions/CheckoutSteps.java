@@ -15,6 +15,10 @@ import org.openqa.selenium.interactions.Actions;
 
 /**
  * CheckoutSteps
+* @Description "Description of CheckoutSteps"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 
 @Log4j2
@@ -32,6 +36,7 @@ public class CheckoutSteps {
 
         // Open the checkout page directly for verification
         driver.get(baseUrl + "/checkout");
+        new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
         checkoutPage = new CheckoutPage(driver);
     }
 

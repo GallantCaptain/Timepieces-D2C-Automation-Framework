@@ -32,6 +32,12 @@ import lombok.extern.log4j.Log4j2;
                                 "rerun:target/cucumber-reports/smoke-rerun.txt",
                                 "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
                 }, monochrome = false, dryRun = false)
+/**
+ * @Description "Description of SmokeRunner"
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
+ */
 public class SmokeRunner extends BaseRunner {
         // Inherits parallel execution and global hooks from BaseRunner
 }

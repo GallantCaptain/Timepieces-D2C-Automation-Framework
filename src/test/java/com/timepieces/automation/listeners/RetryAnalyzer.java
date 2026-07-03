@@ -12,6 +12,9 @@ import org.testng.ITestResult;
  * 
  * @verison 1.0
  * @author Avinash Rath
+* @Description "Description of RetryAnalyzer"
+* @since 2026-07-03
+* @version 1.0
  */
 
 @Log4j2

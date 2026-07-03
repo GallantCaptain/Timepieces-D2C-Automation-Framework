@@ -1,6 +1,6 @@
 # Risks
 
-Last reviewed: 2026-06-25
+Last reviewed: 2026-07-03
 
 | ID | Risk | Probability | Impact | Mitigation | Traceability |
 | --- | --- | --- | --- | --- | --- |

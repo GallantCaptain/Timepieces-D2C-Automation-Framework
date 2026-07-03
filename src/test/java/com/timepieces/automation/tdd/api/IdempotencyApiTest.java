@@ -15,6 +15,12 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+/**
+ * @Description "Description of IdempotencyApiTest"
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
+ */
 
 @Log4j2
 public class IdempotencyApiTest {
@@ -42,6 +48,22 @@ public class IdempotencyApiTest {
         Response primaryCall = null;
         Response secondaryCall = null;
 
+        // Resolve Cloudflare bypass token
+        String tempToken = System.getProperty("CF_BYPASS_TOKEN");
+        if (tempToken == null || tempToken.isEmpty()) {
+            tempToken = System.getenv("CF_BYPASS_TOKEN");
+        }
+        final String cfBypassToken = tempToken;
+
+        // Helper to initialize request with CF bypass header if present
+        java.util.function.Supplier<io.restassured.specification.RequestSpecification> requestBuilder = () -> {
+            var spec = given();
+            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                spec = spec.header("x-automation-bypass", cfBypassToken);
+            }
+            return spec;
+        };
+
         try {
             // Staging gate bypass if applicable
             if (baseUrl.contains("staging")) {
@@ -49,14 +71,14 @@ public class IdempotencyApiTest {
                 if (password == null || password.isEmpty()) {
                     password = "CHANGE_ME";
                 }
-                given()
+                requestBuilder.get()
                     .contentType(ContentType.JSON)
                     .body(Map.of("password", password))
                     .post("/api/verify-password");
             }
 
             // First Execution: Creates the transaction entry
-            primaryCall = given()
+            primaryCall = requestBuilder.get()
                 .header("Idempotency-Key", duplicatePreventionKey)
                 .contentType(ContentType.JSON)
                 .body(requestPayload)
@@ -65,7 +87,7 @@ public class IdempotencyApiTest {
             log.info("Primary call response code: {}", primaryCall.getStatusCode());
 
             // Second Execution: Replays identical details with matching key
-            secondaryCall = given()
+            secondaryCall = requestBuilder.get()
                 .header("Idempotency-Key", duplicatePreventionKey)
                 .contentType(ContentType.JSON)
                 .body(requestPayload)

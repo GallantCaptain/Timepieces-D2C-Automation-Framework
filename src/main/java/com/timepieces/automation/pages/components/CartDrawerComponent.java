@@ -9,6 +9,10 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * CartDrawerComponent — Component Object Model for the Cart Drawer Component.
+* @Description "Description of CartDrawerComponent"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 @Log4j2
 public class CartDrawerComponent extends BasePage<CartDrawerComponent> {

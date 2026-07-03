@@ -35,6 +35,10 @@ import lombok.extern.log4j.Log4j2;
  * links in the website.
  * Clicking on the card redirects the user to: URL:
  * https://www.timepieces-d2c.example/new-release/astonia (AstoniaDropPage)
+* @Description "Description of AstoniaDropCardComponent"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 
 @Log4j2

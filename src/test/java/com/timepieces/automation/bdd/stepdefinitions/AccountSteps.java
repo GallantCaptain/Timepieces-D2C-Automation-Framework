@@ -16,6 +16,10 @@ import org.openqa.selenium.WebDriver;
 
 /**
  * AccountSteps
+* @Description "Description of AccountSteps"
+* @since 2026-07-03
+* @version 1.0
+* @author Avinash Rath
  */
 
 @Log4j2
@@ -44,6 +48,7 @@ public class AccountSteps {
             baseUrl = "https://staging.timepieces-d2c.example";
         }
         driver.get(baseUrl + "/404");
+        new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
 
         // 3. Inject token as cookie
         log.info("Injecting JWT token into cookie jar.");
@@ -63,6 +68,7 @@ public class AccountSteps {
             baseUrl = "https://staging.timepieces-d2c.example";
         }
         driver.get(baseUrl + "/account");
+        new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
         accountPage = new AccountPage(driver);
     }
 
