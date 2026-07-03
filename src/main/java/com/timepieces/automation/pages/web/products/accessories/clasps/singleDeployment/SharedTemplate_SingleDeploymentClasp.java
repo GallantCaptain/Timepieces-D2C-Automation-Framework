@@ -14,17 +14,28 @@ import lombok.extern.log4j.Log4j2;
  * have the feature but will have the same methods with the same name to
  * allow for method chaining in step definitions.
  * 
+ * GENERIC SELF-TYPE (CRTP): parameterised with a recursive self-type so the
+ * inherited fluent {@code open()} returns the concrete variant page. Each variant
+ * binds itself, e.g. {@code class SingleDeploymentClaspSteel extends
+ * SharedTemplate_SingleDeploymentClasp<SingleDeploymentClaspSteel>}.
+ * <p>
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this}
- * (SharedTemplate_SingleDeploymentClasp) to allow method chaining in step
- * definitions.
- * 
+ * All methods that remain on this page return {@code this} (the concrete variant)
+ * to allow method chaining in step definitions.
+ *
+ * @param <SELF> the concrete Single Deployment Clasp variant subtype
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
 @Log4j2
-public class SharedTemplate_SingleDeploymentClasp extends StoreFrontBasePage<SharedTemplate_SingleDeploymentClasp> {
+public abstract class SharedTemplate_SingleDeploymentClasp<SELF extends SharedTemplate_SingleDeploymentClasp<SELF>>
+        extends StoreFrontBasePage<SELF> {
+
+    // ==========================================
+    // Page Constants
+    // ==========================================
 
     // ==========================================
     // Constructor

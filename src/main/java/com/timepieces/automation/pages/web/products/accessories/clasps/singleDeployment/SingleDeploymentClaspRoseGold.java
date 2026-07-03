@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.accessories.clasps.singleDe
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -44,7 +42,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class SingleDeploymentClaspRoseGold extends StoreFrontBasePage<SingleDeploymentClaspRoseGold> {
+public class SingleDeploymentClaspRoseGold extends SharedTemplate_SingleDeploymentClasp<SingleDeploymentClaspRoseGold> {
 
     // ==========================================
     // Constructor

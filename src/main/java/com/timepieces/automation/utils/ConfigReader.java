@@ -15,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
  * All the methods here are stateless, and receive a driver instance explicitly
  * for thread safety in parallel runs.
  * 
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
@@ -56,10 +57,8 @@ public class ConfigReader {
             }
 
             // Step 3: If a gitignored <env>.local.properties exists on the classpath, layer
-            // its
-            // keys on top of the base file. Lets developers keep secrets (e.g.,
-            // staging.password)
-            // out of source control without changing committed config.
+            // its keys on top of the base file. Lets developers keep secrets (e.g.,
+            // staging.password) out of source control without changing committed config.
             try (InputStream local = ConfigReader.class.getClassLoader().getResourceAsStream(localOverrideFile)) {
                 if (local != null) {
                     prop.load(local);

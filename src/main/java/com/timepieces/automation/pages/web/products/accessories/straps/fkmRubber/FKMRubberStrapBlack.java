@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.accessories.straps.fkmRubbe
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -52,7 +50,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class FKMRubberStrapBlack extends StoreFrontBasePage<FKMRubberStrapBlack> {
+public class FKMRubberStrapBlack extends SharedTemplate_FKMRubberStrap<FKMRubberStrapBlack> {
 
     // ==========================================
     // Constructor

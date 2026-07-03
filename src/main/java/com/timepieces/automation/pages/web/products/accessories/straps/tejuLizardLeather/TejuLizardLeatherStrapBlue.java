@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.accessories.straps.tejuLiza
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -52,7 +50,7 @@ import lombok.extern.log4j.Log4j2;
  * @author Avinash Rath
  */
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
-public class TejuLizardLeatherStrapBlue extends StoreFrontBasePage<TejuLizardLeatherStrapBlue> {
+public class TejuLizardLeatherStrapBlue extends SharedTemplate_TejuLizardLeatherStrap<TejuLizardLeatherStrapBlue> {
 
     // ==========================================
     // Constructor

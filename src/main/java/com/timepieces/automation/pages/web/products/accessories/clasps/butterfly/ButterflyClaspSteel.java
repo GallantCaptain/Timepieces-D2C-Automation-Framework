@@ -2,8 +2,6 @@ package com.timepieces.automation.pages.web.products.accessories.clasps.butterfl
 
 import org.openqa.selenium.WebDriver;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
-
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -42,7 +40,7 @@ import lombok.extern.log4j.Log4j2;
  */
 
 @Log4j2
-public class ButterflyClaspSteel extends StoreFrontBasePage<ButterflyClaspSteel> {
+public class ButterflyClaspSteel extends SharedTemplate_ButterflyClasp<ButterflyClaspSteel> {
 
     // ==========================================
     // Constructor

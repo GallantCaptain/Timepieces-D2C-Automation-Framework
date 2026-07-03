@@ -15,17 +15,28 @@ import lombok.extern.log4j.Log4j2;
  * might be added in the future. Therefore, this shared template class is
  * created to make it future-proof and scalable.
  * 
+ * GENERIC SELF-TYPE (CRTP): parameterised with a recursive self-type so the
+ * inherited fluent {@code open()} returns the concrete variant page. Each variant
+ * binds itself, e.g. {@code class WatchCaseBlack extends
+ * SharedTemplate_WatchCase<WatchCaseBlack>}.
+ * <p>
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this}
- * (SharedTemplate_WatchCase) to allow method chaining in step definitions.
- * 
- * @since 2026
+ * All methods that remain on this page return {@code this} (the concrete variant)
+ * to allow method chaining in step definitions.
+ *
+ * @param <SELF> the concrete Watch Case variant subtype
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
 
 @Log4j2
-public abstract class SharedTemplate_WatchCase extends StoreFrontBasePage<SharedTemplate_WatchCase> {
+public abstract class SharedTemplate_WatchCase<SELF extends SharedTemplate_WatchCase<SELF>>
+        extends StoreFrontBasePage<SELF> {
+
+    // ==========================================
+    // Page Constants
+    // ==========================================
 
     // ==========================================
     // Constructor
