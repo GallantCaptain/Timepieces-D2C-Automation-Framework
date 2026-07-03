@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Astonia Sports Podium Green:
  * https://www.timepieces-d2c.example/products/astonia-sports-podium-green
  * The Astonia Sports Podium Green PDP page. This page contains details about
- * the Astonia Sports Podium Green watch. It is a shared template for the
+ * the Astonia Sports Podium Green watch. It is a variant of the
  * Astonia Sports family of timepieces. The other watches can be navigated
  * to in the PDP page with a card to toggle between each. The page also has
  * a sticky header and footer and scroll-to-section functionality.

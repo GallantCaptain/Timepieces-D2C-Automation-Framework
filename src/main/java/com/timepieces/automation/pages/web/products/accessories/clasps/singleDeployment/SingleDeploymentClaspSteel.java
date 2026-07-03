@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Single Deployment Clasp Steel:
  * https://www.timepieces-d2c.example/accessories/clasp/single-deployment-clasp-steel-20mm
  * The Single Deployment Clasp Steel PDP page. This page contains details about
- * the Single Deployment Clasp Steel. It is a shared template for the Single
+ * the Single Deployment Clasp Steel. It is a variant of the Single
  * Deployment Clasp family of accessories. The other clasps can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are

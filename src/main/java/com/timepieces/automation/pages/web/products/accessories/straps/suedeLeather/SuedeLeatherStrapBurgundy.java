@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Suede Leather Strap Burgundy:
  * https://www.timepieces-d2c.example/accessories/strap/suede-leather-strap-burgundy
  * The Suede Leather Strap Burgundy PDP page. This page contains details about
- * the Suede Leather Strap Burgundy. It is a shared template for the Suede
+ * the Suede Leather Strap Burgundy. It is a variant of the Suede
  * Leather Strap family of accessories. The other clasps can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are

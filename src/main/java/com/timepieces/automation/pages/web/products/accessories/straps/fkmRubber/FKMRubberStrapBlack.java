@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * FKMRubber Strap Black:
  * https://www.timepieces-d2c.example/accessories/strap/fkm-rubber-strap-black
  * The FKMRubber Strap Black PDP page. This page contains details about
- * the FKMRubber Strap Black. It is a shared template for the FKMRubber
+ * the FKMRubber Strap Black. It is a variant of the FKMRubber
  * Strap family of accessories. The other clasps can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are

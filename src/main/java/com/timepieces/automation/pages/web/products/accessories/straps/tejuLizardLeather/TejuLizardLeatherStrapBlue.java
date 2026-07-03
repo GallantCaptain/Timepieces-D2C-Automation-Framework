@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Teju Lizard Leather Strap Blue:
  * https://www.timepieces-d2c.example/accessories/strap/teju-lizard-leather-strap-blue
  * The Teju Lizard Leather Strap Blue PDP page. This page contains details about
- * the Teju Lizard Leather Strap Blue. It is a shared template for the Teju
+ * the Teju Lizard Leather Strap Blue. It is a variant of the Teju
  * Lizard Leather Strap family of accessories. The other clasps can be navigated
  * to
  * in the PDP page with a card to toggle between each. The page also has a

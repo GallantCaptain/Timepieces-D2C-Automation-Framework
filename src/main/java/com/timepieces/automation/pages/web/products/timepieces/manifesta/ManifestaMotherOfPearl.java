@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Manifesta Mother Of Pearl:
  * https://www.timepieces-d2c.example/products/manifesta-mother-of-pearl
  * The Manifesta Mother Of Pearl PDP page. This page contains details about the
- * Manifesta Mother Of Pearl watch. It is a shared template for the Manifesta
+ * Manifesta Mother Of Pearl watch. It is a variant of the Manifesta
  * family of timepieces. The other watches can be navigated to in the PDP page
  * with a card
  * to toggle between each. The page also has a sticky header and footer and

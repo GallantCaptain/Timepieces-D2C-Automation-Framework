@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Hybrid Leather Strap Black:
  * https://www.timepieces-d2c.example/accessories/strap/hybrid-leather-strap-black
  * The Hybrid Leather Strap Black PDP page. This page contains details about
- * the Hybrid Leather Strap Black. It is a shared template for the Hybrid
+ * the Hybrid Leather Strap Black. It is a variant of the Hybrid
  * Leather Strap family of accessories. The other clasps can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are

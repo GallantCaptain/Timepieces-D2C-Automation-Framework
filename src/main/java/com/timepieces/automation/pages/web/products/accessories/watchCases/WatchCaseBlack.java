@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Premium Watch Case Black:
  * https://www.timepieces-d2c.example/accessories/watch-case/premium-watch-case
  * The Premium Watch Case Black PDP page. This page contains details about
- * the Premium Watch Case Black. It is a shared template for the Premium Watch
+ * the Premium Watch Case Black. It is a variant of the Premium Watch
  * Case family of accessories. The other watch cases can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are

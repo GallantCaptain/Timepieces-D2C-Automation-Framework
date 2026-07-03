@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
  * Butterfly Clasp Steel:
  * https://www.timepieces-d2c.example/accessories/clasp/butterfly-clasp-steel-18mm
  * The Butterfly Clasp Steel PDP page. This page contains details about
- * the Butterfly Clasp Steel. It is a shared template for the Butterfly
+ * the Butterfly Clasp Steel. It is a variant of the Butterfly
  * Clasp family of accessories. The other clasps can be navigated to
  * in the PDP page with a card to toggle between each. The page also has a
  * sticky header and footer and scroll-to-section functionality. There are
