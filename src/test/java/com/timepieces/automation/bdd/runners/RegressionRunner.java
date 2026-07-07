@@ -5,8 +5,8 @@ import org.testng.annotations.Test;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * RegressionRunner
- * 
+ * @Description "Description of RegressionRunner"
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
@@ -20,7 +20,11 @@ import lombok.extern.log4j.Log4j2;
                 "src/test/resources/features/01_authentication_identity/OTP_Bruteforce_Security.feature",
                 "src/test/resources/features/01_authentication_identity/API_Backed_UI_Session.feature",
                 "src/test/resources/features/03_checkout_payments/Checkout_Idempotency.feature",
-                "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature"
+                "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature",
+                "src/test/resources/features/04_checkout_secure_funnel/Cart_Addition_And_Domestic_Checkout.feature",
+                "src/test/resources/features/04_checkout_secure_funnel/Checkout_Form_Validation.feature",
+                "src/test/resources/features/05_payment_integration/Payment_Integration_Validation.feature",
+                "src/test/resources/features/06_customer_retention_wishlist/Wishlist_And_Account_Management.feature"
 }, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
                 /*
                  * Disjointness with Smoke is enforced on the SmokeRunner side (tags =
@@ -37,12 +41,6 @@ import lombok.extern.log4j.Log4j2;
                                 "rerun:target/cucumber-reports/regression-rerun.txt",
                                 "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
                 }, monochrome = true, dryRun = false)
-/**
- * @Description "Description of RegressionRunner"
- * @since 2026-07-03
- * @version 1.0
- * @author Avinash Rath
- */
 public class RegressionRunner extends BaseRunner {
         // Inherits parallel execution and global hooks from BaseRunner
 }
