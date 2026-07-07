@@ -1,211 +1,163 @@
 # Timepieces Automation Framework: Project Context
 
-Last updated: 2026-06-05
+Last updated: 2026-07-08
+
+> Governance note: the authoritative, living project memory is the OKF under
+> `docs/okf/` (start at `docs/okf/OKF_INDEX.md`). This file is a fast-rehydration
+> overview; where it and the OKF differ, the OKF `CurrentStatus.md` wins.
 
 ## Purpose
 
-This repository contains the Timepieces web automation framework: a Java/Maven BDD test suite for validating Timepieces storefront flows such as homepage initialization, sidebar navigation, login/OTP, product discovery, cart, checkout, wishlist, payment, and account/session behavior.
+This repository contains the Timepieces web automation program: a Java/Maven
+BDD + TDD test suite validating the Timepieces headless-Shopify storefront
+(authentication/OTP, catalog & product discovery, cart, checkout, payments,
+retention/wishlist, account/session), plus a React/Node QA dashboard for run
+history, trends, and on-demand flow execution.
 
-The project is intended to act as both an executable test harness and living test documentation through Cucumber feature files.
+Active goal (final push before handoff): reach **250+ automated test cases** and
+a **completed Page Object Model**, working directly on `main`.
 
 ## Stack
 
 - Language/runtime: Java, Maven, compiler release 25
-- Test automation: Selenium WebDriver 4.44.0
-- BDD: Cucumber-JVM 7.18.0
-- Runner: TestNG 7.10.2
-- Reporting: Allure via `allure-testng` and `allure-cucumber7-jvm`
-- Logging: Log4j2
-- Optional/forward-looking integrations: Rest-Assured, Appium, Healenium
+- UI automation: Selenium WebDriver 4.44.0 (migration to Playwright + Python is on the roadmap; a validated Playwright/TypeScript PoC lives under `automation-ts/`)
+- BDD: Cucumber-JVM 7.18.0 · Runner: TestNG 7.10.2 · Assertions: AssertJ
+- API/TDD: Rest-Assured 5.4.0 (active — search, idempotency, auth-engine)
+- Reporting: Allure (`allure-testng`, `allure-cucumber7-jvm`); Cucumber HTML/JSON
+- Metrics: PostgreSQL (`test_runs`) via `MetricsListener` → Grafana + dashboard
+- Logging: Log4j2 · DI/scenario state: Cucumber PicoContainer
+- Self-healing/mobile (present, not primary): Healenium 3.4.6, Appium 9.2.3
 - Screen recording: Monte Screen Recorder
-- DI/shared scenario state: Cucumber PicoContainer
 
-## Repository Map
+## Test Layers & Suites (BDD/TDD segregation)
 
-- `pom.xml`: dependency and plugin source of truth. Surefire is configured to execute `testng.xml`.
-- `testng.xml`: suite definition. Runs `SmokeRunner`, `SanityRunner`, and `RegressionRunner`; passes `environment=staging`.
-- `src/main/java/com/timepieces/automation/base`: browser driver lifecycle.
-- `src/main/java/com/timepieces/automation/pages`: page object hierarchy and page/component models.
-- `src/main/java/com/timepieces/automation/utils`: config, browser/window/action utilities, and screen recording.
-- `src/test/java/com/timepieces/automation/hooks`: Cucumber scenario setup/teardown.
-- `src/test/java/com/timepieces/automation/runners`: TestNG+Cucumber runners.
-- `src/test/java/com/timepieces/automation/stepdefinitions`: Cucumber glue. At the time of this note, only login steps are implemented.
-- `src/test/resources/features`: Gherkin specs grouped into smoke, functional, and regression folders.
-- `src/test/resources/config`: environment properties for `staging` and `production`.
-- `docs`: product, architecture, test strategy, and this context note.
-- `docker`: Dockerized multi-browser test bed.
-- Generated/local runtime folders include `.allure`, `logs`, and `target`.
+Test code is split into two package roots:
+
+- `com.timepieces.automation.bdd.*` — Cucumber runners (`SmokeRunner`,
+  `RegressionRunner`, `ProductionRunner`), step definitions, and hooks.
+- `com.timepieces.automation.tdd.api.*` — pure TestNG/Rest-Assured tests
+  (`SearchApiTest` — 100 deterministic search tests across 6 groups;
+  `SearchApiExploratoryTest` — 50 randomized nightly tests; `IdempotencyApiTest`;
+  `AuthenticationEngine`; `TwilioServiceTest`).
+
+Suite XMLs:
+
+- `testng.xml` — default combined suite (CI staging, test-pipeline, Docker).
+- `testng-bdd.xml` / `testng-tdd.xml` — local-only convenience suites to run BDD
+  or TDD scopes independently.
+- `testng-production.xml` — production-scoped suite (`-Dsurefire.suite=...`).
+- `testng-exploratory.xml` — nightly exploratory search suite.
+
+Maven profiles `SmokeSuite` and `RegressionSuite` map runner groups and Cucumber
+tags together. `SanityRunner` has been removed (no `@Sanity` scenarios).
 
 ## Execution Model
 
-The intended local Maven path is:
-
 ```powershell
-mvn test
-```
-
-Useful overrides:
-
-```powershell
+mvn test                                             # default testng.xml
+mvn test "-Dsurefire.suite=testng-tdd.xml"           # TDD/API only
+mvn test "-Dsurefire.suite=testng-bdd.xml"           # BDD only
+mvn test -PSmokeSuite                                 # smoke profile
 mvn test -Denv=staging -Dbrowser=chrome -Dheadless=true "-Dcucumber.filter.tags=@Smoke"
 mvn allure:serve
 ```
 
-Surefire delegates discovery to `testng.xml`, because the runner classes do not follow default `Test*.java` naming. Allure results are redirected to `target/allure-results` so `mvn clean` removes stale report state.
+Surefire delegates discovery to the suite XML because runner classes do not
+follow default `Test*.java` naming. Allure results go to `target/allure-results`.
+`BaseRunner` overrides Cucumber's TestNG data provider with `parallel = true`
+(scenario-level parallelism); browser isolation relies on `DriverFactory`'s
+`ThreadLocal<WebDriver>`.
 
-The suite XML currently invokes all three suite runners:
+## Page Object Model (fluent, CRTP generics)
 
-- `SmokeRunner`: tag filter `@Smoke`
-- `SanityRunner`: tag filter `@Sanity`
-- `RegressionRunner`: tag filter `@Regression`
+Core inheritance, now parameterized with a recursive self-type so inherited
+fluent methods (e.g. `open()`) return the concrete page type with no per-page
+override:
 
-`BaseRunner` overrides Cucumber's TestNG data provider with `parallel = true`, so scenarios may execute concurrently. Browser isolation depends on `DriverFactory` using a `ThreadLocal<WebDriver>`.
-
-## Docker Workflow
-
-The Docker test bed is under `docker/` and targets Ubuntu with Java 25, Maven 3.9.9, Chrome, Firefox, Edge, and Brave.
-
-Typical invocation:
-
-```powershell
-.\docker\run-tests.ps1
+```text
+BasePage<SELF extends BasePage<SELF>>
+  -> HeaderOnlyBasePage<SELF>            (adds HeaderComponent)
+       -> StoreFrontBasePage<SELF>      (adds FooterComponent)
 ```
 
-Defaults:
+- Concrete pages bind themselves: `class UpdatesPage extends StoreFrontBasePage<UpdatesPage>`.
+- Product families use abstract `SharedTemplate_*` intermediates (timepieces:
+  Monarch, Arvion, Astonia, AstoniaSports, Auriqua, Manifesta; accessories:
+  FKMRubber/Hybrid/Ostrich/Suede/TejuLizard straps, Butterfly/SingleDeployment
+  clasps, WatchCase) — a variant PDP is a ~10-line class.
+- `getPagePath()`/`getPageTitle()` are non-abstract (default `""`); pages with a
+  real endpoint override them. `open()` navigates to `baseUrl + pagePath`.
+- ~101 page/component objects total. Assertions live in step definitions, not
+  page objects; shared header/footer behavior lives in components.
+- Drops pages (`upcomingDrops/`) intentionally stay on `StoreFrontBasePage`
+  directly (each drop is unique/frequently changing — no shared template).
 
-- Environment: `staging`
-- Tags: `@Smoke and @Login`
-- Browsers: Chrome, Firefox, Edge, Brave
-- Mode: headless
-
-Visible debugging can be enabled with:
-
-```powershell
-.\docker\run-tests.ps1 -Vnc
-```
-
-The entrypoint loops through browsers and runs Maven with:
-
-```bash
-mvn test -Denv="$ENV_TARGET" -Dbrowser="$browser" -Dheadless="$HEADLESS" -Dchrome.no.sandbox=true "-Dcucumber.filter.tags=${TAGS}"
-```
+See `docs/system_architecture.md` for the full coding standard.
 
 ## Configuration
 
-`ConfigReader` loads `config/<env>.properties` from the classpath and then optionally overlays `config/<env>.local.properties` if present. Lookup precedence is:
+`ConfigReader` loads `config/<env>.properties`, then optionally overlays
+`config/<env>.local.properties`. Lookup precedence: (1) JVM system property,
+(2) OS environment variable, (3) properties file. Common keys: `env`
+(default `staging`), `browser`, `headless`, `chrome.no.sandbox`,
+`explicit.wait.timeout`, `recordVideo`, `max.retry.count`, `base.url`,
+`staging.password`, `CF_BYPASS_TOKEN`.
 
-1. JVM system property, such as `-Dbrowser=firefox`
-2. OS environment variable with the same key
-3. Environment properties file
+Known drift (tracked in OKF): `staging.properties` uses `is.headless` while
+`DriverFactory` reads `headless` — prefer `-Dheadless=...` until reconciled.
 
-Known keys used by core code include:
+## CI/CD, Cloudflare & Security
 
-- `env`: selected by Maven/TestNG, defaults to `staging`
-- `browser`: `chrome`, `firefox`, `edge`, `safari`, or `brave`
-- `headless`: read by `DriverFactory`
-- `chrome.no.sandbox`: enables `--no-sandbox` for containers
-- `explicit.wait.timeout`: used by `BasePage`
-- `recordVideo`: controls Monte recording in hooks
-- `max.retry.count`: used by retry analyzer
-- `base.url` and `login.path`: used by page objects
+- GitHub Actions workflows: `test-pipeline.yml` (PR/manual/dispatch),
+  `staging-tests.yml`, `production-tests.yml`, `exploratory-search-tests.yml`.
+- **Cloudflare (open blocker):** GitHub-hosted runners are challenged by
+  Cloudflare on `staging.timepieces-d2c.example`. Browser-side bypass (CDP header via
+  `Network.enable` + `X-Automation-Bypass`) is implemented; the Cloudflare-side
+  WAF-skip rule is owned by infra. CI is not reliably green until that lands.
+  Do not treat "compiles/passes locally" as "CI green."
+- **OTP security (open):** an automated probe documents a missing OTP
+  attempt-limit (brute-force exposure); requires an app-side fix.
+- Security testing: OWASP ZAP (DAST) and AI-assisted red-team assessments;
+  findings (incl. an exposed Google Cloud Run endpoint on the collection page)
+  disclosed to developers for remediation.
 
-Observation: `staging.properties` currently defines `is.headless=false`, but `DriverFactory` reads `headless`. Production includes both `headless=false` and `is.headless=false`. Prefer `headless` for new code and CLI overrides unless this is reconciled.
+## Dashboard (kept separate)
 
-## Browser Lifecycle
+`dashboard/` is a React (Vite) + Node/Express/TypeScript + Postgres app for run
+history, trends, and GitHub Actions flow dispatch (gated on a configured token).
+Per ADR 0001 it stays in the monorepo for now and is slated to split into its own
+repository (trigger: deployment to `dev.timepieces-world.example`). Do not fold dashboard
+work into the framework's main line.
 
-`Hooks` initializes a fresh driver before every scenario with `DriverFactory.initDriver()`.
+## Test Case Coverage & Tracking
 
-On scenario failure, hooks attach:
+Roadmap phases (see `docs/okf/test-case-roadmap.md`): 1 Authentication &
+Identity (complete), 2 Catalog & Discovery, 3 Cart & Bag, 4 Checkout Funnel,
+5 Payments & Security, 6 Retention & Wishlist. 67 test cases are registered and
+tagged (`BDD`/`TDD`, `Automated`/`Not Automated`) in Zephyr Scale; the push to
+250+ continues on `main`.
 
-- PNG screenshot from Selenium
-- AVI video, when `recordVideo` is enabled and a recording exists
-
-On success, videos are discarded. In all cases the driver is quit and removed from the `ThreadLocal`.
-
-`DriverFactory` supports Chrome, Firefox, Edge, Safari, and Brave. Chromium-based browsers receive stability and anti-fingerprint flags such as `--disable-dev-shm-usage`, `--window-size=1920,1080`, `--disable-blink-features=AutomationControlled`, and optional `--no-sandbox`.
-
-For Brave, `BRAVE_PATH` must be set.
-
-## Page Object Conventions
-
-Core inheritance:
-
-```text
-BasePage
-  -> HeaderOnlyBasePage
-       -> StoreFrontBasePage
-```
-
-- `BasePage` owns Selenium wrappers, waits, click/input/text helpers, visibility checks, and dynamic locator formatting.
-- `HeaderOnlyBasePage` adds `HeaderComponent`.
-- `StoreFrontBasePage` adds `FooterComponent`.
-- Pages should expose actions and state queries, not raw locators.
-- Assertions belong in step definitions, not page objects.
-- Shared header/footer behavior belongs in components.
-
-This design is also documented in `docs/system_architecture.md`; use that file as the coding standard reference.
-
-## Current Test Surface
-
-Smoke feature files currently cover:
-
-- Staging password bypass
-- Homepage initialization and sidebar
-- Valid login via responsive sidebar
-- Product category navigation
-- Domestic checkout initialization
-- International checkout initialization
-- Global search validation
-- User authentication and OTP prompt
-
-Regression specs are organized by domain:
-
-- `01_Authentication_Identity`
-- `02_Catalog_Product_Discovery`
-- `03_Cart_Bag_Management`
-- `04_Checkout_Secure_Funnel`
-- `05_Payment_Integration`
-- `06_Customer_Retention_Wishlist`
-
-Functional specs currently include login and checkout positive/negative suites.
-
-Important gap: most feature files appear to be ahead of implemented glue. `LoginSteps.java` is the only step definition file present as of this note, so many scenarios may be living specs until matching step definitions are added.
-
-## Reporting And Retry
-
-- Runner plugins produce HTML, JSON, rerun text, and Allure outputs under `target/cucumber-reports` and `target/allure-results`.
-- `RetryAnnotationTransformer` attaches `RetryAnalyzer` to TestNG scenario methods.
-- Retry count is config-driven through `max.retry.count`.
-- `DriverFactory` writes Allure `environment.properties` under `target/allure-results`.
-
-## Generated Artifacts
-
-Common generated paths:
-
-- `target/allure-results`
-- `target/cucumber-reports`
-- `target/screen-recordings`
-- `.allure`
-- `logs`
-
-Avoid committing runtime output unless explicitly needed.
+Known gap (tracked): some feature files are ahead of implemented glue / runner
+registration — treat `docs/okf/testing-strategy.md` "Current Executable Runner
+Scope" as ground truth for what actually runs.
 
 ## Contribution Notes
 
-- Keep new step definitions thin; route browser behavior into page objects.
-- Keep page objects assertion-free.
-- Add new shared scenario data to `TestContext` when it is meaningful and typed; use the generic map only for short-lived incidental data.
-- Prefer `ConfigReader.get(...)` over hardcoded environment values.
-- For new suite filters, update runners and document expected tags.
-- For local secrets or environment-specific overrides, use uncommitted `<env>.local.properties` files rather than committed config.
-- Be careful with parallel execution: any new shared state must be scenario-local or thread-safe.
+- Work on `main` (post-consolidation). Keep step definitions thin; route browser
+  behavior into page objects; keep page objects assertion-free.
+- New page objects: parameterize the `extends` clause with the class's own name;
+  wire `getPagePath()`/`getPageTitle()` only for real endpoints.
+- Prefer `ConfigReader.get(...)`; keep secrets in uncommitted
+  `<env>.local.properties` or CI secrets.
+- Any new shared state must be scenario-local or thread-safe (parallel runs).
+- Meaningful changes must update the OKF (CurrentStatus, changelog, delta,
+  decisions) per OKF governance.
 
 ## Quick Rehydration Checklist
 
-1. Read `docs/system_architecture.md`.
-2. Read this file.
-3. Inspect `pom.xml` and `testng.xml`.
+1. Read `docs/okf/OKF_INDEX.md` and `docs/okf/CurrentStatus.md`.
+2. Read `docs/system_architecture.md` and this file.
+3. Inspect `pom.xml`, `testng.xml`, and the profile/suite XMLs.
 4. Check `src/test/resources/config/staging.properties`.
-5. Inspect the relevant feature file under `src/test/resources/features`.
-6. Confirm whether step definitions exist for that feature.
-7. Run a narrow tagged Maven command before broad suite execution.
+5. Inspect the relevant feature file and confirm step-definition/runner wiring.
+6. Run a narrow tagged command before broad suite execution.

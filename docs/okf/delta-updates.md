@@ -1,6 +1,93 @@
 # Delta Updates
 
-Last updated: 2026-07-03
+Last updated: 2026-07-06
+
+## 2026-07-06 Zephyr Scale Metadata Audit & Custom Tags Integration
+
+### Added Items
+
+- `scratch/update_all_tcs_metadata.py` — Python utility script used to audit, clean, and batch-update Zephyr Scale test case fields.
+
+### Modified Items
+
+- `docs/okf/changelog.md` — Logged the batch metadata updates.
+
+### Status Changes
+
+- Checked all 67 test cases in Zephyr Scale.
+- Configured correct `Automation Status` (`Automated` vs `Not Automated`) based on step definition bindings and runner lists.
+- Appended the new `"TDD"` tag and ensured `"API"` tag is present for the 5 API-based test cases (`QA-T7`, `QA-T33`, `QA-T34`, `QA-T35`, `QA-T36`).
+- Appended the new `"BDD"` tag to the remaining 62 UI storefront test cases.
+
+### Verification
+
+- Batch update completed successfully with exit code 0; verified GET results display updated custom fields on QA-T1.
+
+## 2026-07-04 Customer Retention & Wishlist Test Case Integration
+
+### Added Items
+
+- `src/test/resources/features/06_customer_retention_wishlist/Wishlist_And_Account_Management.feature` — Gherkin BDD specifications outlining 6 scenarios for guest wishlist addition, guest wishlist removal, guest-to-member wishlist syncing, authenticated order history, order shipping details tracking, and address book modifications.
+- `scripts/add_retention_tcs.py` — Python registration script integrating customer retention/wishlist scenarios as `QA-T62` through `QA-T67` in Zephyr Scale.
+
+### Modified Items
+
+- `docs/okf/test-case-roadmap.md` — Updated Phase 6 status to `IN PROGRESS` and added QA keys.
+- `docs/okf/CurrentStatus.md` — Added `STAT-023` under Completed Features.
+- `docs/okf/changelog.md` — Appended today's customer retention/wishlist test cases integration.
+
+### Status Changes
+
+- Registered 6 new customer retention/wishlist test cases in Zephyr Scale (`QA-T62` to `QA-T67`).
+
+### Verification
+
+- Script execution completed successfully with exit code 0.
+- Verified all 6 customer retention/wishlist test cases exist in Zephyr Scale registry via `list_zephyr_testcases.py`.
+
+## 2026-07-04 Payment Integration & Security Test Case Integration
+
+### Added Items
+
+- `src/test/resources/features/05_payment_integration/Payment_Integration_Validation.feature` — Gherkin BDD specifications outlining 6 scenarios for credit card formats, insufficient funds decline, expired card decline, incorrect CVV decline, secure token transmission, and order confirmation redirection.
+- `scripts/add_payment_tcs.py` — Python registration script integrating payment scenarios as `QA-T56` through `QA-T61` in Zephyr Scale.
+
+### Modified Items
+
+- `docs/okf/test-case-roadmap.md` — Updated Phase 5 status to `IN PROGRESS` and added QA keys.
+- `docs/okf/CurrentStatus.md` — Added `STAT-022` under Completed Features.
+- `docs/okf/changelog.md` — Appended today's payment test cases integration.
+
+### Status Changes
+
+- Registered 6 new payment integration test cases in Zephyr Scale (`QA-T56` to `QA-T61`).
+
+### Verification
+
+- Script execution completed successfully with exit code 0.
+- Verified all 6 payment test cases exist in Zephyr Scale registry via `list_zephyr_testcases.py`.
+
+## 2026-07-04 Checkout Funnel Test Case Integration
+
+### Added Items
+
+- `src/test/resources/features/04_checkout_secure_funnel/Checkout_Form_Validation.feature` — Gherkin BDD specifications outlining 6 scenarios for checkout mandatory fields, email formatting, pincodes, billing toggle, and promo code validations.
+- `scripts/add_checkout_tcs.py` — Python registration script integrating checkout scenarios as `QA-T50` through `QA-T55` in Zephyr Scale.
+
+### Modified Items
+
+- `docs/okf/test-case-roadmap.md` — Updated Phase 4 status to `IN PROGRESS` and added QA keys.
+- `docs/okf/CurrentStatus.md` — Added `STAT-020` under Completed Features.
+- `docs/okf/changelog.md` — Appended today's checkout test cases integration.
+
+### Status Changes
+
+- Registered 6 new checkout validation test cases in Zephyr Scale (`QA-T50` to `QA-T55`).
+
+### Verification
+
+- Script execution completed successfully with exit code 0.
+- Verified all 6 checkout test cases exist in Zephyr Scale registry via `list_zephyr_testcases.py`.
 
 ## 2026-07-03 Javadoc Refactoring & Staging Gate Alignment
 

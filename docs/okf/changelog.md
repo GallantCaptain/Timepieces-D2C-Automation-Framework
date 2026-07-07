@@ -102,4 +102,25 @@ This changelog is append-only. New entries must be added chronologically and mus
   - Added the `x-automation-bypass` header in RestAssured requests within `AuthenticationEngine.java` and `IdempotencyApiTest.java` to prevent Cloudflare edge blocking on GHA runners.
 - **Verification**: Ran `./mvnw clean test-compile` successfully.
 
+## 2026-07-04
 
+- Created `Checkout_Form_Validation.feature` under `src/test/resources/features/04_checkout_secure_funnel/` detailing 6 Gherkin BDD scenarios for checkout form validation (mandatory fields, email formats, pincodes), billing address form expansion, and promo code applications.
+- Implemented and executed `scripts/add_checkout_tcs.py` to register the new BDD scenarios as official test cases `QA-T50` through `QA-T55` in Zephyr Scale.
+- Verified successful registration of the test cases via `list_zephyr_testcases.py`.
+- Updated `test-case-roadmap.md` Phase 4 status to `IN PROGRESS` and logged `STAT-021` in `CurrentStatus.md`.
+- Created `Payment_Integration_Validation.feature` under `src/test/resources/features/05_payment_integration/` detailing 6 Gherkin BDD scenarios for payment validations (card formats, decline reasons like insufficient funds, expired card, incorrect CVV), secure token transmission, and redirection to the success page.
+- Implemented and executed `scripts/add_payment_tcs.py` to register the new BDD scenarios as official test cases `QA-T56` through `QA-T61` in Zephyr Scale.
+- Verified successful registration of the test cases via `list_zephyr_testcases.py`.
+- Updated `test-case-roadmap.md` Phase 5 status to `IN PROGRESS` and logged `STAT-022` in `CurrentStatus.md`.
+- Created `Wishlist_And_Account_Management.feature` under `src/test/resources/features/06_customer_retention_wishlist/` detailing 6 Gherkin BDD scenarios for wishlist additions/removal, wishlist guest-to-member syncing, order history viewing, order tracking checkpoints, and shipping address edit settings.
+- Implemented and executed `scripts/add_retention_tcs.py` to register the new BDD scenarios as official test cases `QA-T62` through `QA-T67` in Zephyr Scale.
+- Verified successful registration of the test cases via `list_zephyr_testcases.py`.
+- Updated `test-case-roadmap.md` Phase 6 status to `IN PROGRESS` and logged `STAT-023` in `CurrentStatus.md`.
+
+## 2026-07-06
+
+- Performed a complete audit of all 67 test cases in Zephyr Scale.
+- Updated `Automation Status` custom field to `"Automated"` for test cases `QA-T1`, `QA-T3`, `QA-T9`, `QA-T18`, and `QA-T32` (reflecting actual automation status in runners and step definitions). All other test cases marked `"Not Automated"`.
+- Appended the new `"TDD"` tag and ensured the `"API"` tag is present for the 5 TDD-scoped API test cases (`QA-T7`, `QA-T33`, `QA-T34`, `QA-T35`, `QA-T36`).
+- Appended the new `"BDD"` tag to the remaining 62 UI/storefront test cases to separate BDD and TDD automation scopes.
+- Batch-pushed all updates successfully to Zephyr Scale using GET-modify-PUT calls with retry handling.

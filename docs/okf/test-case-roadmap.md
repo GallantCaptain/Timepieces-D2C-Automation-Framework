@@ -1,6 +1,6 @@
 # Test Case Coverage Roadmap
 
-Last updated: 2026-07-01
+Last updated: 2026-07-04
 
 This document outlines the systematic, phase-by-phase roadmap for test case coverage across the entire Timepieces headless Shopify storefront. Test cases are organized into functional chunks to maintain logical context and tracking.
 
@@ -60,7 +60,7 @@ graph TD
 ---
 
 ## Phase 4: Checkout Funnel & Validation
-**Status**: PLANNED
+**Status**: IN PROGRESS (QA-T50 to QA-T55)
 
 ### Functional Areas Covered
 - Shopify Checkout transition and user redirection
@@ -73,7 +73,7 @@ graph TD
 ---
 
 ## Phase 5: Payment Integration & Security
-**Status**: PLANNED
+**Status**: IN PROGRESS (QA-T56 to QA-T61)
 
 ### Functional Areas Covered
 - Credit card payment form validation (number, expiry, CVV format validation)
@@ -85,7 +85,7 @@ graph TD
 ---
 
 ## Phase 6: Customer Retention & Wishlist
-**Status**: PLANNED
+**Status**: IN PROGRESS (QA-T62 to QA-T67)
 
 ### Functional Areas Covered
 - Wishlist creation, addition from catalog, and removal
