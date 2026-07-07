@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-07-06
+Last updated: 2026-07-07
  
 ## Completed Features
  
@@ -30,6 +30,7 @@ Last updated: 2026-07-06
 | STAT-022 | Payment Integration & Security BDD feature created and programmatically registered as QA-T56 to QA-T61 in Zephyr Scale. | `Payment_Integration_Validation.feature`, `scripts/add_payment_tcs.py` | TASK-RUN-001 |
 | STAT-023 | Customer Retention & Wishlist BDD feature created and programmatically registered as QA-T62 to QA-T67 in Zephyr Scale. | `Wishlist_And_Account_Management.feature`, `scripts/add_retention_tcs.py` | TASK-RUN-001 |
 | STAT-024 | Audited all 67 test cases in Zephyr Scale, updated Automation Status, and integrated custom BDD/TDD tags. | `update_all_tcs_metadata.py` | TASK-RUN-001 |
+| STAT-025 | Healenium self-healing locators wired into `DriverFactory` (single wrap point covering every page object via `getDriver()`), gated off by default via `healenium.enabled`; added `healenium.properties` and opt-in `healenium-postgres`/`hlm-backend` services in `docker-compose.yml`. | `DriverFactory.java`, `healenium.properties`, `docker-compose.yml` | DEC-0010, TASK-MOBILE-API-001 |
  
 ## In-Progress Features
 
@@ -60,7 +61,7 @@ Last updated: 2026-07-06
 | DEBT-003 | `staging.properties` uses `is.headless`, while `DriverFactory` reads `headless`. | Config/code mismatch. | TASK-CFG-001 |
 | DEBT-004 | README claims Allure publishes to GitHub Pages, but inspected workflow uploads an artifact and organizes deploy files without a Pages deploy step. | `README.md`, `.github/workflows/test-pipeline.yml` | TASK-CI-002 |
 | DEBT-005 | Dashboard flow env list includes `dev`, but workflow input allows only `staging` and `prod`. | `flows.config.ts`, workflow input. | TASK-DASH-002 |
-| DEBT-006 | Appium and Healenium dependencies are present, but verified tests/integration remain TBD; Rest-Assured is now active for search API validation. | `pom.xml`, `SearchApiTest.java` | TASK-DOC-001 |
+| DEBT-006 | Healenium is now wired into `DriverFactory` and config-gated (`healenium.enabled`, default `false`); Appium remains an unused dependency with no verified integration. Rest-Assured is active for search API validation. | `pom.xml`, `DriverFactory.java`, `SearchApiTest.java` | TASK-DOC-001 |
 | DEBT-007 | Astonia drop card POM is implemented and compiles, but the timed appear/dismiss/reappear behavior is not yet covered by verified tests. | `AstoniaCardComponent.java` (methods present; no feature/scenario exercising them). | TASK-RUN-001 |
 | DEBT-008 | `HomePage` and `SidebarMenuComponent` carry `TODO(locators)` markers where real `data-testid`s are still pending (remaining homepage sections; logged-in user container child elements). | `HomePage.java`, `SidebarMenuComponent.java`. | TASK-LOC-001 |
 

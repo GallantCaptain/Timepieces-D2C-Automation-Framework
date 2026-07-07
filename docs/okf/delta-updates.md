@@ -1,6 +1,35 @@
 # Delta Updates
 
-Last updated: 2026-07-06
+Last updated: 2026-07-07
+
+## 2026-07-07 Healenium Self-Healing Locators Implementation
+
+### Added Items
+
+- `src/test/resources/healenium.properties` — Healenium client config (backend URL, recovery tries, score cap, node-attribute scoring), read directly by `SelfHealingDriver` from the classpath.
+- `docs/adr/0010-healenium-self-healing-locators.md` — ADR documenting the decision to wire up the previously-unused `healenium-web` dependency, default-off via config gate.
+
+### Modified Items
+
+- `src/main/java/com/timepieces/automation/base/DriverFactory.java` — Added `wrapWithHealenium(WebDriver)`, called from both the local-browser branch and the `CLOUD`/`RemoteWebDriver` branch, always after `applyCloudflareBypassHeader(...)` so the CDP `ChromiumDriver` cast still matches the raw driver.
+- `src/test/resources/config/staging.properties`, `production.properties` — Added `healenium.enabled=false` toggle and clarified that `healenium.server.url` here is reference-only (the real value lives in `healenium.properties`).
+- `docker-compose.yml` — Added `healenium-postgres` and `hlm-backend` services (opt-in, independent of `postgres-dev`) and a `healenium-pgdata` volume.
+- `docs/okf/system-architecture.md` — Added `IMPL-FWK-HEAL-001` component row.
+- `docs/okf/project-structure.md` — Added `healenium.properties`, the Docker backend services, and the new PDF guide to the relevant tables.
+- `docs/okf/CurrentStatus.md` — Added `STAT-025`; updated `DEBT-006` to reflect Healenium being wired (Appium activation remains open).
+- `docs/okf/task-backlog.md` — Updated `TASK-MOBILE-API-001` status.
+- `docs/okf/decisions-log.md` — Added `DEC-0010`.
+- `docs/okf/changelog.md` — Logged the implementation.
+
+### Status Changes
+
+- Healenium self-healing is implemented and callable but OFF by default everywhere; enabling it requires `healenium.enabled=true` plus `docker compose up healenium-postgres hlm-backend`.
+- `DEBT-006` Healenium portion resolved; Appium activation decision remains open.
+
+### Verification
+
+- `mvnw -o clean test-compile` → BUILD SUCCESS (110 main sources compiled, including the modified `DriverFactory.java`).
+- No live Healenium backend was started or exercised end-to-end during this change, since the feature is disabled by default; this is a wiring/config change, not a live-healing verification run.
 
 ## 2026-07-06 Zephyr Scale Metadata Audit & Custom Tags Integration
 

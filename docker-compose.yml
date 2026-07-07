@@ -28,6 +28,39 @@ services:
       - ./target/allure-results:/app/allure-results
       - allure-reports:/app/default-reports
 
+  # --- Healenium self-healing locator backend -------------------------------------
+  # Two services below are the minimum Healenium stack: hlm-backend (the REST
+  # service SelfHealingDriver talks to — see healenium.properties' hlm.server.url)
+  # and its own dedicated Postgres database (kept separate from postgres-dev above,
+  # which stores unrelated test-run metrics, not locator-healing data). Neither
+  # container starts unless you explicitly bring this compose file up AND set
+  # healenium.enabled=true in the framework config — see DriverFactory.java.
+  healenium-postgres:
+    image: postgres:13
+    container_name: timepieces-healenium-postgres
+    environment:
+      POSTGRES_DB: healenium
+      POSTGRES_USER: healenium_user
+      POSTGRES_PASSWORD: healenium_pass
+    volumes:
+      - healenium-pgdata:/var/lib/postgresql/data
+
+  hlm-backend:
+    image: healenium/hlm-backend:latest
+    container_name: timepieces-healenium-backend
+    depends_on:
+      - healenium-postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://healenium-postgres:5432/healenium
+      SPRING_DATASOURCE_USERNAME: healenium_user
+      SPRING_DATASOURCE_PASSWORD: healenium_pass
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
+      SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+    ports:
+      # Must match hlm.server.url in src/test/resources/healenium.properties.
+      - "7878:7878"
+
 volumes:
   pgdata-dev:
   allure-reports:
+  healenium-pgdata:

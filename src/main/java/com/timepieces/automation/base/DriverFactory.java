@@ -22,6 +22,15 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import java.util.HashMap;
 import java.util.Map;
 
+// HEALENIUM: SelfHealingDriver is the healenium-web entry point. It wraps a normal
+// Selenium WebDriver in a decorator that intercepts every By-based lookup
+// (driver.findElement/findElements, and therefore every WebDriverWait/ExpectedConditions
+// call too, since they all resolve through the same driver instance). On a
+// NoSuchElementException it asks the hlm-backend service for the closest healed locator
+// learned from prior successful runs, retries with it, and reports back so future breaks
+// keep healing. See com.epam.healenium:healenium-web in pom.xml.
+import com.epam.healenium.SelfHealingDriver;
+
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -111,8 +120,12 @@ public class DriverFactory {
 
         log.info("Initializing RemoteWebDriver (CLOUD mode) against: {}", gridHubUrl);
         WebDriver driver = new RemoteWebDriver(new java.net.URL(gridHubUrl), browserOptions);
-        tlDriver.set(driver);
+        // Apply the Cloudflare CDP header BEFORE wrapping with Healenium: the cast to
+        // ChromiumDriver below only works against the raw vendor driver, not the
+        // SelfHealingDriver decorator produced by wrapWithHealenium(...).
         applyCloudflareBypassHeader(driver);
+        driver = wrapWithHealenium(driver);
+        tlDriver.set(driver);
         return getDriver();
       } catch (Exception e) {
         log.error("Failed to initialize RemoteWebDriver for CLOUD mode: {}", e.getMessage(), e);
@@ -169,9 +182,68 @@ public class DriverFactory {
 
       default -> throw new IllegalArgumentException("Unsupported browser: " + browser);
     };
-    tlDriver.set(driver);
+    // Same ordering as the CLOUD branch above: apply the raw-driver CDP header first,
+    // then wrap with Healenium last so every downstream page object gets self-healing.
     applyCloudflareBypassHeader(driver);
+    driver = wrapWithHealenium(driver);
+    tlDriver.set(driver);
     return getDriver();
+  }
+
+  /**
+   * HEALENIUM INTEGRATION POINT.
+   *
+   * <p>
+   * This is the single place the whole framework wraps WebDriver with Healenium's
+   * self-healing decorator. It is safe to call unconditionally because every page
+   * object, component, and step definition obtains its driver exclusively through
+   * {@link #getDriver()} (see {@code BasePage}, {@code Hooks}, and the step
+   * definition classes) — so wrapping here once makes every {@code getElement},
+   * {@code WebDriverWait}, and {@code ExpectedConditions} call in the framework
+   * self-healing for free, with no changes needed in page objects.
+   *
+   * <p>
+   * Gated behind the {@code healenium.enabled} config key (default {@code false}
+   * — see {@code staging.properties} / {@code production.properties}) so
+   * environments that have not started the Healenium backend stack (see
+   * {@code docker-compose.yml}: {@code healenium-postgres} + {@code hlm-backend})
+   * — such as plain CI runs — are completely unaffected and keep using the raw
+   * WebDriver. When disabled, {@code SelfHealingDriver.create(...)} is never
+   * called at all, so there is zero dependency on the backend being reachable.
+   *
+   * <p>
+   * When Healenium itself throws during wrapping (e.g. it cannot parse
+   * {@code healenium.properties}), the failure is logged and the raw driver is
+   * returned instead of failing the whole test run — self-healing is a
+   * resilience feature and must never be the reason a suite cannot start.
+   *
+   * @param driver the fully-configured vendor WebDriver (Chrome/Firefox/Edge/etc.),
+   *               with any Cloudflare CDP header already applied
+   * @return a Healenium {@code SelfHealingDriver} wrapping {@code driver} when
+   *         {@code healenium.enabled=true}, otherwise the original {@code driver}
+   *         unchanged
+   */
+  private static WebDriver wrapWithHealenium(WebDriver driver) {
+    boolean healeniumEnabled = Boolean.parseBoolean(ConfigReader.get("healenium.enabled"));
+    if (!healeniumEnabled) {
+      log.debug("healenium.enabled=false; using the raw WebDriver without self-healing.");
+      return driver;
+    }
+    try {
+      // SelfHealingDriver.create(...) reads src/test/resources/healenium.properties
+      // from the classpath for the backend URL and healing tuning (recovery-tries,
+      // score-cap, etc.) — it does NOT go through ConfigReader, so that file must be
+      // kept in sync with healenium.server.url in the environment .properties files.
+      WebDriver selfHealingDriver = SelfHealingDriver.create(driver);
+      log.info("Healenium self-healing is ENABLED; WebDriver wrapped with SelfHealingDriver.");
+      return selfHealingDriver;
+    } catch (Exception e) {
+      // Fail-open: a mis-configured or unreachable Healenium backend must never
+      // block test execution. Log loudly and fall back to the raw driver.
+      log.error("Failed to initialize Healenium SelfHealingDriver; continuing with the raw WebDriver. {}",
+          e.getMessage(), e);
+      return driver;
+    }
   }
 
   private static void applyCloudflareBypassHeader(WebDriver driver) {

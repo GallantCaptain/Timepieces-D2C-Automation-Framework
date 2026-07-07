@@ -1,6 +1,6 @@
 # Decisions Log
 
-Last reviewed: 2026-07-03
+Last reviewed: 2026-07-07
 
 Architecture and framework decisions are stored as ADRs under `docs/adr/`. This file is the OKF index for decision traceability.
 
@@ -17,6 +17,7 @@ Architecture and framework decisions are stored as ADRs under `docs/adr/`. This 
 | DEC-0007 | [../adr/0007-cloudflare-automation-bypass-header.md](../adr/0007-cloudflare-automation-bypass-header.md) | Accepted | Apply an automation bypass header for Chromium sessions when configured. | TBD | TASK-CI-001 |
 | DEC-0008 | [../adr/0008-safari-substitution-non-macos.md](../adr/0008-safari-substitution-non-macos.md) | Accepted | Use real Safari only on macOS; substitute configured Chromium fallback elsewhere and annotate reports. | TBD | REQ-FWK-002 |
 | DEC-0009 | [../adr/0009-okf-governance.md](../adr/0009-okf-governance.md) | Accepted | Use OKF as authoritative project memory with topic files, ADRs, append-only changelog, and README navigation. | Project orchestrator | TASK-OKF-001 |
+| DEC-0010 | [../adr/0010-healenium-self-healing-locators.md](../adr/0010-healenium-self-healing-locators.md) | Accepted | Wrap `DriverFactory`'s WebDriver in Healenium's `SelfHealingDriver`, gated off by default behind `healenium.enabled`, with a `healenium.properties` config file and opt-in `docker-compose.yml` backend services. | QA Automation | REQ-FWK-001, TASK-MOBILE-API-001, DEBT-006 |
 
 ## Superseded or Rejected Decisions
 

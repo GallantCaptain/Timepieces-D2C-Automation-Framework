@@ -1,6 +1,6 @@
 # System Architecture
 
-Last reviewed: 2026-06-24
+Last reviewed: 2026-07-07
 
 ## High-Level Architecture
 
@@ -32,6 +32,7 @@ Execution flow:
 | IMPL-DASH-WEB-001 | Dashboard SPA | React/Vite user interface for dashboard pages | `dashboard/web/src/` |
 | IMPL-CI-001 | CI workflow | GitHub Actions test execution, Allure generation, artifact upload | `.github/workflows/test-pipeline.yml` |
 | IMPL-LOCAL-DB-001 | Local metrics database | Dockerized Postgres for local metrics/dashboard work | `docker-compose.yml` |
+| IMPL-FWK-HEAL-001 | Healenium self-healing locators | Wraps the WebDriver built by `DriverFactory` in `SelfHealingDriver` when `healenium.enabled=true`; healed-locator storage backend runs as opt-in Docker services | `DriverFactory.java`, `healenium.properties`, `docker-compose.yml` (`healenium-postgres`, `hlm-backend`) |
 
 ## Dependencies
 
@@ -89,6 +90,7 @@ Execution flow:
 | Grafana | Uses exported dashboard JSON in `grafana-dashboards/` | Current artifact present |
 | Cloudflare | Staging challenge bypass header `X-Automation-Bypass` for Chromium drivers | Implementation present; external WAF rule status TBD |
 | Twilio | Optional real OTP read-back for `@OtpE2E` | Code present; runtime configuration status TBD |
+| Healenium (`hlm-backend`) | Self-healing locator lookup/storage for `SelfHealingDriver`, wrapped around the `DriverFactory` WebDriver | Implemented and config-gated via `healenium.enabled` (default `false`); opt-in Docker services |
 
 ## Environment Details
 

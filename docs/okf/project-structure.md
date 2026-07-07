@@ -1,6 +1,6 @@
 # Project Structure
 
-Last reviewed: 2026-06-29
+Last reviewed: 2026-07-07
 
 ## Directory Layout
 
@@ -48,6 +48,7 @@ timepieces-automation-framework/
 | `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests |
 | `src/test/resources/config/staging.properties` | Staging configuration |
 | `src/test/resources/config/production.properties` | Production configuration |
+| `src/test/resources/healenium.properties` | Healenium self-healing engine config (backend URL, recovery tries, score cap); read directly by `SelfHealingDriver`, not via `ConfigReader` |
 | `.github/workflows/test-pipeline.yml` | CI/manual/repository-dispatch workflow |
 | `docker-compose.yml` | Local Postgres metrics database |
 | `docker/Dockerfile` | Dockerized Java/browser test bed |
@@ -69,6 +70,7 @@ timepieces-automation-framework/
 | Dashboard API TS config | `dashboard/server/tsconfig.json` | TypeScript compiler config |
 | Dashboard web TS/Vite config | `dashboard/web/tsconfig.json`, `dashboard/web/vite.config.ts` | TypeScript and dev proxy |
 | Local DB | `docker-compose.yml` | Postgres 16 Alpine |
+| Healenium backend (opt-in) | `docker-compose.yml` (`healenium-postgres`, `hlm-backend`) | Postgres 13 + `healenium/hlm-backend`; only needed when `healenium.enabled=true` |
 | CI | `.github/workflows/test-pipeline.yml` | Workflow inputs and secrets |
 
 ## Generated Artifacts
@@ -83,6 +85,9 @@ timepieces-automation-framework/
 | `.allure` | Allure tooling | Do not commit unless explicitly required |
 | `logs/` | Log4j2 | Do not commit runtime output |
 | `output/pdf/timepieces-framework-design-guide.pdf` | Documentation generation | Generated/exported artifact; commit policy TBD unless explicitly requested |
+| `output/pdf/healenium-implementation-guide.pdf` | Documentation generation | Generated/exported Healenium onboarding guide; commit policy TBD unless explicitly requested |
+| `output/pdf/docker-kubernetes-guide.pdf` | Documentation generation | Generated/exported Docker (this repo's actual usage) + Kubernetes (generic foundations primer, not implemented here) onboarding guide for team transition; commit policy TBD unless explicitly requested |
+| `output/pdf/cicd-pipelines-guide.pdf` | Documentation generation | Generated/exported guide: this repo's actual GitHub Actions pipelines (5 workflows) plus illustrative Jenkins/GitLab CI/CD/Azure DevOps equivalents for comparison — only GitHub Actions is implemented; commit policy TBD unless explicitly requested |
 | `dashboard/web/dist/` | Vite build | Generated artifact |
 | `dashboard/**/node_modules/` | npm install | Do not commit |
 

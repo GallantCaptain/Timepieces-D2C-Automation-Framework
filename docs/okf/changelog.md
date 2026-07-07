@@ -124,3 +124,22 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Appended the new `"TDD"` tag and ensured the `"API"` tag is present for the 5 TDD-scoped API test cases (`QA-T7`, `QA-T33`, `QA-T34`, `QA-T35`, `QA-T36`).
 - Appended the new `"BDD"` tag to the remaining 62 UI/storefront test cases to separate BDD and TDD automation scopes.
 - Batch-pushed all updates successfully to Zephyr Scale using GET-modify-PUT calls with retry handling.
+
+## 2026-07-07
+
+- **Implemented Healenium self-healing locators (DEC-0010, ADR 0010):** Wrapped the WebDriver built in `DriverFactory.initDriver()` with `com.epam.healenium.SelfHealingDriver` at the single construction point shared by every page object, component, and step definition (`getDriver()`), so no page object changes were needed.
+- Added a new `wrapWithHealenium(WebDriver)` helper in `DriverFactory.java`, gated by a new `healenium.enabled` config key (default `false` in both `staging.properties` and `production.properties`) and fail-open on any Healenium initialization error.
+- Fixed the wrap ordering relative to the existing Cloudflare CDP bypass header: `applyCloudflareBypassHeader(driver)` now always runs on the raw vendor driver BEFORE `wrapWithHealenium`, since the CDP `instanceof ChromiumDriver` cast would not match the Healenium decorator.
+- Added `src/test/resources/healenium.properties` (backend URL, recovery tries, score cap, node-attribute scoring) — read directly by the Healenium client, independent of `ConfigReader`.
+- Added `healenium-postgres` and `hlm-backend` services plus a `healenium-pgdata` volume to `docker-compose.yml`, kept separate from the existing `postgres-dev` metrics database.
+- Verified with `mvnw -o clean test-compile` → BUILD SUCCESS.
+- Updated OKF: `system-architecture.md` (new component/integration entries), `project-structure.md` (new files/config locations), `CurrentStatus.md` (`STAT-025`, resolved the Healenium half of `DEBT-006`), `task-backlog.md` (`TASK-MOBILE-API-001`), `decisions-log.md` (`DEC-0010`), and added `docs/adr/0010-healenium-self-healing-locators.md`.
+- Authored `output/pdf/healenium-implementation-guide.pdf` documenting the integration for a developer who has never used Healenium before.
+
+### Docker & Kubernetes onboarding guide (later same day)
+
+- Authored `output/pdf/docker-kubernetes-guide.pdf` ahead of a team transition: walks this repo's actual Docker usage (`docker-compose.yml` service by service, `docker/Dockerfile` instruction by instruction, `docker/entrypoint.sh`, and a comparison of `docker/run-tests.ps1` vs. `scripts/run-docker-headed.ps1`), clarifies CI does NOT run inside this project's Docker image, then adds a clearly-labeled generic Kubernetes foundations primer (concept map from Docker terms, a standalone `kubectl` exercise) since Kubernetes is not implemented anywhere in this repository today.
+
+### CI/CD pipelines guide (later same day)
+
+- Authored `output/pdf/cicd-pipelines-guide.pdf` ahead of the same team transition: documents this repo's real GitHub Actions setup in full (`staging-tests.yml`, `production-tests.yml`, `exploratory-search-tests.yml`, `test-pipeline.yml`, `cf-bypass-check.yml` — triggers, secrets, concurrency groups, and the dashboard's `workflow_dispatch` REST integration via `dashboard/server/src/github.ts`), cross-references already-documented pipeline drift (`ISSUE-001`, `BLK-001`, `BLK-002`, `DEBT-004`, `DEBT-005`, `ISSUE-007`), then reproduces the staging smoke+regression suite as an illustrative Jenkinsfile, `.gitlab-ci.yml`, and `azure-pipelines.yml`, with a platform comparison and concept-translation table. Only the GitHub Actions pipeline is implemented in this repository; the other three are clearly labeled illustrative.

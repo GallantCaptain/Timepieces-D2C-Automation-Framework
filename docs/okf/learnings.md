@@ -1,6 +1,6 @@
 # Learnings
 
-Last updated: 2026-07-03
+Last updated: 2026-07-07
 
 | ID | Learning | Source | Reusable Guidance |
 | --- | --- | --- | --- |
@@ -18,6 +18,8 @@ Last updated: 2026-07-03
 | LEARN-012 | Zephyr Scale Cloud API uses region-specific base URLs (e.g. `eu.api.zephyrscale.smartbear.com/v2`) and requires Connect-app Bearer JWT tokens. | Zephyr Scale REST API | Ensure BDD Gherkin text uploaded via `/testscript` excludes `Feature:`/`Scenario:` headers, and `tags` custom fields use only pre-configured values. |
 | LEARN-013 | Storefront API tests should be written in pure TDD (TestNG/Rest Assured) instead of BDD/Cucumber. | Search API testing | Maintain API-level validation as fast, code-first TestNG tests without Gherkin overlays. |
 | LEARN-014 | Footer automation now depends on responsive footer behavior, so shared viewport and window helpers should be reused instead of duplicated or called with inline package names. | `BasePage.java`, `FooterComponent.java`, `FooterSteps.java`, `WindowUtils.java` | Import shared utilities at the top of Java files and call inherited `BasePage` wrappers directly from page/component classes. |
+| LEARN-015 | `SelfHealingDriver.create(...)` returns a decorator that is no longer an `instanceof ChromiumDriver`, so any vendor-specific cast (like the Cloudflare CDP header cast) must run on the raw driver BEFORE wrapping with Healenium, never after. | `DriverFactory.java` | Always apply CDP/vendor-specific driver logic first, then wrap with `SelfHealingDriver` as the last step before publishing the driver. |
+| LEARN-016 | `healenium.properties` is read directly by the Healenium client from the classpath root — it does not go through `ConfigReader`'s -D/env/file precedence, so it cannot vary per environment the way other config does. | `healenium.properties`, `ConfigReader.java` | Keep `hlm.server.url` manually in sync with the reference `healenium.server.url` key in the environment `.properties` files; do not expect `-Dhealenium.server.url=...` to change Healenium's own backend target. |
 
 ## Troubleshooting Notes
 

@@ -1,6 +1,6 @@
 # Task Backlog
 
-Last reviewed: 2026-06-29
+Last reviewed: 2026-07-07
 
 | ID | Priority | Description | Dependencies | Status |
 | --- | --- | --- | --- | --- |
@@ -17,7 +17,7 @@ Last reviewed: 2026-06-29
 | TASK-DOC-001 | P2 | Reconcile historical docs with OKF CurrentStatus without deleting history; mark superseded sections where needed. | OKF approval | Open |
 | TASK-IDE-001 | P2 | Investigate `hs_err_pid4140.log` JVM crash and document root cause or mitigation. | IDE/JDK/JDT LS environment access | Open |
 | TASK-QA-001 | P2 | Define manual testing standard, dashboard test coverage expectations, and release signoff requirements. | QA/product owner input | Open |
-| TASK-MOBILE-API-001 | P3 | Decide whether Appium and Healenium dependencies are active roadmap items or should be documented as future/TBD. Rest-Assured is now active for storefront search API testing. | Architecture decision | Open |
+| TASK-MOBILE-API-001 | P3 | Healenium is now wired and config-gated (see DEC-0010); Appium activation is still an open decision. Rest-Assured is active for storefront search API testing. | Architecture decision on Appium | Open (Healenium portion completed 2026-07-07) |
 | TASK-CI-003 | P1 | Add email report notifications to all 3 CI/CD workflows (staging-tests, production-tests, test-pipeline) using `dawidd6/action-send-mail@v5`. Recipients: `167759523+GallantCaptain@users.noreply.github.com`, `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example`. Requires `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` secrets. | SMTP credentials from admin | Stashed (awaiting SMTP details) |
 | TASK-CI-004 | P2 | Implement nightly exploratory search API test suite (50 randomized tests from the JSON pool) running on production by default. | None | Completed |
 | TASK-CI-005 | P3 | Transition DriverFactory from local to fully managed/self-hosted Cloud Grid (e.g. BrowserStack, LambdaTest) for Safari/iOS coverage, scheduled around mid/end-July. | Team grid infrastructure decision | Open |
