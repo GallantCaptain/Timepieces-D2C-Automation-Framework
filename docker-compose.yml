@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres-dev:
     image: postgres:16-alpine
@@ -13,5 +11,23 @@ services:
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
 
+  # Serves the Allure report as a live web UI. It watches target/allure-results
+  # (written by the Maven/Surefire run) and regenerates the report on change, so
+  # after any `mvn test` the report — including the MP4 videos attached on
+  # failure — is browsable at http://localhost:5252 with no separate generate
+  # step. History is kept across runs so trend charts populate.
+  allure:
+    image: frankescobar/allure-docker-service
+    container_name: timepieces-allure
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 3
+      KEEP_HISTORY: 1
+    ports:
+      - "5252:5050"
+    volumes:
+      - ./target/allure-results:/app/allure-results
+      - allure-reports:/app/default-reports
+
 volumes:
   pgdata-dev:
+  allure-reports:

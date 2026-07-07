@@ -7,7 +7,7 @@ ENV BRAVE_PATH=/usr/bin/brave-browser
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg xz-utils wget bzip2 unzip \
-        xvfb x11vnc fluxbox \
+        xvfb x11vnc fluxbox ffmpeg \
         fonts-liberation libnss3 libxss1 libasound2t64 libatk-bridge2.0-0 \
         libgtk-3-0 libgbm1 libdbus-glib-1-2 \
     && rm -rf /var/lib/apt/lists/*
