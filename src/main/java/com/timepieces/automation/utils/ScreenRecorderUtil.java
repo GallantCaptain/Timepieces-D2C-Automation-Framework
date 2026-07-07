@@ -19,10 +19,14 @@ import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.monte.media.Format;
 import org.monte.media.FormatKeys.MediaType;
@@ -38,7 +42,13 @@ import org.monte.screenrecorder.ScreenRecorder;
  * Recorder operates on the full desktop, so concurrent recordings on the same
  * machine all capture the same pixels — useful only for headed, ideally serial,
  * executions. Headless JVMs short-circuit safely with no recording produced.
- * 
+ *
+ * <p>
+ * Monte writes a TechSmith-codec AVI, which browsers cannot play inline. On
+ * extraction the AVI is transcoded to H.264 MP4 via ffmpeg so the Allure report
+ * embeds a playable HTML5 video instead of a download-only link; if ffmpeg is
+ * absent the raw AVI is attached as a fallback.
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of ScreenRecorderUtil"
@@ -106,30 +116,150 @@ public final class ScreenRecorderUtil {
     }
 
     /**
-     * Stops the active recording and returns the AVI bytes. The on-disk file is
-     * deleted after read. Returns {@code null} if no recording was active or
-     * capture failed.
+     * Immutable holder for an extracted recording: the raw bytes plus the media
+     * type / extension so the caller can attach it to Allure with the correct
+     * MIME type (MP4 renders an inline HTML5 player; AVI is only a download link).
      */
-    public static byte[] stopAndExtract() {
+    public record Recording(byte[] bytes, String mediaType, String fileExtension) {
+    }
+
+    /**
+     * Stops the active recording, transcodes the raw AVI to a browser-playable
+     * MP4 (H.264 / yuv420p / +faststart) via ffmpeg so Allure can play it inline,
+     * and returns the MP4 bytes. If ffmpeg is unavailable or the transcode fails,
+     * the original AVI bytes are returned instead so a recording is never lost.
+     * On-disk files are deleted after read. Returns {@code null} if no recording
+     * was active or capture failed.
+     */
+    public static Recording stopAndExtract() {
         NamedScreenRecorder recorder = TL_RECORDER.get();
         if (recorder == null) {
             return null;
         }
+        File avi = null;
+        File mp4 = null;
         try {
             recorder.stop();
             List<File> files = recorder.getCreatedMovieFiles();
             if (files.isEmpty()) {
                 return null;
             }
-            File video = files.get(files.size() - 1);
-            byte[] bytes = Files.readAllBytes(video.toPath());
-            Files.deleteIfExists(video.toPath());
-            return bytes;
+            avi = files.get(files.size() - 1);
+
+            mp4 = transcodeToMp4(avi);
+            if (mp4 != null && mp4.exists() && mp4.length() > 0) {
+                byte[] bytes = Files.readAllBytes(mp4.toPath());
+                log.info("Transcoded recording to MP4 for inline Allure playback ({} bytes).", bytes.length);
+                return new Recording(bytes, "video/mp4", "mp4");
+            }
+
+            // Fallback: attach the raw AVI so the evidence survives even without ffmpeg.
+            log.warn("MP4 transcode unavailable/failed; attaching the original AVI "
+                    + "(viewers may need to download it to play).");
+            byte[] bytes = Files.readAllBytes(avi.toPath());
+            return new Recording(bytes, "video/avi", "avi");
         } catch (IOException e) {
             log.error("Failed to stop / extract screen recording: {}", e.getMessage(), e);
             return null;
         } finally {
+            deleteQuietly(avi);
+            deleteQuietly(mp4);
             TL_RECORDER.remove();
+        }
+    }
+
+    /**
+     * Transcodes {@code avi} to a sibling {@code .mp4} using ffmpeg. Uses libx264
+     * with the {@code yuv420p} pixel format and {@code +faststart} so the result
+     * plays inline in browsers/Allure; even dimensions are forced because H.264
+     * requires them. Returns the MP4 file on success, or {@code null} if ffmpeg is
+     * missing, times out, or exits non-zero.
+     */
+    private static File transcodeToMp4(File avi) {
+        String ffmpeg = resolveFfmpegBinary();
+        String baseName = avi.getName().replaceFirst("\\.[^.]+$", "");
+        File mp4 = new File(avi.getParentFile(), baseName + ".mp4");
+
+        ProcessBuilder pb = new ProcessBuilder(
+                ffmpeg,
+                "-y",
+                "-i", avi.getAbsolutePath(),
+                "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                "-c:v", "libx264",
+                "-preset", "veryfast",
+                "-crf", "23",
+                "-pix_fmt", "yuv420p",
+                "-movflags", "+faststart",
+                mp4.getAbsolutePath());
+        pb.redirectErrorStream(true);
+
+        try {
+            Process process = pb.start();
+            drainStream(process);
+            boolean finished = process.waitFor(120, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                log.error("ffmpeg transcode timed out after 120s for [{}].", avi.getName());
+                return null;
+            }
+            if (process.exitValue() != 0) {
+                log.error("ffmpeg exited with code {} while transcoding [{}].", process.exitValue(), avi.getName());
+                return null;
+            }
+            return mp4;
+        } catch (IOException e) {
+            // Most commonly: ffmpeg not found on PATH / at the configured path.
+            log.warn("Could not launch ffmpeg [{}] to transcode the recording: {}. "
+                    + "Set 'ffmpeg.path' (or the FFMPEG_PATH env var) to enable inline MP4 playback.",
+                    ffmpeg, e.getMessage());
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while waiting for ffmpeg transcode of [{}].", avi.getName());
+            return null;
+        }
+    }
+
+    /**
+     * Resolves the ffmpeg executable: {@code ffmpeg.path} config key first, then
+     * the {@code FFMPEG_PATH} environment variable, defaulting to {@code ffmpeg}
+     * on the PATH.
+     */
+    private static String resolveFfmpegBinary() {
+        String configured = ConfigReader.get("ffmpeg.path");
+        if (configured != null && !configured.isBlank()) {
+            return configured;
+        }
+        String envPath = System.getenv("FFMPEG_PATH");
+        if (envPath != null && !envPath.isBlank()) {
+            return envPath;
+        }
+        return "ffmpeg";
+    }
+
+    /**
+     * Consumes the merged stdout/stderr so the ffmpeg process never blocks on a
+     * full pipe buffer during a long transcode.
+     */
+    private static void drainStream(Process process) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+            while (reader.readLine() != null) {
+                // Discard ffmpeg progress chatter; failures surface via the exit code.
+            }
+        } catch (IOException e) {
+            log.debug("Non-fatal error draining ffmpeg output: {}", e.getMessage());
+        }
+    }
+
+    private static void deleteQuietly(File file) {
+        if (file == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            log.warn("Could not delete temporary recording file [{}]: {}", file.getAbsolutePath(), e.getMessage());
         }
     }
 

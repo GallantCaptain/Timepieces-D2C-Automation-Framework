@@ -15,14 +15,12 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 
 /**
- * Cucumber lifecycle hooks: provisions a fresh ThreadLocal WebDriver and screen
- * recorder per scenario; on failure, attaches a PNG screenshot and the captured
- * AVI to the Allure report.
- * 
+ * @Description Cucumber lifecycle hooks: provisions a fresh ThreadLocal
+ * WebDriver and screen recorder per scenario; on failure, attaches a 
+ * PNG screenshot and the captured AVI to the Allure report.
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of Hooks"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2
@@ -82,13 +80,15 @@ public class Hooks {
         if (!isVideoRecordingEnabled()) {
             return;
         }
-        byte[] video = ScreenRecorderUtil.stopAndExtract();
-        if (video == null || video.length == 0) {
+        ScreenRecorderUtil.Recording recording = ScreenRecorderUtil.stopAndExtract();
+        if (recording == null || recording.bytes() == null || recording.bytes().length == 0) {
             log.warn("No video bytes available to attach for scenario [{}].", scenario.getName());
             return;
         }
-        scenario.attach(video, "video/avi", "Video on Failure");
-        log.info("Video attached to Allure report ({} bytes).", video.length);
+        // MP4 renders an inline HTML5 player in Allure; AVI (transcode fallback) is a
+        // download-only link. The media type is resolved by ScreenRecorderUtil.
+        scenario.attach(recording.bytes(), recording.mediaType(), "Video on Failure");
+        log.info("Video attached to Allure report ({} bytes, {}).", recording.bytes().length, recording.mediaType());
     }
 
     private void quitDriverQuietly(WebDriver driver) {
