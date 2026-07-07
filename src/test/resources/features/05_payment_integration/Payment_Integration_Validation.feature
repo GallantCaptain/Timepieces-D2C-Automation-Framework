@@ -11,9 +11,9 @@ Feature: Payment Integration and Security
 
   Scenario: Verify credit card format validation errors
     When the user enters invalid card credentials:
-      | Card Number | 4111 1111      |
-      | Expiry Date | 13/29          |
-      | CVV         | 12             |
+      | Card Number | 4111 1111 |
+      | Expiry Date |     13/29 |
+      | CVV         |        12 |
     Then the credit card form displays inline errors for number, expiry, and CVV formats
 
   Scenario: Verify error on card declined due to insufficient funds

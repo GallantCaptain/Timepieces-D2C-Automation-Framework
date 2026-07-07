@@ -15,7 +15,7 @@ Feature: OTP verification brute-force exposure
   Scenario: OTP verify accepts unlimited wrong codes without any lockout
     Given a user navigates to the Timepieces login page
     When the user selects the country "India" from the region dropdown
-    And the user enters the phone number "9000000001" in the phone number input field
+    And the user enters the phone number "7428730894" in the phone number input field
     And clicks the send OTP button
     Then the OTP verification screen should be displayed
     When the user submits 20 incorrect OTP codes in a row

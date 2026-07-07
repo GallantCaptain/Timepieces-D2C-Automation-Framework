@@ -13,8 +13,7 @@ import java.util.Map;
  * 
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of MetricsListener"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2

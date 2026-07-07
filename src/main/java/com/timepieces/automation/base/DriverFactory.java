@@ -23,8 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
+
 /**
- * @Description "Description of DriverFactory"
+ * DriverFactory
+ * 
  * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
@@ -106,7 +108,7 @@ public class DriverFactory {
         cloudOptions.put("user", user);
         cloudOptions.put("accessKey", key);
         browserOptions.setCapability("LT:Options", cloudOptions);
-        
+
         log.info("Initializing RemoteWebDriver (CLOUD mode) against: {}", gridHubUrl);
         WebDriver driver = new RemoteWebDriver(new java.net.URL(gridHubUrl), browserOptions);
         tlDriver.set(driver);
@@ -189,10 +191,14 @@ public class DriverFactory {
     if (driver instanceof ChromiumDriver chromiumDriver) {
       log.info("Applying Cloudflare bypass header x-automation-bypass to Chromium session.");
       try {
-        // CRITICAL: Network.setExtraHTTPHeaders is silently ignored unless the Network domain
-        // is enabled on the SAME CDP session first. Without this enable call the command still
-        // returns OK (so it looks applied) but the header is never attached to any request — so
-        // the Cloudflare skip rule never matches and CI keeps getting challenged. Enable first.
+        // CRITICAL: Network.setExtraHTTPHeaders is silently ignored unless the Network
+        // domain
+        // is enabled on the SAME CDP session first. Without this enable call the
+        // command still
+        // returns OK (so it looks applied) but the header is never attached to any
+        // request — so
+        // the Cloudflare skip rule never matches and CI keeps getting challenged.
+        // Enable first.
         chromiumDriver.executeCdpCommand("Network.enable", new HashMap<>());
 
         Map<String, Object> headers = new HashMap<>();

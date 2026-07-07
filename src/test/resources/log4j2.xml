@@ -16,9 +16,7 @@
         </Console>
 
         <!-- General application log: rolls on new day or 10MB, keeps 10 archives -->
-        <RollingFile name="ApplicationLog"
-            fileName="${basePath}/automation.log"
-            filePattern="${basePath}/automation-%d{yyyy-MM-dd}-%i.log">
+        <RollingFile name="ApplicationLog" fileName="${basePath}/automation.log" filePattern="${basePath}/automation-%d{yyyy-MM-dd}-%i.log">
             <PatternLayout pattern="${filePattern}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
@@ -28,12 +26,9 @@
         </RollingFile>
 
         <!-- Error-only log: rolls on new day or 10MB, keeps 5 archives -->
-        <RollingFile name="ErrorLog"
-            fileName="${basePath}/automation-error.log"
-            filePattern="${basePath}/automation-error-%d{yyyy-MM-dd}-%i.log">
+        <RollingFile name="ErrorLog" fileName="${basePath}/automation-error.log" filePattern="${basePath}/automation-error-%d{yyyy-MM-dd}-%i.log">
             <PatternLayout pattern="${filePattern}" />
-            <LevelRangeFilter minLevel="FATAL" maxLevel="ERROR"
-                onMatch="ACCEPT" onMismatch="DENY" />
+            <LevelRangeFilter minLevel="FATAL" maxLevel="ERROR" onMatch="ACCEPT" onMismatch="DENY" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
                 <SizeBasedTriggeringPolicy size="10MB" />

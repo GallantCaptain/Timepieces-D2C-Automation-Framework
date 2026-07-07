@@ -1,9 +1,10 @@
 package com.timepieces.automation.bdd.runners;
 
 import io.cucumber.testng.CucumberOptions;
+import lombok.extern.log4j.Log4j2;
 
 /**
- * ProductionRunner — the scope executed by the nightly production suite
+ * @Description ProductionRunner — the scope executed by the nightly production suite
  * (testng-production.xml, selected via -Dsurefire.suite).
  *
  * SCOPE: production currently runs ONLY scenarios explicitly vetted and tagged
@@ -25,9 +26,12 @@ import io.cucumber.testng.CucumberOptions;
  * is picked up; unselected scenarios with undefined steps are ignored (only
  * matched scenarios run).
  * 
+ * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
+
+@Log4j2
 @CucumberOptions(features = { "src/test/resources/features" }, glue = { "com.timepieces.automation.bdd.stepdefinitions",
         "com.timepieces.automation.bdd.hooks" }, tags = "@ProdReady", plugin = {
                 "pretty",
@@ -36,12 +40,6 @@ import io.cucumber.testng.CucumberOptions;
                 "rerun:target/cucumber-reports/production-rerun.txt",
                 "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
         }, monochrome = true, dryRun = false)
-/**
- * @Description "Description of ProductionRunner"
- * @since 2026-07-03
- * @version 1.0
- * @author Avinash Rath
- */
 public class ProductionRunner extends BaseRunner {
     // Inherits parallel execution and global hooks from BaseRunner
 }

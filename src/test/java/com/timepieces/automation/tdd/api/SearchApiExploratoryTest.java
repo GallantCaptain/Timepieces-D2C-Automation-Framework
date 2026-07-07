@@ -36,13 +36,12 @@ import lombok.extern.log4j.Log4j2;
  * <p>
  * This class reads all keywords from search_keywords.json, shuffles them
  * using a time-based seed (or configured seed), selects exactly 50
- * combinations,
- * and executes them against the target environment (defaulting to production).
+ * combinations, and executes them against the target environment
+ * (defaulting to production).
  * 
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of SearchApiExploratoryTest"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2

@@ -16,16 +16,12 @@ import io.cucumber.java.en.When;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * LoginSteps
- */
-
-// Assertions belong in Step Definitions, NEVER in Page Objects
-/**
  * @Description "Description of LoginSteps"
  * @since 2026-07-03
  * @version 1.0
  * @author Avinash Rath
  */
+
 @Log4j2
 public class LoginSteps {
     private final TestContext testContext;

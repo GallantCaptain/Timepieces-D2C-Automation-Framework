@@ -20,4 +20,4 @@ So that I can access my personalized account features and information seamlessly
 
     Examples:
       | country | phone_number | otp    | account_marker |
-      | India   |   9000000001 | 123456 | My Account     |
+      | India   |   7428730894 | 123456 | My Account     |

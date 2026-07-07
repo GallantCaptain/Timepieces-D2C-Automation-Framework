@@ -14,5 +14,5 @@ Feature: User Authentication and OTP Flow
 
     Examples:
       | country       | phone_number |
-      | India         |   9000000001 |
+      | India         |   7428730894 |
       | United States |   1234567890 |
