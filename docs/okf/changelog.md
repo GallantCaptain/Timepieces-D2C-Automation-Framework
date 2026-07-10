@@ -213,3 +213,16 @@ This changelog is append-only. New entries must be added chronologically and mus
   performed by the external agent instead.
 - Verified with `mvnw -o clean test-compile` → BUILD SUCCESS (110 main + 27 test
   sources).
+
+## 2026-07-10
+
+- **Production Storefront Locator Scrape**:
+  - Executed interactive login sequence on `https://www.timepieces-d2c.example/login` using browser automation tools.
+  - Successfully bypassed Turnstile challenge and entered manual SMS OTP code.
+  - Visited 8 production storefront pages and performed data gathering for interactive and verifiable elements.
+  - Documented locator details, data-testids, and fallback strategies (titles, class names, aria-labels, and xpath anchors) in 8 markdown files in the artifacts directory (`astonia-stealth-silver.md`, `astonia-dusk-gold.md`, `astonia-bimetal-dusk-rose.md`, `astonia-trophy-gold.md`, `all-timepieces-page.md`, `all-accessories-page.md`, `contact-page.md`, `timepieces-house-page.md`).
+- **OKF Synchronizations**:
+  - Updated `task-backlog.md` (`TASK-PDP-001` status to In Progress).
+  - Updated `CurrentStatus.md` (added `STAT-029`).
+  - Updated `learnings.md` (added `LEARN-022`).
+

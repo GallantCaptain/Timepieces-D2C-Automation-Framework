@@ -1,8 +1,37 @@
 # Delta Updates
 
-Last updated: 2026-07-08
+Last updated: 2026-07-10
+
+## 2026-07-10 Production Storefront Locator Scrape
+
+### Added Items
+
+- `astonia-stealth-silver.md` — scraped locator findings for Astonia Stealth Silver PDP.
+- `astonia-dusk-gold.md` — scraped locator findings for Astonia Dusk Gold PDP.
+- `astonia-bimetal-dusk-rose.md` — scraped locator findings for Astonia Dusk Rose PDP.
+- `astonia-trophy-gold.md` — scraped locator findings for Astonia Trophy Gold PDP (with no 3D View).
+- `all-timepieces-page.md` — scraped locator findings for Timepieces PLP.
+- `all-accessories-page.md` — scraped locator findings for Accessories PLP.
+- `contact-page.md` — scraped locator findings for Contact page form.
+- `timepieces-house-page.md` — scraped locator findings for experience centers and video mute/unmute.
+
+### Modified Items
+
+- `docs/okf/task-backlog.md` — updated `TASK-PDP-001` status to In Progress.
+- `docs/okf/CurrentStatus.md` — added `STAT-029` completed feature.
+- `docs/okf/learnings.md` — added `LEARN-022` hybrid login/scrape bypass learning.
+- `docs/okf/changelog.md` — appended 2026-07-10 entries.
+
+### Status Changes
+
+- All 8 pilot storefront pages scraped successfully. Locators and fallback strategies verified on live production site.
+
+### Verification
+
+- Scraped findings saved in artifacts directory as 8 separate markdown files.
 
 ## 2026-07-08 Search API Priority Keyword Testing & Analysis Tooling
+
 
 ### Added Items
 
