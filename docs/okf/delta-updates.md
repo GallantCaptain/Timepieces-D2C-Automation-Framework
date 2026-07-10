@@ -1,6 +1,38 @@
 # Delta Updates
 
-Last updated: 2026-07-07
+Last updated: 2026-07-08
+
+## 2026-07-08 Search API Priority Keyword Testing & Analysis Tooling
+
+### Added Items
+
+- `testng-search-api.xml` — committed convenience suite isolating `SearchApiTest` for repeated/standalone runs.
+- `scripts/run-search-api-analysis.ps1` — reusable script that runs the deterministic (`SearchApiTest`) and exploratory (`SearchApiExploratoryTest`) suites a configurable number of times each and compiles a combined per-keyword pass/fail analysis (summary.md + keyword-aggregation.csv), for use by both the automation team and app developers going forward.
+- `output/pdf/Automated Search API Test Results.pdf` — full report from 2 deterministic + 10 exploratory runs (718 observations).
+
+### Modified Items
+
+- `src/test/java/com/timepieces/automation/tdd/api/SearchApiTest.java` — added `G7_PriorityKeywords` test group (9 business-critical bare terms); deterministic test count now 109 across 7 groups.
+- `src/test/resources/testdata/search_keywords.json` — added `timepiece`/`timepieces`/`dial` to one representative product per watch collection and bare `strap`/`clasp` to every Strap/Clasp SKU, so the exploratory pool can draw the priority terms.
+- `.gitignore` — added `output/search-api-analysis/` (regenerable per-run artifacts).
+- `docs/okf/known-issues.md` — added `ISSUE-009` (Strap/Clasp accessory line invisible to brand-wide terms), `ISSUE-010` (`wristwatch`/`limited edition` zero-result), `ISSUE-011` (~18-19 result cap), `ISSUE-012` (`loom` fallback-result behavior).
+- `docs/okf/task-backlog.md` — added `TASK-SEARCH-001` through `TASK-SEARCH-005`.
+- `docs/okf/CurrentStatus.md` — added `STAT-026`.
+- `docs/okf/testing-strategy.md`, `docs/okf/project-structure.md`, `docs/okf/learnings.md` (`LEARN-017`-`LEARN-020`) — updated to reflect the new test group, script, and methodology insights.
+- `docs/okf/changelog.md` — logged the full implementation and findings.
+
+### Status Changes
+
+- Deterministic suite: 109 tests, 93.6% pass rate, 100% reproducible across 2 official runs (7 failures both times) plus a 3rd ad-hoc verification run during script development.
+- Exploratory suite: 50 tests/run across 10 runs, 46-64% pass rate (55.8% average) — lower than the deterministic suite primarily because its assertion style (must return one specific expected product) is stricter, not because production is meaningfully less healthy than staging.
+- 8 of 9 priority keywords are healthy; `dial` is a persistent failure; `loom` passes its automated check but was found to return an irrelevant fallback result set on manual inspection.
+- 4 real search-relevance defects confirmed and logged for developer action (`ISSUE-009`-`ISSUE-012`).
+
+### Verification
+
+- `mvnw -o clean test-compile` → BUILD SUCCESS.
+- Both deterministic runs produced byte-for-byte identical failure lists; a 3rd ad-hoc run reproduced the same core 7 relevance failures plus unrelated transient `staging.timepieces-d2c.example` connection exceptions (infrastructure noise, not a new defect) — used to validate a file-copy race fix in the new script.
+- Cross-referenced findings against the original `Timepieces_Search_Keywords.xlsx` source spreadsheet (extracted via a one-off XLSX→CSV parser) to separate intentional design (brand-wide term layering) from genuine defects.
 
 ## 2026-07-07 Healenium Self-Healing Locators Implementation
 

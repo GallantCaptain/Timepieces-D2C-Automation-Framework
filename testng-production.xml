@@ -5,7 +5,7 @@
   -Dsurefire.suite=testng-production.xml. Runs ONLY the ProductionRunner, which is
   scoped to @ProdReady (non-login) scenarios — see ProductionRunner javadoc.
 -->
-<suite name="Timepieces Production Suite" parallel="none" data-provider-thread-count="2">
+<suite name="Timepieces Production Suite" parallel="none" data-provider-thread-count="5">
 
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />

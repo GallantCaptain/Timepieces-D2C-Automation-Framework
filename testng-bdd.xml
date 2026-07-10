@@ -7,7 +7,7 @@
     included here so the full Gherkin scope executes. The runners self-deconflict
     overlapping scenarios (see RegressionRunner notes).
 -->
-<suite name="Timepieces BDD Suite" parallel="none" data-provider-thread-count="2">
+<suite name="Timepieces BDD Suite" parallel="none" data-provider-thread-count="5">
 
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />

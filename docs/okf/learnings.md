@@ -1,6 +1,6 @@
 # Learnings
 
-Last updated: 2026-07-07
+Last updated: 2026-07-08
 
 | ID | Learning | Source | Reusable Guidance |
 | --- | --- | --- | --- |
@@ -20,6 +20,10 @@ Last updated: 2026-07-07
 | LEARN-014 | Footer automation now depends on responsive footer behavior, so shared viewport and window helpers should be reused instead of duplicated or called with inline package names. | `BasePage.java`, `FooterComponent.java`, `FooterSteps.java`, `WindowUtils.java` | Import shared utilities at the top of Java files and call inherited `BasePage` wrappers directly from page/component classes. |
 | LEARN-015 | `SelfHealingDriver.create(...)` returns a decorator that is no longer an `instanceof ChromiumDriver`, so any vendor-specific cast (like the Cloudflare CDP header cast) must run on the raw driver BEFORE wrapping with Healenium, never after. | `DriverFactory.java` | Always apply CDP/vendor-specific driver logic first, then wrap with `SelfHealingDriver` as the last step before publishing the driver. |
 | LEARN-016 | `healenium.properties` is read directly by the Healenium client from the classpath root — it does not go through `ConfigReader`'s -D/env/file precedence, so it cannot vary per environment the way other config does. | `healenium.properties`, `ConfigReader.java` | Keep `hlm.server.url` manually in sync with the reference `healenium.server.url` key in the environment `.properties` files; do not expect `-Dhealenium.server.url=...` to change Healenium's own backend target. |
+| LEARN-017 | A "did the search return any non-empty result?" assertion is not a reliable relevance signal — the search API was observed returning a consistent, unrelated fallback result set (4 specific clasps) for the priority keyword `loom`, which has no legitimate catalog match, while genuine gibberish (`xyzzyfoobarbaz123`) correctly returns empty. | `SearchApiTest.java` G7 group, "Automated Search API Test Results" report §7 | Prefer assertions that check for a specific expected handle (or category of handles) over bare non-emptiness when validating search relevance for generic/category-level terms. |
+| LEARN-018 | Generic/brand search queries (`Timepieces`, `automatic watch`, etc.) appear capped around 18-19 returned results regardless of how many of the 40 catalog SKUs carry the matching tag, which silently excludes deep-catalog SKUs from broad queries. | "Automated Search API Test Results" report §8 | When a G1-style product-matrix test fails for a low-profile SKU across every keyword category simultaneously, suspect a result-count cap before assuming the product's tags are wrong. |
+| LEARN-019 | `search_keywords.json`'s per-category keyword order does not preserve `Timepieces_Search_Keywords.xlsx`'s authored precedence (distinguishing name first, brand-generic term last) — 25 of 40 products have the generic `Timepieces` term at NAMES index 0 in the JSON. Since `SearchApiTest`'s G1 group always queries index 0, this weakens that group's validation value for those products. | `search_keywords.json` vs. `Timepieces_Search_Keywords.xlsx` | When re-generating `search_keywords.json` from the spreadsheet, preserve each category's authored keyword order rather than reordering. |
+| LEARN-020 | The source-of-truth spreadsheet's own README documents a monthly maintenance process ("pull zero-result searches from search analytics and add them to MISSPELLINGS or RELATED") — this is the intended channel for acting on search-relevance findings like ISSUE-009 through ISSUE-012. | `Timepieces_Search_Keywords.xlsx` README tab | Route future search-relevance findings through that existing spreadsheet process rather than only through OKF issues. |
 
 ## Troubleshooting Notes
 

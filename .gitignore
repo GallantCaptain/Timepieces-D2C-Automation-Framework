@@ -41,6 +41,10 @@ test-output/
 screenshots/
 videos/
 
+# Search API analysis script output — regenerable per-run artifacts.
+# See scripts/run-search-api-analysis.ps1. (output/pdf/ deliverables stay tracked.)
+output/search-api-analysis/
+
 # Secrets / local config
 *.env
 .env.local

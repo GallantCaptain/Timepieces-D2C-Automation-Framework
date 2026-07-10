@@ -1,6 +1,6 @@
 # Known Issues
 
-Last reviewed: 2026-07-03
+Last reviewed: 2026-07-08
 
 ## Open Issues
 
@@ -13,6 +13,10 @@ Last reviewed: 2026-07-03
 | ISSUE-005 | `staging.properties` defines `is.headless=false`, but `DriverFactory` reads `headless`; production has both keys. | Medium | Open | Use CLI `-Dheadless=...` or add `headless` to staging until config is reconciled. | TASK-CFG-001 |
 | ISSUE-006 | `hs_err_pid4140.log` records a JVM `EXCEPTION_ACCESS_VIOLATION` in VS Code Red Hat Java language server using Temurin 21.0.10. Root cause is TBD. | Medium | Open | Restart affected IDE/JDT LS process; deeper root-cause analysis TBD. | TASK-IDE-001 |
 | ISSUE-007 | CI workflow browser inputs include Edge and Brave, but the workflow install step only installs Chrome and Firefox. | Medium | Open | Use Docker test bed for Edge/Brave until CI browser setup is aligned, or update workflow. | TASK-RUN-001 |
+| ISSUE-009 | The entire Strap/Clasp accessory line (21 of 40 catalog SKUs) never appears in search results for any of the 11 brand-wide attribute terms (`wristwatch`, `quartz watch`, `316L steel`, etc.), despite `Timepieces_Search_Keywords.xlsx` explicitly specifying these products carry the same brand-wide tags as watches. Confirmed 0/164 observations across 12 automated runs (2 deterministic + 10 exploratory, 2026-07-08). | Critical | Open | None — needs product/search-backend investigation. Compare live Shopify metafields for a Strap/Clasp SKU against the spreadsheet's per-product ATTRIBUTES column. | TASK-SEARCH-001, "Automated Search API Test Results" report §5 |
+| ISSUE-010 | `wristwatch` and `limited edition` — both part of the brand-wide keyword bucket meant to be merged into every product — return zero search results, 100% reproducible across 20 and 18 observations respectively (12 automated runs, 2026-07-08). Related dial/style compound terms (`skeleton dial`, `champagne dial`, `moon phase`, etc.) show the same zero-result pattern. | Critical | Open | None — needs search-index/relevance investigation. | TASK-SEARCH-002, "Automated Search API Test Results" report §6 |
+| ISSUE-011 | Generic/brand queries (`Timepieces`, `automatic watch`, `watch with serial number`, etc.) appear capped around 18-19 returned results regardless of how many of the 40 catalog SKUs actually carry the matching tag; two accessory SKUs (Suede Leather Strap — Brown, Single Deployment Clasp — Rose Gold 22mm) fall outside this cutoff for every one of their first-listed keywords simultaneously. | Medium | Open | Confirm with search/backend owner whether this is an intentional page-size limit and whether sort order should change. | TASK-SEARCH-003, "Automated Search API Test Results" report §8 |
+| ISSUE-012 | Priority keyword `loom` (chosen because no woven/NATO-style strap exists in the catalog) does not return an honest empty result — it consistently returns 4 unrelated deployment-clasp products instead, unlike genuine gibberish queries which correctly return empty. Suggests the search API silently substitutes a fallback/default result set for some zero-relevance real-word queries. | Medium | Open | Decide whether to add a woven-strap product tagged `loom`, or fix the API to return an honest empty result for unmatched real-word queries. | TASK-SEARCH-004, "Automated Search API Test Results" report §7 |
 
 ## Resolved Issues
 

@@ -32,7 +32,8 @@
       "leather strap",
       "skeleton dial",
       "men's watch",
-      "automatic"
+      "automatic",
+      "dial"
     ],
     "misspellings_keywords": [
       "ariqua",
@@ -57,7 +58,9 @@
       "watch with visible gears",
       "premium watch",
       "black rose gold watch",
-      "yacht watch"
+      "yacht watch",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -214,7 +217,8 @@
       "ostrich leather",
       "silver dial",
       "men's watch",
-      "automatic"
+      "automatic",
+      "dial"
     ],
     "misspellings_keywords": [
       "monrch",
@@ -240,7 +244,9 @@
       "watch with power reserve",
       "premium watch",
       "silver dress watch",
-      "watch with moon"
+      "watch with moon",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -337,7 +343,8 @@
       "minimalist",
       "Arvion",
       "suede strap",
-      "men's watch"
+      "men's watch",
+      "dial"
     ],
     "misspellings_keywords": [
       "arvin navy",
@@ -362,7 +369,9 @@
       "navy minimalist watch",
       "Indian watch brand",
       "premium watch",
-      "blue single hand watch"
+      "blue single hand watch",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -518,7 +527,8 @@
       "40mm",
       "aventurine dial",
       "men's watch",
-      "automatic"
+      "automatic",
+      "dial"
     ],
     "misspellings_keywords": [
       "aventurin",
@@ -543,7 +553,9 @@
       "natural dial watch",
       "blue stone watch",
       "premium watch",
-      "starry night dial watch"
+      "starry night dial watch",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -695,7 +707,8 @@
       "Q-Matic",
       "chronograph",
       "FKM rubber strap",
-      "grey dial"
+      "grey dial",
+      "dial"
     ],
     "misspellings_keywords": [
       "astonia silvr",
@@ -720,7 +733,9 @@
       "watch with pushers",
       "Indian watch brand",
       "premium watch",
-      "grey chronograph"
+      "grey chronograph",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -943,7 +958,8 @@
       "chronograph",
       "blackout chronograph",
       "FKM rubber strap",
-      "men's watch"
+      "men's watch",
+      "dial"
     ],
     "misspellings_keywords": [
       "astonia phantom blak",
@@ -968,7 +984,9 @@
       "Kush Maini watch",
       "rubber strap chronograph",
       "black sports chronograph",
-      "racing chronograph"
+      "racing chronograph",
+      "timepiece",
+      "timepieces"
     ]
   },
   {
@@ -1093,7 +1111,7 @@
   },
   {
     "handle": "suede-leather-strap-burgundy",
-    "name": "Suede Leather Strap \u2014 Burgundy",
+    "name": "Suede Leather Strap — Burgundy",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1120,7 +1138,8 @@
       "leather strap",
       "suede strap",
       "Arvion strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "sued strap burgundy",
@@ -1145,7 +1164,7 @@
   },
   {
     "handle": "suede-leather-strap-brown",
-    "name": "Suede Leather Strap \u2014 Brown",
+    "name": "Suede Leather Strap — Brown",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1171,7 +1190,8 @@
       "watch band",
       "men's watch",
       "numbered watch",
-      "mens watch"
+      "mens watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -1195,7 +1215,7 @@
   },
   {
     "handle": "suede-leather-strap-blue",
-    "name": "Suede Leather Strap \u2014 Blue",
+    "name": "Suede Leather Strap — Blue",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1223,7 +1243,8 @@
       "leather strap",
       "suede strap",
       "Arvion strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -1247,7 +1268,7 @@
   },
   {
     "handle": "fkm-rubber-strap-black",
-    "name": "FKM Rubber Strap \u2014 Black",
+    "name": "FKM Rubber Strap — Black",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1275,7 +1296,8 @@
       "automatic watch",
       "leather strap",
       "sports strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -1301,7 +1323,7 @@
   },
   {
     "handle": "fkm-rubber-strap-yellow",
-    "name": "FKM Rubber Strap \u2014 Yellow",
+    "name": "FKM Rubber Strap — Yellow",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1328,7 +1350,8 @@
       "watch band",
       "men's watch",
       "yellow strap",
-      "mens watch"
+      "mens watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "fkm strap yelo",
@@ -1352,7 +1375,7 @@
   },
   {
     "handle": "fkm-rubber-strap-orange",
-    "name": "FKM Rubber Strap \u2014 Orange",
+    "name": "FKM Rubber Strap — Orange",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1379,7 +1402,8 @@
       "numbered watch",
       "watch band",
       "men's watch",
-      "mens watch"
+      "mens watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "fkm orang strap",
@@ -1403,7 +1427,7 @@
   },
   {
     "handle": "fkm-rubber-strap-white",
-    "name": "FKM Rubber Strap \u2014 White",
+    "name": "FKM Rubber Strap — White",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1430,7 +1454,8 @@
       "numbered watch",
       "watch band",
       "men's watch",
-      "mens watch"
+      "mens watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "fkm whit strap",
@@ -1454,7 +1479,7 @@
   },
   {
     "handle": "teju-lizard-leather-strap-black",
-    "name": "Teju Lizard Leather Strap \u2014 Black",
+    "name": "Teju Lizard Leather Strap — Black",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1482,7 +1507,8 @@
       "automatic watch",
       "leather strap",
       "lizard strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "tegu lizard",
@@ -1508,7 +1534,7 @@
   },
   {
     "handle": "teju-lizard-leather-strap-blue",
-    "name": "Teju Lizard Leather Strap \u2014 Blue",
+    "name": "Teju Lizard Leather Strap — Blue",
     "type": "Strap",
     "names_keywords": [
       "Timepieces",
@@ -1536,7 +1562,8 @@
       "automatic watch",
       "leather strap",
       "lizard strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "tegu lizard blue",
@@ -1560,7 +1587,7 @@
   },
   {
     "handle": "ostrich-leather-strap-black",
-    "name": "Ostrich Leather Strap \u2014 Black",
+    "name": "Ostrich Leather Strap — Black",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1587,7 +1614,8 @@
       "watch band",
       "automatic watch",
       "leather strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "ostridge strap",
@@ -1612,7 +1640,7 @@
   },
   {
     "handle": "ostrich-leather-strap-brown",
-    "name": "Ostrich Leather Strap \u2014 Brown",
+    "name": "Ostrich Leather Strap — Brown",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1639,7 +1667,8 @@
       "automatic watch",
       "leather strap",
       "brown strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "ostridge strap brown",
@@ -1663,7 +1692,7 @@
   },
   {
     "handle": "hybrid-leather-strap-black",
-    "name": "Hybrid Leather Strap \u2014 Black",
+    "name": "Hybrid Leather Strap — Black",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1690,7 +1719,8 @@
       "watch band",
       "automatic watch",
       "leather strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "hybrid strpa",
@@ -1714,7 +1744,7 @@
   },
   {
     "handle": "hybrid-leather-strap-blue",
-    "name": "Hybrid Leather Strap \u2014 Blue",
+    "name": "Hybrid Leather Strap — Blue",
     "type": "Strap",
     "names_keywords": [
       "Timepieces watch",
@@ -1741,7 +1771,8 @@
       "watch band",
       "automatic watch",
       "leather strap",
-      "men's watch"
+      "men's watch",
+      "strap"
     ],
     "misspellings_keywords": [
       "hibrid strap blue",
@@ -1764,7 +1795,7 @@
   },
   {
     "handle": "butterfly-clasp-gold-18mm",
-    "name": "Butterfly Clasp \u2014 Gold (18mm)",
+    "name": "Butterfly Clasp — Gold (18mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces",
@@ -1791,7 +1822,8 @@
       "deployant clasp",
       "men's watch",
       "butterfly clasp",
-      "mens watch"
+      "mens watch",
+      "clasp"
     ],
     "misspellings_keywords": [
       "buterly clasp",
@@ -1817,7 +1849,7 @@
   },
   {
     "handle": "butterfly-clasp-steel-18mm",
-    "name": "Butterfly Clasp \u2014 Steel (18mm)",
+    "name": "Butterfly Clasp — Steel (18mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces",
@@ -1844,7 +1876,8 @@
       "deployant clasp",
       "men's watch",
       "butterfly clasp",
-      "mens watch"
+      "mens watch",
+      "clasp"
     ],
     "misspellings_keywords": [
       "buterfly clasp steel",
@@ -1869,7 +1902,7 @@
   },
   {
     "handle": "butterfly-clasp-rose-gold-18mm",
-    "name": "Butterfly Clasp \u2014 Rose Gold (18mm)",
+    "name": "Butterfly Clasp — Rose Gold (18mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces",
@@ -1896,7 +1929,8 @@
       "deployant clasp",
       "men's watch",
       "butterfly clasp",
-      "mens watch"
+      "mens watch",
+      "clasp"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -1921,7 +1955,7 @@
   },
   {
     "handle": "single-deployment-clasp-steel-20mm",
-    "name": "Single Deployment Clasp \u2014 Steel (20mm)",
+    "name": "Single Deployment Clasp — Steel (20mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces watch",
@@ -1946,7 +1980,8 @@
       "numbered watch",
       "20mm clasp",
       "men's watch",
-      "deployant clasp"
+      "deployant clasp",
+      "clasp"
     ],
     "misspellings_keywords": [
       "single deployent",
@@ -1972,7 +2007,7 @@
   },
   {
     "handle": "single-deployment-clasp-black-20mm",
-    "name": "Single Deployment Clasp \u2014 Black (20mm)",
+    "name": "Single Deployment Clasp — Black (20mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces watch",
@@ -1997,7 +2032,8 @@
       "numbered watch",
       "20mm clasp",
       "men's watch",
-      "deployant clasp"
+      "deployant clasp",
+      "clasp"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -2022,7 +2058,7 @@
   },
   {
     "handle": "single-deployment-clasp-rose-gold-20mm",
-    "name": "Single Deployment Clasp \u2014 Rose Gold (20mm)",
+    "name": "Single Deployment Clasp — Rose Gold (20mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces watch",
@@ -2047,7 +2083,8 @@
       "numbered watch",
       "20mm clasp",
       "men's watch",
-      "deployant clasp"
+      "deployant clasp",
+      "clasp"
     ],
     "misspellings_keywords": [
       "rosegold clasp 20",
@@ -2071,7 +2108,7 @@
   },
   {
     "handle": "single-deployment-clasp-rose-gold-22mm",
-    "name": "Single Deployment Clasp \u2014 Rose Gold (22mm)",
+    "name": "Single Deployment Clasp — Rose Gold (22mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces watch",
@@ -2096,7 +2133,8 @@
       "numbered watch",
       "deployant clasp",
       "men's watch",
-      "mens watch"
+      "mens watch",
+      "clasp"
     ],
     "misspellings_keywords": [
       "Rotoros",
@@ -2120,7 +2158,7 @@
   },
   {
     "handle": "single-deployment-clasp-gold-20mm",
-    "name": "Single Deployment Clasp \u2014 Gold (20mm)",
+    "name": "Single Deployment Clasp — Gold (20mm)",
     "type": "Clasp",
     "names_keywords": [
       "Timepieces watch",
@@ -2145,7 +2183,8 @@
       "numbered watch",
       "20mm clasp",
       "men's watch",
-      "deployant clasp"
+      "deployant clasp",
+      "clasp"
     ],
     "misspellings_keywords": [
       "single deployant gold",
@@ -2170,7 +2209,7 @@
   },
   {
     "handle": "premium-watch-case",
-    "name": "Premium Watch Case \u2014 Black",
+    "name": "Premium Watch Case — Black",
     "type": "Case",
     "names_keywords": [
       "Timepieces",

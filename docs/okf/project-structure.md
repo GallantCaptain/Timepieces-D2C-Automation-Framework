@@ -1,6 +1,6 @@
 # Project Structure
 
-Last reviewed: 2026-07-07
+Last reviewed: 2026-07-08
 
 ## Directory Layout
 
@@ -45,7 +45,9 @@ timepieces-automation-framework/
 | `src/test/java/com/timepieces/automation/api/SearchApiTest.java` | TestNG/Rest-Assured storefront search keyword validation |
 | `src/test/java/com/timepieces/automation/listeners/MetricsListener.java` | Metrics listener |
 | `src/test/java/com/timepieces/automation/utils/TestMetricsPublisher.java` | Postgres metrics publisher |
-| `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests |
+| `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests; derived from `Timepieces_Search_Keywords.xlsx` |
+| `testng-search-api.xml` | Committed convenience suite isolating `SearchApiTest` (deterministic search API suite) for repeated/standalone runs |
+| `scripts/run-search-api-analysis.ps1` | Runs the deterministic + exploratory search API suites a configurable number of times each and compiles a combined per-keyword pass/fail analysis |
 | `src/test/resources/config/staging.properties` | Staging configuration |
 | `src/test/resources/config/production.properties` | Production configuration |
 | `src/test/resources/healenium.properties` | Healenium self-healing engine config (backend URL, recovery tries, score cap); read directly by `SelfHealingDriver`, not via `ConfigReader` |
@@ -88,6 +90,8 @@ timepieces-automation-framework/
 | `output/pdf/healenium-implementation-guide.pdf` | Documentation generation | Generated/exported Healenium onboarding guide; commit policy TBD unless explicitly requested |
 | `output/pdf/docker-kubernetes-guide.pdf` | Documentation generation | Generated/exported Docker (this repo's actual usage) + Kubernetes (generic foundations primer, not implemented here) onboarding guide for team transition; commit policy TBD unless explicitly requested |
 | `output/pdf/cicd-pipelines-guide.pdf` | Documentation generation | Generated/exported guide: this repo's actual GitHub Actions pipelines (5 workflows) plus illustrative Jenkins/GitLab CI/CD/Azure DevOps equivalents for comparison — only GitHub Actions is implemented; commit policy TBD unless explicitly requested |
+| `output/pdf/Automated Search API Test Results.pdf` | Documentation generation | Generated/exported search relevance test report (2 deterministic + 10 exploratory runs); commit policy TBD unless explicitly requested |
+| `output/search-api-analysis/` | `scripts/run-search-api-analysis.ps1` | Per-run logs/reports and compiled summary/CSV; gitignored, fully regenerable |
 | `dashboard/web/dist/` | Vite build | Generated artifact |
 | `dashboard/**/node_modules/` | npm install | Do not commit |
 

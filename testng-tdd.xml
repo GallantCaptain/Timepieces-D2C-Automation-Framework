@@ -8,7 +8,7 @@
     To run ONLY the API test, comment out the "Unit Executions" <test> block below
     (or vice-versa for the Twilio unit test).
 -->
-<suite name="Timepieces TDD Suite" parallel="none" data-provider-thread-count="2">
+<suite name="Timepieces TDD Suite" parallel="none" data-provider-thread-count="8">
 
     <listeners>
         <listener class-name="com.timepieces.automation.listeners.RetryAnnotationTransformer" />

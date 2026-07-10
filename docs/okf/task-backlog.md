@@ -1,6 +1,6 @@
 # Task Backlog
 
-Last reviewed: 2026-07-07
+Last reviewed: 2026-07-08
 
 | ID | Priority | Description | Dependencies | Status |
 | --- | --- | --- | --- | --- |
@@ -21,6 +21,11 @@ Last reviewed: 2026-07-07
 | TASK-CI-003 | P1 | Add email report notifications to all 3 CI/CD workflows (staging-tests, production-tests, test-pipeline) using `dawidd6/action-send-mail@v5`. Recipients: `167759523+GallantCaptain@users.noreply.github.com`, `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example`. Requires `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` secrets. | SMTP credentials from admin | Stashed (awaiting SMTP details) |
 | TASK-CI-004 | P2 | Implement nightly exploratory search API test suite (50 randomized tests from the JSON pool) running on production by default. | None | Completed |
 | TASK-CI-005 | P3 | Transition DriverFactory from local to fully managed/self-hosted Cloud Grid (e.g. BrowserStack, LambdaTest) for Safari/iOS coverage, scheduled around mid/end-July. | Team grid infrastructure decision | Open |
+| TASK-SEARCH-001 | P1 | Investigate why the Strap/Clasp accessory line (21 SKUs) never surfaces for any of the 11 brand-wide attribute search terms despite being tagged per the spreadsheet's design. | Search/backend + product data owner | Open |
+| TASK-SEARCH-002 | P1 | Fix zero-result search for `wristwatch`, `limited edition`, and related dial/style compound terms — brand-wide terms that should return most of the catalog. | Search/backend owner | Open |
+| TASK-SEARCH-003 | P2 | Confirm whether the ~18-19 result cap on generic/brand queries is intentional; if so, review sort order so deep-catalog SKUs aren't structurally excluded. | Search/backend owner | Open |
+| TASK-SEARCH-004 | P2 | Decide on `loom`: add a woven/NATO-style strap product, or fix the search API to return an honest empty result for unmatched real-word queries instead of an unrelated fallback set. | Product + search/backend owner | Open |
+| TASK-SEARCH-005 | P3 | Run the spreadsheet's own documented monthly maintenance process (pull zero-result searches into MISSPELLINGS/RELATED buckets) using the "Automated Search API Test Results" report as the current input; also re-order `search_keywords.json`'s NAMES lists so a distinguishing term (not the generic `Timepieces` brand term) sits at index 0. | QA + content owner | Open |
 
 
 ## Backlog Self-Audit

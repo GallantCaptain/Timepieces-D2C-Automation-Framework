@@ -30,7 +30,7 @@ import io.restassured.response.Response;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Timepieces Search API Test Suite — 100 tests total.
+ * Timepieces Search API Test Suite — 109 tests total.
  * Groups:
  * G1 — Product Matrix (40): Each product tested with first keyword per category
  * G2 — Generic Watch Keywords (20): High-intent terms like "watches", "watch",
@@ -40,7 +40,11 @@ import lombok.extern.log4j.Log4j2;
  * G4 — Brand & Misspellings (12): Brand name variants and global misspellings
  * G5 — Deep Keywords (15): 2nd/3rd keywords from select products
  * G6 — Edge Cases (5): Empty, nonsense, special chars
- * 
+ * G7 — Priority Keyword Coverage (9): Business-critical bare terms that must
+ * always return relevant results — watch, watches, timepiece, timepieces,
+ * loom, dial, strap, clasp, watch case. See "Automated Search API Test
+ * Results" report for the business rationale and any anomalies found.
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of SearchApiTest"
@@ -241,7 +245,7 @@ public class SearchApiTest {
     }
 
     private synchronized void recordResult(String group, String testName, String keyword,
-            String status, String error, List<String> returned) {
+            String status, String error, String returnedSummary) {
         totalTests++;
         if ("PASS".equals(status)) {
             passedTests++;
@@ -256,15 +260,31 @@ public class SearchApiTest {
         result.put("category", group);
         result.put("status", status);
         result.put("error", error != null ? error : "");
-        result.put("returned", returned);
+        result.put("returned", returnedSummary != null ? returnedSummary : "—");
         testResults.add(result);
+    }
+
+    /**
+     * Formats one search's actual API response in full, split by category
+     * (timepieces vs. accessories) exactly as the API returns it — never
+     * truncated — so this is the real payload shape a developer can act on,
+     * not just a flat "N handles" count.
+     */
+    private String formatSearchResult(SearchResult result) {
+        if (result.error != null) {
+            return "—";
+        }
+        String tp = result.timepieces.isEmpty() ? "none" : String.join(", ", result.timepieces);
+        String ac = result.accessories.isEmpty() ? "none" : String.join(", ", result.accessories);
+        return String.format("Timepieces (%d): %s — Accessories (%d): %s",
+                result.timepieces.size(), tp, result.accessories.size(), ac);
     }
 
     // ==================================================================================
     // GROUP 1: Product-Specific Matrix Tests (40 tests)
     // ==================================================================================
 
-    @DataProvider(name = "productMatrixData")
+    @DataProvider(name = "productMatrixData", parallel = true)
     public Object[][] productMatrixData() {
         // Wait for testMatrix to be loaded
         if (testMatrix == null || testMatrix.isEmpty()) {
@@ -293,6 +313,10 @@ public class SearchApiTest {
         int catsPassed = 0;
         int catsTested = 0;
         StringBuilder failDetails = new StringBuilder();
+        // Captures the actual API response for every one of the up to 4 searches this
+        // test performs, so developers can see exactly what came back per category —
+        // not just the pass/fail verdict.
+        StringBuilder resultsDetail = new StringBuilder();
 
         for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
             String catName = entry.getKey();
@@ -305,6 +329,8 @@ public class SearchApiTest {
 
             SearchResult result = performSearch(kw);
             throttle();
+
+            resultsDetail.append(String.format("[%s '%s'] %s; ", catName, kw, formatSearchResult(result)));
 
             if (result.error != null) {
                 failDetails.append(String.format("[%s] API error for '%s': %s; ", catName, kw, result.error));
@@ -321,7 +347,7 @@ public class SearchApiTest {
 
         String status = (catsPassed >= 1) ? "PASS" : "FAIL";
         recordResult("G1_ProductMatrix", name, handle, status,
-                failDetails.length() > 0 ? failDetails.toString() : null, List.of());
+                failDetails.length() > 0 ? failDetails.toString() : null, resultsDetail.toString());
 
         log.info("[G1] {} — {}/{} categories passed for '{}'", status, catsPassed, catsTested, name);
         assertThat(catsPassed)
@@ -333,7 +359,7 @@ public class SearchApiTest {
     // GROUP 2: Generic Watch Keyword Tests (20 tests)
     // ==================================================================================
 
-    @DataProvider(name = "genericKeywordData")
+    @DataProvider(name = "genericKeywordData", parallel = true)
     public Object[][] genericKeywordData() {
         return new Object[][] {
                 { "watches", "Should return any timepieces or accessories" },
@@ -369,7 +395,7 @@ public class SearchApiTest {
 
         recordResult("G2_GenericKeywords", keyword, keyword, status,
                 result.error != null ? result.error : (hasResults ? null : "Empty results"),
-                result.allHandles());
+                formatSearchResult(result));
 
         log.info("[G2] {} — '{}' returned {} results. {}", status, keyword,
                 result.allHandles().size(), rationale);
@@ -390,7 +416,7 @@ public class SearchApiTest {
     // GROUP 3: Collection / Type Search Tests (8 tests)
     // ==================================================================================
 
-    @DataProvider(name = "collectionSearchData")
+    @DataProvider(name = "collectionSearchData", parallel = true)
     public Object[][] collectionSearchData() {
         return new Object[][] {
                 { "Auriqua", new String[] { "auriqua-noir-rose", "auriqua-racing-green", "auriqua-ocean-blue" } },
@@ -441,7 +467,7 @@ public class SearchApiTest {
         String status = foundAny ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
         recordResult("G3_CollectionSearch", keyword, keyword, status,
                 result.error != null ? result.error : (foundAny ? null : "No collection members found"),
-                allReturned);
+                formatSearchResult(result));
 
         log.info("[G3] {} — '{}' matched {}/{} collection handles: {}", status, keyword,
                 matchedHandles.size(), expectedHandles.length, matchedHandles);
@@ -458,7 +484,7 @@ public class SearchApiTest {
     // GROUP 4: Brand & Misspelling Tests (12 tests)
     // ==================================================================================
 
-    @DataProvider(name = "brandMisspellingData")
+    @DataProvider(name = "brandMisspellingData", parallel = true)
     public Object[][] brandMisspellingData() {
         return new Object[][] {
                 { "Timepieces", "Exact brand name" },
@@ -486,7 +512,7 @@ public class SearchApiTest {
 
         recordResult("G4_BrandMisspellings", keyword + " (" + description + ")", keyword, status,
                 result.error != null ? result.error : (hasResults ? null : "Empty results"),
-                result.allHandles());
+                formatSearchResult(result));
 
         log.info("[G4] {} — '{}' ({}) returned {} results", status, keyword, description,
                 result.allHandles().size());
@@ -504,7 +530,7 @@ public class SearchApiTest {
     // Tests 2nd and 3rd keywords from select products across all collections
     // ==================================================================================
 
-    @DataProvider(name = "deepKeywordData")
+    @DataProvider(name = "deepKeywordData", parallel = true)
     public Object[][] deepKeywordData() {
         if (testMatrix == null || testMatrix.isEmpty()) {
             return new Object[0][0];
@@ -562,7 +588,7 @@ public class SearchApiTest {
         recordResult("G5_DeepKeywords", productName + " " + label, keyword, status,
                 result.error != null ? result.error
                         : (found ? null : "Product '" + expectedHandle + "' not in results"),
-                result.allHandles());
+                formatSearchResult(result));
 
         log.info("[G5] {} — '{}' {} '{}' for {} ({})", status, keyword,
                 found ? "found" : "MISSED", expectedHandle, productName, label);
@@ -585,7 +611,7 @@ public class SearchApiTest {
     // GROUP 6: Negative & Edge Case Tests (5 tests)
     // ==================================================================================
 
-    @DataProvider(name = "edgeCaseData")
+    @DataProvider(name = "edgeCaseData", parallel = true)
     public Object[][] edgeCaseData() {
         return new Object[][] {
                 { "", "Empty query" },
@@ -609,7 +635,7 @@ public class SearchApiTest {
         recordResult("G6_EdgeCases", description, keyword, status,
                 graceful ? null
                         : "Unexpected status: " + result.statusCode + " " + (result.error != null ? result.error : ""),
-                result.allHandles());
+                formatSearchResult(result));
 
         log.info("[G6] {} — '{}' ({}) returned status {} with {} results", status, keyword,
                 description, result.statusCode, result.allHandles().size());
@@ -620,12 +646,61 @@ public class SearchApiTest {
     }
 
     // ==================================================================================
+    // GROUP 7: Priority Keyword Coverage Tests (9 tests)
+    // These 9 bare terms are business-critical: product/marketing consider them the
+    // core vocabulary customers use to find watches and accessories, so each is tested
+    // standalone (not buried inside a longer phrase) with its own PASS/FAIL signal.
+    // ==================================================================================
+
+    @DataProvider(name = "priorityKeywordData", parallel = true)
+    public Object[][] priorityKeywordData() {
+        return new Object[][] {
+                { "watch", "Core singular generic term for the entire timepiece catalog" },
+                { "watches", "Core plural generic term for the entire timepiece catalog" },
+                { "timepiece", "Singular synonym for watch; validates synonym-level search relevance" },
+                { "timepieces", "Plural synonym for watch; validates synonym-level search relevance" },
+                { "loom", "Woven/NATO-style strap material term; validates strap-material synonym coverage" },
+                { "dial", "Bare watch-face component term (not a compound like 'skeleton dial')" },
+                { "strap", "Bare accessory category term for the Strap product line" },
+                { "clasp", "Bare accessory category term for the Clasp product line" },
+                { "watch case", "Accessory category phrase for the Case product line" }
+        };
+    }
+
+    @Test(dataProvider = "priorityKeywordData", groups = "G7_PriorityKeywords", description = "Validates business-critical bare keywords always return relevant search results")
+    public void testPriorityKeyword(String keyword, String rationale) {
+        SearchResult result = performSearch(keyword);
+        throttle();
+
+        boolean hasResults = result.hasResults();
+        String status = hasResults ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
+
+        recordResult("G7_PriorityKeywords", keyword, keyword, status,
+                result.error != null ? result.error : (hasResults ? null : "Empty results — " + rationale),
+                formatSearchResult(result));
+
+        log.info("[G7] {} — '{}' returned {} results. {}", status, keyword,
+                result.allHandles().size(), rationale);
+
+        if (result.error != null) {
+            log.warn("[G7] API error for priority keyword '{}': {}", keyword, result.error);
+        }
+
+        assertThat(result.statusCode)
+                .as("Priority keyword search for '%s' should return HTTP 200", keyword)
+                .isEqualTo(200);
+        assertThat(result.allHandles())
+                .as("Priority keyword '%s' should return at least one relevant result — %s", keyword, rationale)
+                .isNotEmpty();
+    }
+
+    // ==================================================================================
     // Report Generation (runs after all tests)
     // ==================================================================================
 
     @Test(dependsOnGroups = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
             "G4_BrandMisspellings", "G5_DeepKeywords",
-            "G6_EdgeCases" }, alwaysRun = true, groups = "report", description = "Generates the comprehensive search analysis report after all test groups complete")
+            "G6_EdgeCases", "G7_PriorityKeywords" }, alwaysRun = true, groups = "report", description = "Generates the comprehensive search analysis report after all test groups complete")
     public void generateSearchReport() {
         generateReport();
 
@@ -636,45 +711,12 @@ public class SearchApiTest {
                 totalTests, passedTests, failedTests, String.format("%.2f", passRate));
         log.info("========================================");
 
-        assertThat(totalTests).as("At least 95 search tests should have executed.").isGreaterThanOrEqualTo(95);
+        assertThat(totalTests).as("At least 104 search tests should have executed.").isGreaterThanOrEqualTo(104);
     }
 
     // ==================================================================================
     // Private Helpers
     // ==================================================================================
-
-    /**
-     * Records a failed result with extra handle-level detail and emits a warning
-     * log.
-     * <p>
-     * Currently unused — retained for future per-keyword failure tracking. Counting
-     * and
-     * storage are delegated to {@link #recordResult} so the failure counters and
-     * the
-     * {@code testResults} structure stay consistent. Previously this method
-     * incremented
-     * {@code failedTests} itself, which double-counted when paired with a
-     * recordResult
-     * call for the same failure; that is now handled in one place.
-     */
-    private void recordFailure(String handle, String name, String kw, String catName, String status, String error,
-            List<String> returned) {
-        recordResult(catName, name, kw, status, error, returned);
-        log.warn("  [FAIL] {} | Keyword: '{}' | Expected: '{}' | Got: {}", catName, kw, handle, returned);
-    }
-
-    /** Formats the API-returned handles list into a compact, table-safe cell. */
-    @SuppressWarnings("unchecked")
-    private String formatReturnedHandles(Object returnedObj) {
-        if (!(returnedObj instanceof List<?> list) || list.isEmpty()) {
-            return "—";
-        }
-        String joined = String.join(", ", ((List<String>) list));
-        if (joined.length() > 300) {
-            joined = joined.substring(0, 297) + "...";
-        }
-        return sanitizeCell(joined);
-    }
 
     /**
      * Escapes pipe/newline characters so a value cannot break the markdown table
@@ -734,7 +776,7 @@ public class SearchApiTest {
                 }
 
                 String[] groupOrder = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
-                        "G4_BrandMisspellings", "G5_DeepKeywords", "G6_EdgeCases" };
+                        "G4_BrandMisspellings", "G5_DeepKeywords", "G6_EdgeCases", "G7_PriorityKeywords" };
                 for (String group : groupOrder) {
                     int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
                     double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
@@ -742,32 +784,36 @@ public class SearchApiTest {
                 }
                 pw.println();
 
-                // Failed tests detail
+                // Failed tests detail — includes the exact API results returned, not just the
+                // pass/fail verdict, so a failure can be sent to developers as-is.
                 pw.println("## List of Failed Search Queries");
                 pw.println();
-                pw.println("The following keywords failed to return their expected results.");
+                pw.println("The following keywords failed to return their expected results. \"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. accessories) for that query.");
                 pw.println();
-                pw.println("| Group | Test Name | Keyword | Status | Error |");
-                pw.println("| --- | --- | --- | --- | --- |");
+                pw.println("| Group | Test Name | Keyword | Status | Actual Results Returned | Error |");
+                pw.println("| --- | --- | --- | --- | --- | --- |");
 
                 for (Map<String, Object> r : testResults) {
                     if (!"PASS".equals(r.get("status"))) {
-                        pw.printf("| %s | %s | `%s` | %s | %s |%n",
+                        pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
                                 r.get("group"),
                                 r.get("name"),
                                 r.get("keyword"),
                                 r.get("status"),
+                                sanitizeCell(r.get("returned")),
                                 sanitizeCell(r.get("error")));
                     }
                 }
                 pw.println();
 
-                // Full results detail — every executed query, regardless of pass/fail
+                // Full results detail — every executed query, regardless of pass/fail, with
+                // the complete, untruncated, categorized (timepieces vs. accessories) API
+                // response — the exact payload a developer needs, not just a pass/fail flag.
                 pw.println("## Full Results");
                 pw.println();
-                pw.println("Every executed search query and its outcome, including the handles returned by the API.");
+                pw.println("Every executed search query and its outcome, including the exact, untruncated handles returned by the API, split by category.");
                 pw.println();
-                pw.println("| Group | Test Name | Keyword | Status | Returned Handles | Error |");
+                pw.println("| Group | Test Name | Keyword | Status | Actual Results Returned | Error |");
                 pw.println("| --- | --- | --- | --- | --- | --- |");
 
                 for (Map<String, Object> r : testResults) {
@@ -776,7 +822,7 @@ public class SearchApiTest {
                             r.get("name"),
                             r.get("keyword"),
                             r.get("status"),
-                            formatReturnedHandles(r.get("returned")),
+                            sanitizeCell(r.get("returned")),
                             sanitizeCell(r.get("error")));
                 }
             }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    Deterministic Search API suite: isolates SearchApiTest so it can be run repeatedly
+    (e.g. via scripts/run-search-api-analysis.ps1) without also running
+    IdempotencyApiTest, TwilioServiceTest, or any BDD browser scenarios.
+    Run with:  ./mvnw clean test "-Dsurefire.suite=testng-search-api.xml"
+-->
+<suite name="Timepieces Search API Suite" parallel="none" data-provider-thread-count="8">
+
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
+    </listeners>
+
+    <!-- Global Parameter read by BaseRunner (harmless for pure TestNG classes).
+         SearchApiTest itself resolves its target environment from the -Denv system
+         property via ConfigReader, not from this suite parameter. -->
+    <parameter name="environment" value="staging" />
+
+    <test name="Search API Only">
+        <classes>
+            <class name="com.timepieces.automation.tdd.api.SearchApiTest" />
+        </classes>
+    </test>
+</suite>

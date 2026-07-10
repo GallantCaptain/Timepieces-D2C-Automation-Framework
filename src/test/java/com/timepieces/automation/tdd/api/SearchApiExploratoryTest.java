@@ -303,7 +303,7 @@ public class SearchApiExploratoryTest {
     }
 
     private synchronized void recordResult(String group, String testName, String keyword,
-            String status, String error, List<String> returned) {
+            String status, String error, String returnedSummary) {
         totalTests++;
         if ("PASS".equals(status)) {
             passedTests++;
@@ -318,11 +318,27 @@ public class SearchApiExploratoryTest {
         result.put("category", group);
         result.put("status", status);
         result.put("error", error != null ? error : "");
-        result.put("returned", returned);
+        result.put("returned", returnedSummary != null ? returnedSummary : "—");
         testResults.add(result);
     }
 
-    @DataProvider(name = "exploratorySearchData")
+    /**
+     * Formats one search's actual API response in full, split by category
+     * (timepieces vs. accessories) exactly as the API returns it — never
+     * truncated — so this is the real payload shape a developer can act on,
+     * not just a flat "N handles" count.
+     */
+    private String formatSearchResult(SearchResult result) {
+        if (result.error != null) {
+            return "—";
+        }
+        String tp = result.timepieces.isEmpty() ? "none" : String.join(", ", result.timepieces);
+        String ac = result.accessories.isEmpty() ? "none" : String.join(", ", result.accessories);
+        return String.format("Timepieces (%d): %s — Accessories (%d): %s",
+                result.timepieces.size(), tp, result.accessories.size(), ac);
+    }
+
+    @DataProvider(name = "exploratorySearchData", parallel = true)
     public Object[][] exploratorySearchData() {
         Object[][] data = new Object[selectedInstances.size()][1];
         for (int i = 0; i < selectedInstances.size(); i++) {
@@ -344,7 +360,7 @@ public class SearchApiExploratoryTest {
                         : (found ? null
                                 : "Expected handle '" + instance.expectedHandle + "' not in results (got: "
                                         + result.allHandles() + ")"),
-                result.allHandles());
+                formatSearchResult(result));
 
         log.info("[Exploratory] [{}] {} — '{}' {} expected handle '{}' for '{}'",
                 instance.category, status, instance.keyword, found ? "found" : "MISSED",
@@ -372,18 +388,6 @@ public class SearchApiExploratoryTest {
         log.info("========================================");
 
         assertThat(totalTests).as("Exactly 50 exploratory search tests should have executed.").isEqualTo(50);
-    }
-
-    private String formatReturnedHandles(Object returnedObj) {
-        if (!(returnedObj instanceof List<?> list) || list.isEmpty()) {
-            return "—";
-        }
-        @SuppressWarnings("unchecked")
-        String joined = String.join(", ", ((List<String>) list));
-        if (joined.length() > 300) {
-            joined = joined.substring(0, 297) + "...";
-        }
-        return sanitizeCell(joined);
     }
 
     private String sanitizeCell(Object value) {
@@ -449,28 +453,34 @@ public class SearchApiExploratoryTest {
                 }
                 pw.println();
 
-                // Failed tests detail
+                // Failed tests detail — includes the exact API results returned, not just the
+                // pass/fail verdict, so a failure can be sent to developers as-is.
                 pw.println("## List of Failed Search Queries");
                 pw.println();
-                pw.println("| Category | Test Name (Product) | Keyword | Status | Error |");
-                pw.println("| --- | --- | --- | --- | --- |");
+                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. accessories) for that query.");
+                pw.println();
+                pw.println("| Category | Test Name (Product) | Keyword | Status | Actual Results Returned | Error |");
+                pw.println("| --- | --- | --- | --- | --- | --- |");
 
                 for (Map<String, Object> r : testResults) {
                     if (!"PASS".equals(r.get("status"))) {
-                        pw.printf("| %s | %s | `%s` | %s | %s |%n",
+                        pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
                                 r.get("group"),
                                 r.get("name"),
                                 r.get("keyword"),
                                 r.get("status"),
+                                sanitizeCell(r.get("returned")),
                                 sanitizeCell(r.get("error")));
                     }
                 }
                 pw.println();
 
-                // Full results detail
+                // Full results detail — complete, untruncated, categorized (timepieces vs.
+                // accessories) API response for every executed query — the exact payload a
+                // developer needs, not just a pass/fail flag.
                 pw.println("## Full Results");
                 pw.println();
-                pw.println("| Category | Test Name (Product) | Keyword | Status | Returned Handles | Error |");
+                pw.println("| Category | Test Name (Product) | Keyword | Status | Actual Results Returned | Error |");
                 pw.println("| --- | --- | --- | --- | --- | --- |");
 
                 for (Map<String, Object> r : testResults) {
@@ -479,7 +489,7 @@ public class SearchApiExploratoryTest {
                             r.get("name"),
                             r.get("keyword"),
                             r.get("status"),
-                            formatReturnedHandles(r.get("returned")),
+                            sanitizeCell(r.get("returned")),
                             sanitizeCell(r.get("error")));
                 }
             }

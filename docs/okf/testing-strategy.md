@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Last reviewed: 2026-06-29
+Last reviewed: 2026-07-08
 
 ## Test Levels
 
@@ -24,7 +24,8 @@ Coverage expectations are TBD. Verified current artifacts:
 - 81 page/component object Java files exist under `src/main/java/com/timepieces/automation/pages`.
 - `testng.xml` executes `SmokeRunner`, `RegressionRunner`, and `SearchApiTest`.
 - `SmokeRunner` and `RegressionRunner` currently register authentication and global footer feature files.
-- `SearchApiTest` loads `testdata/search_keywords.json`, calls the staging password/token/search API path, writes `target/search_keyword_api_report.md`, and asserts the baseline pass rate is at least 55%.
+- `SearchApiTest` loads `testdata/search_keywords.json`, calls the staging password/token/search API path, writes `target/search_keyword_api_report.md`, and asserts the baseline pass rate is at least 55%. Now 109 tests across 7 groups (G1-G7), including a dedicated `G7_PriorityKeywords` group for the 9 business-critical bare terms (watch, watches, timepiece, timepieces, loom, dial, strap, clasp, watch case).
+- `scripts/run-search-api-analysis.ps1` runs `SearchApiTest` (via `testng-search-api.xml`) and `SearchApiExploratoryTest` (via `testng-exploratory.xml`) a configurable number of times each and compiles a combined pass/fail analysis — see "Automated Search API Test Results" (`output/pdf/`) for the most recent findings (4 confirmed search-relevance defects: ISSUE-009 through ISSUE-012).
 
 ## Supported Browsers and Platforms
 
