@@ -164,3 +164,52 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Removed the now-dead `formatReturnedHandles` and `recordFailure` helpers from both classes; both report tables ("List of Failed Search Queries" and "Full Results") now render an `Actual Results Returned` column sourced directly from the stored formatted string.
 - Ran both suites once each to verify: deterministic (`testng-search-api.xml`, staging) — 109 tests, same 7 failures as prior runs, now each failure row shows the exact untruncated timepieces/accessories returned; exploratory (`testng-exploratory.xml`, production) — 50 tests, same pattern confirmed.
 - Verified with `mvnw -o clean test-compile` → BUILD SUCCESS.
+
+### PDP locator-scraping tooling, pivoted to an external browser agent (later same day)
+
+- **Fixed a hard compile blocker**: `FriendsAndPartners.java` had ~90 raw URLs sitting
+  directly in the class body — a hard Java syntax error breaking `mvn compile` for
+  the whole module. The URL list was already wrapped in a proper block comment by
+  the time this was picked up; set real `PAGE_PATH`/`PAGE_TITLE` values
+  (`/friends-and-partners`, `Timepieces | Friends & Partners`) to replace the
+  copy-pasted placeholders that remained.
+- **Investigated the PDP page-object gap**: all ~40 PDP page objects under
+  `pages/web/products/` (18 timepiece + 22 accessory variants) exist only as empty
+  scaffolds — correct CRTP structure and a rich behavioral Javadoc on every class,
+  but zero real locators and zero Business Library / Private Helper / Verification
+  methods across all of them. This is the direct blocker for the `PendingException`
+  stubs already wired in `CartCheckoutSteps.java` and `WishlistSteps.java`.
+- Added `src/test/java/com/timepieces/automation/tools/PdpLocatorScraper.java` (new
+  `tools` package) + `testng-pdp-scraper.xml`: a one-off diagnostic tool (not a
+  regression test) that logs into production with a real phone number, a
+  human-solved Cloudflare Turnstile, and a file-hand-off for the manually-relayed
+  SMS OTP (`target/pdp-scrape/otp-handoff.txt` — there is no existing
+  interactive-input mechanism in this framework; the other two OTP paths are a
+  hardcoded feature-file string or full Twilio-account auto-fetch, neither of which
+  fits a real personal phone number), then scrapes every `[data-testid]` element
+  (plus video/canvas/accordion/gallery/price heuristics) from each configured PDP
+  handle to a markdown file.
+- **First live run against production failed before even reaching the CAPTCHA
+  step**: `driver.get("https://www.timepieces-d2c.example/login")` itself hung for ~3 minutes
+  and threw a client-side `TimeoutException`, even though the user confirmed the
+  page had actually rendered and was fully usable on screen. Root cause: Selenium's
+  default "normal" page-load strategy waits for the browser's top-level `load`
+  event, which likely never fired due to a persistent background connection (most
+  likely Cloudflare's bot-management heartbeat). Fixed by having the tool build its
+  own `ChromeDriver` directly (bypassing `DriverFactory`, scoped to this one tool)
+  with `pageLoadStrategy=EAGER`, which only waits for `DOMContentLoaded` — matching
+  what a human actually perceives as "loaded." Verified this fix compiles; not yet
+  re-verified with a live run.
+- **Pivoted the live browser-interaction step to an external browser agent
+  ("Antigravity")** rather than continuing to drive it through this Selenium tool
+  turn-by-turn. Authored a detailed, self-contained hand-off brief (login
+  procedure with real `data-testid` values, the 4 Astonia pilot PDP URLs with a
+  fallback for the `astonia-bimetal-dusk-rose` handle's uncertain URL slug, exactly
+  what to capture per page, and a strict output template) so that agent can
+  perform the actual production scrape independently and report back structured
+  findings for the real locators/methods to be hand-written from afterward.
+- `PdpLocatorScraper.java` and `testng-pdp-scraper.xml` are kept committed as a
+  working, reusable fallback tool even though this pass's live scrape is being
+  performed by the external agent instead.
+- Verified with `mvnw -o clean test-compile` → BUILD SUCCESS (110 main + 27 test
+  sources).

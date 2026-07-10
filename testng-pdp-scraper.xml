@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    One-off diagnostic tool suite: isolates PdpLocatorScraper so it can be run on its
+    own, against production, with a generous CAPTCHA wait window (a human must solve
+    the Cloudflare Turnstile challenge live in the visible browser). Not part of any
+    smoke/regression scope — run explicitly:
+
+        mvnw -o test "-Dsurefire.suite=testng-pdp-scraper.xml" "-Denv=production" "-Dcaptcha.wait.timeout=300"
+
+    See PdpLocatorScraper's class Javadoc for the OTP hand-off mechanism
+    (target/pdp-scrape/otp-handoff.txt).
+-->
+<suite name="Timepieces PDP Locator Scraper" parallel="none">
+
+    <test name="PDP Locator Scraper">
+        <classes>
+            <class name="com.timepieces.automation.tools.PdpLocatorScraper" />
+        </classes>
+    </test>
+</suite>

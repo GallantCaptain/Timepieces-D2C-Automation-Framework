@@ -1,6 +1,6 @@
 # Learnings
 
-Last updated: 2026-07-08
+Last updated: 2026-07-10
 
 | ID | Learning | Source | Reusable Guidance |
 | --- | --- | --- | --- |
@@ -24,6 +24,7 @@ Last updated: 2026-07-08
 | LEARN-018 | Generic/brand search queries (`Timepieces`, `automatic watch`, etc.) appear capped around 18-19 returned results regardless of how many of the 40 catalog SKUs carry the matching tag, which silently excludes deep-catalog SKUs from broad queries. | "Automated Search API Test Results" report §8 | When a G1-style product-matrix test fails for a low-profile SKU across every keyword category simultaneously, suspect a result-count cap before assuming the product's tags are wrong. |
 | LEARN-019 | `search_keywords.json`'s per-category keyword order does not preserve `Timepieces_Search_Keywords.xlsx`'s authored precedence (distinguishing name first, brand-generic term last) — 25 of 40 products have the generic `Timepieces` term at NAMES index 0 in the JSON. Since `SearchApiTest`'s G1 group always queries index 0, this weakens that group's validation value for those products. | `search_keywords.json` vs. `Timepieces_Search_Keywords.xlsx` | When re-generating `search_keywords.json` from the spreadsheet, preserve each category's authored keyword order rather than reordering. |
 | LEARN-020 | The source-of-truth spreadsheet's own README documents a monthly maintenance process ("pull zero-result searches from search analytics and add them to MISSPELLINGS or RELATED") — this is the intended channel for acting on search-relevance findings like ISSUE-009 through ISSUE-012. | `Timepieces_Search_Keywords.xlsx` README tab | Route future search-relevance findings through that existing spreadsheet process rather than only through OKF issues. |
+| LEARN-021 | `driver.get(url)` can hang for the full HTTP client timeout (~3 minutes) against production even when the page has visibly rendered and is fully usable — Selenium's default "normal" page-load strategy waits for the browser's top-level `load` event, which can fail to fire if a background connection stays open (observed against a Cloudflare-fronted page; likely its bot-management heartbeat). | `PdpLocatorScraper.java` first live run against `https://www.timepieces-d2c.example/login`, 2026-07-10 | When automating a Cloudflare-fronted page (or any page with persistent background connections), build the driver with `ChromeOptions.setPageLoadStrategy(PageLoadStrategy.EAGER)` so navigation returns once the DOM is interactive instead of waiting for full `load`. |
 
 ## Troubleshooting Notes
 

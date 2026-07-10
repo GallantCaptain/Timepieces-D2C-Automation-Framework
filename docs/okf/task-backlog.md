@@ -1,6 +1,6 @@
 # Task Backlog
 
-Last reviewed: 2026-07-08
+Last reviewed: 2026-07-10
 
 | ID | Priority | Description | Dependencies | Status |
 | --- | --- | --- | --- | --- |
@@ -26,6 +26,8 @@ Last reviewed: 2026-07-08
 | TASK-SEARCH-003 | P2 | Confirm whether the ~18-19 result cap on generic/brand queries is intentional; if so, review sort order so deep-catalog SKUs aren't structurally excluded. | Search/backend owner | Open |
 | TASK-SEARCH-004 | P2 | Decide on `loom`: add a woven/NATO-style strap product, or fix the search API to return an honest empty result for unmatched real-word queries instead of an unrelated fallback set. | Product + search/backend owner | Open |
 | TASK-SEARCH-005 | P3 | Run the spreadsheet's own documented monthly maintenance process (pull zero-result searches into MISSPELLINGS/RELATED buckets) using the "Automated Search API Test Results" report as the current input; also re-order `search_keywords.json`'s NAMES lists so a distinguishing term (not the generic `Timepieces` brand term) sits at index 0. | QA + content owner | Open |
+| TASK-PDP-001 | P1 | Implement real locators + Business Library/Private Helper/Verification methods for 8 scraped pages: the 4-page Astonia timepiece PDP pilot (`SharedTemplate_Astonia` + `AstoniaStealthSilver`/`AstoniaDuskGold`/`AstoniaDuskRose`/`AstoniaTrophyGold`) plus `AllTimepiecesPage`, `AllAccessoriesPage`, `ContactPage`, and `TimepiecesHousePage`, using the findings from the external browser agent's production scrape (see `antigravity-pdp-scrape-brief.md` hand-off). Directly unblocks the `PendingException` stubs in `CartCheckoutSteps.java`/`WishlistSteps.java` for the Astonia products. Also fix `TimepiecesHousePage`'s copy-pasted placeholder `PAGE_TITLE`. Where the scrape reports an element has no real `data-testid` yet, use the documented fallback locator strategy (id/aria-attribute/text-anchor/semantic-class) and flag it as a `data-testid` rollout gap rather than treating it as done. | Scrape findings from the external browser agent | Open (scrape hand-off prepared 2026-07-10; awaiting results) |
+| TASK-PDP-002 | P2 | Once the 8-page pilot (TASK-PDP-001) is validated, scale the same locator-mapping approach to the remaining ~35 PDP pages: Astonia Sports, Auriqua, Monarch, Arvion, Manifesta timepieces, then all 22 accessory (strap/clasp/watch-case) variants. | TASK-PDP-001 completion | Open |
 
 
 ## Backlog Self-Audit

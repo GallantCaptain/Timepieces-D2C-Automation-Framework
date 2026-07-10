@@ -61,14 +61,25 @@ import lombok.extern.log4j.Log4j2;
  * All methods that remain on this page return {@code this} (LoginPage) to allow
  * method chaining in step definitions. The final step (completeLogin) returns
  * the next page object once navigation is confirmed.
-* @Description "Description of LoginPage"
-* @since 2026-07-03
-* @version 1.0
-* @author Avinash Rath
+ * 
+ * @Description "Description of LoginPage"
+ * @since 2026-07-03
+ * @version 1.0
+ * @author Avinash Rath
  */
 
 @Log4j2 // Lombok logger annotation, Takes care of the logger instances
 public class LoginPage extends HeaderOnlyBasePage<LoginPage> {
+
+    // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    // The Page Path Variable
+    private static final String PAGE_PATH = "/something";
+
+    // The Page Title Variable {Keep whether Unique or Not}
+    // Decide if it needs to be added to assertions if not unique
+    private static final String PAGE_TITLE = "Timepieces Watches | Early Access to Limited Edition Pieces";
 
     // ==========================================
     // CONSTRUCTOR
