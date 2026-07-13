@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-07-10
+Last updated: 2026-07-13
  
 ## Completed Features
  
@@ -35,6 +35,12 @@ Last updated: 2026-07-10
 | STAT-027 | Both search API test reports now record the full, untruncated, categorized (timepieces vs. accessories) actual API response for every executed query instead of a flat handle list truncated at 300 characters — so a failing (or passing) result can be forwarded to developers as-is. Verified via one run each of the deterministic (`testng-search-api.xml`) and exploratory (`testng-exploratory.xml`) suites. | `SearchApiTest.java`, `SearchApiExploratoryTest.java` | STAT-026 |
 | STAT-028 | Fixed a hard compile blocker in `FriendsAndPartners.java` (uncommented URL dump) and set its real `PAGE_PATH`/`PAGE_TITLE`. Built `PdpLocatorScraper.java` + `testng-pdp-scraper.xml`, a one-off production login/PDP-scrape tool (real phone + human-solved Cloudflare Turnstile + file-hand-off OTP relay), fixed a page-load-strategy hang discovered on its first live run, then pivoted the actual live browser interaction to an external browser agent ("Antigravity") via a detailed hand-off brief covering 8 pages (4 Astonia PDPs + `AllTimepiecesPage`/`AllAccessoriesPage`/`ContactPage`/`TimepiecesHousePage`), with a documented locator-fallback strategy for pages the `data-testid` rollout hasn't reached yet — see TASK-PDP-001. | `FriendsAndPartners.java`, `PdpLocatorScraper.java`, `testng-pdp-scraper.xml` | TASK-PDP-001 |
 | STAT-029 | Scraped and documented real locators for 8 Timepieces storefront pages (4 Astonia PDPs, All Timepieces PLP, All Accessories PLP, Contact Page, Timepieces House Page) using external browser agent ("Antigravity") with fallback locator strategies for elements missing `data-testid` attributes. | Artifacts: `astonia-stealth-silver.md`, `astonia-dusk-gold.md`, `astonia-bimetal-dusk-rose.md`, `astonia-trophy-gold.md`, `all-timepieces-page.md`, `all-accessories-page.md`, `contact-page.md`, `timepieces-house-page.md` | TASK-PDP-001 |
+| STAT-030 | Phase 4-6 BDD features (cart/checkout, checkout form, payment, wishlist/account) are wired to Smoke/Regression runners with matching step-definition glue (PendingException scaffolds pending locators), so they execute and report as pending. | `bdd/runners/`, `bdd/stepdefinitions/{CartCheckout,CheckoutForm,Payment,Wishlist,AccountManagement}Steps.java` | STAT-004 |
+| STAT-031 | Failure recordings play inline in Allure: Monte AVI is transcoded to H.264 MP4 (`+faststart`) via ffmpeg and attached as `video/mp4`, with a raw-AVI fallback. | `ScreenRecorderUtil.java`, `Hooks.java`, `staging.properties` (`recordVideo`, `ffmpeg.path`) | STAT-006, DEC-0006 |
+| STAT-032 | Allure reports are emailed after every local, Docker, and CI run (summary + zip attachment locally; summary + report link in CI). Env/`.env`-driven, no-op when SMTP unset; verified with a real send. | `scripts/email_allure_report.py`, `docs/allure-email.md`, workflows | DEC-0011 |
+| STAT-033 | Allure reports are hosted for click-only stakeholder access: GitHub Pages publish per run in `test-pipeline.yml` (matches dashboard `reportUrl`), plus a local `allure` docker-compose service. | `test-pipeline.yml` (Publish to Pages), `docker-compose.yml` (`allure`) | DEC-0012 |
+| STAT-034 | Docker test image ships ffmpeg + python3; a `docker-compose` `allure` service serves reports at `http://localhost:5252`. | `docker/Dockerfile`, `docker-compose.yml` | STAT-010 |
+| STAT-035 | Test dashboard extracted to dedicated repo `TimepiecesTech/qa-dashboard` (history preserved, secrets scrubbed); Playwright/TS POC embedded into the monorepo at `automation-ts/`. | `TimepiecesTech/qa-dashboard`, `automation-ts/` | DEC-0013, DEC-0001 |
 
  
 ## In-Progress Features

@@ -1,6 +1,6 @@
 # Decisions Log
 
-Last reviewed: 2026-07-07
+Last reviewed: 2026-07-13
 
 Architecture and framework decisions are stored as ADRs under `docs/adr/`. This file is the OKF index for decision traceability.
 
@@ -18,6 +18,9 @@ Architecture and framework decisions are stored as ADRs under `docs/adr/`. This 
 | DEC-0008 | [../adr/0008-safari-substitution-non-macos.md](../adr/0008-safari-substitution-non-macos.md) | Accepted | Use real Safari only on macOS; substitute configured Chromium fallback elsewhere and annotate reports. | TBD | REQ-FWK-002 |
 | DEC-0009 | [../adr/0009-okf-governance.md](../adr/0009-okf-governance.md) | Accepted | Use OKF as authoritative project memory with topic files, ADRs, append-only changelog, and README navigation. | Project orchestrator | TASK-OKF-001 |
 | DEC-0010 | [../adr/0010-healenium-self-healing-locators.md](../adr/0010-healenium-self-healing-locators.md) | Accepted | Wrap `DriverFactory`'s WebDriver in Healenium's `SelfHealingDriver`, gated off by default behind `healenium.enabled`, with a `healenium.properties` config file and opt-in `docker-compose.yml` backend services. | QA Automation | REQ-FWK-001, TASK-MOBILE-API-001, DEBT-006 |
+| DEC-0011 | (no ADR) | Accepted | Email the Allure report after every run via `scripts/email_allure_report.py`, config from env/`.env` (no secrets in source). CI uses link mode (summary + report link) to avoid corporate `.zip` filters; local/Docker attach the zip. | QA Automation | STAT-032, DEC-0006 |
+| DEC-0012 | (no ADR) | Accepted | Host Allure reports for click-only stakeholder access. Primary: publish per-run reports to GitHub Pages from `test-pipeline.yml` (matches the dashboard `reportUrl`). Secondary/local: `frankescobar/allure-docker-service` in `docker-compose.yml`. | QA Automation | STAT-033 |
+| DEC-0013 | (no ADR) | Accepted | Extract the test dashboard to dedicated repo `TimepiecesTech/qa-dashboard` (realizes the DEC-0001 trigger) via `git subtree split` with secrets scrubbed; embed the Playwright/TypeScript POC into the monorepo at `automation-ts/`. | QA Automation | DEC-0001, STAT-035 |
 
 ## Superseded or Rejected Decisions
 

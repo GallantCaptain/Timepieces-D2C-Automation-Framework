@@ -116,6 +116,19 @@ jobs:
           cp -r target/site/allure-maven-plugin/history/* allure-history/ || true
           cp -r allure-history deploy/
 
+      # Publish the reports to GitHub Pages so stakeholders get a permanent,
+      # click-only link (no login) that matches the dashboard's report URL:
+      #   https://<owner>.github.io/<repo>/runs/<run_number>/
+      # keep_files preserves prior runs/<n>/ so history accumulates. Requires
+      # Pages enabled on the repo with the gh-pages branch as its source.
+      - name: Publish Allure Reports to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          keep_files: true
+
       - name: Upload Allure Report as Artifact
         id: upload_allure
         if: always()
@@ -140,7 +153,9 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
           RUN_SOURCE: ci
           MAIL_ATTACH: 'false'
-          REPORT_URL: ${{ steps.upload_allure.outputs.artifact-url }}
+          # Public, login-free GitHub Pages report (matches the dashboard link).
+          # Pages may take ~1 min to go live after the deploy step.
+          REPORT_URL: https://timepiecestech.github.io/qa-automation/runs/${{ github.run_number }}/
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: python3 scripts/email_allure_report.py

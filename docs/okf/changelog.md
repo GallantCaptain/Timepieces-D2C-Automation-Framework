@@ -226,3 +226,91 @@ This changelog is append-only. New entries must be added chronologically and mus
   - Updated `CurrentStatus.md` (added `STAT-029`).
   - Updated `learnings.md` (added `LEARN-022`).
 
+## 2026-07-13
+
+### BDD Phase 4-6 features wired to runners + step definitions
+
+- The Phase 4-6 feature specs (cart injection + domestic/international checkout,
+  checkout form & promo validation, payment integration, wishlist & account
+  management) existed but were registered in no runner, so Cucumber never
+  executed them. Registered the international checkout-init smoke feature in
+  `SmokeRunner`; registered the domestic-checkout, checkout-form, payment, and
+  wishlist regression features in `RegressionRunner` (which owns `@Regression`
+  scenarios including dual-tagged ones, so no double execution).
+- Added matching glue for every new step across five step-definition classes
+  (`CartCheckoutSteps`, `CheckoutFormSteps`, `PaymentSteps`, `WishlistSteps`,
+  `AccountManagementSteps`). Params/DataTables are captured into `TestContext`;
+  interactions `throw new PendingException(...)` with a targeted TODO until the
+  page-object locators/methods are implemented, so scenarios execute and report
+  as pending rather than undefined. Verified `mvnw test-compile` → BUILD SUCCESS.
+
+### Inline-playable Allure videos (ffmpeg MP4 transcode)
+
+- Monte captures a TechSmith-codec AVI, which browsers cannot play inline, so
+  Allure only offered a download link. `ScreenRecorderUtil.stopAndExtract()` now
+  returns a `Recording(bytes, mediaType, ext)` and transcodes the AVI to H.264
+  MP4 (`yuv420p`, `+faststart`, even-dimension guard) via ffmpeg, attached as
+  `video/mp4` so Allure renders an inline HTML5 player. Falls back to the raw AVI
+  if ffmpeg is missing. Enabled `recordVideo` and added `ffmpeg.path` in
+  `staging.properties`. Verified the exact transcode produces h264/yuv420p with
+  the moov atom first.
+
+### Docker: ffmpeg + python3 + Allure report-serving service
+
+- Added `ffmpeg` and `python3` to `docker/Dockerfile`; forwarded `SMTP_*`/`MAIL_*`
+  into the container from `run-tests.ps1` / `run-docker-headed.ps1`; entrypoint
+  generates + emails the report.
+- Added an `allure` service (`frankescobar/allure-docker-service`) to
+  `docker-compose.yml` that watches `target/allure-results` and serves the report
+  at `http://localhost:5252`, videos playing inline; verified end-to-end (report
+  generates, index 200, mp4 served as `content-type: video/mp4`). Rebuilt the
+  `timepieces-tests` image and confirmed ffmpeg 6.1.1 + libx264 are present.
+
+### Emailed Allure reports (local, Docker, CI)
+
+- Added `scripts/email_allure_report.py`: sends a pass/fail summary with the
+  Allure report, fully env-driven (`SMTP_HOST/USER/PASSWORD`, `MAIL_TO`), no
+  secrets in source, auto-loads a gitignored `.env`, no-ops (exit 0) when SMTP is
+  unset, non-fatal on send errors. Wired into local (`run-local-headed.ps1`),
+  Docker (entrypoint), and CI (an `Email Allure Report` step in staging /
+  production / exploratory / test-pipeline workflows).
+- CI uses link mode (`MAIL_ATTACH=false`): summary + link to the uploaded
+  artifact and (in test-pipeline) the public Pages report, avoiding corporate
+  `.zip` attachment filters. Local/Docker attach the zipped report.
+- Verified with a real SMTP send (Gmail app password). The live send surfaced a
+  bug — the body was set after adding the attachment (`set_content not valid on
+  multipart`); fixed the ordering (decide attachment, set body, then attach).
+
+### Stakeholder report hosting via GitHub Pages
+
+- The dashboard's `reportUrl` builds `https://<owner>.github.io/<repo>/runs/<run>/`
+  but no workflow published to Pages, so those links 404. Added a
+  `peaceiris/actions-gh-pages@v4` "Publish Allure Reports to GitHub Pages" step to
+  `test-pipeline.yml` (publishes `deploy/`, `keep_files: true` so runs accumulate),
+  and pointed the CI email at the public, login-free Pages URL. Requires Pages to
+  be enabled on the repo with the `gh-pages` branch as source. Verified the
+  equivalent hosted-report UX locally via the Allure docker service (HTTP 200
+  report at a click-only URL).
+
+### Repository consolidation
+
+- Extracted the test dashboard from the deleted `feature/dev-bypass-metrics-tracking`
+  branch into a dedicated repo `TimepiecesTech/qa-dashboard` via `git subtree split`
+  (history preserved, secrets scrubbed, only `.env.example`); added a self-contained
+  `docker-compose.yml` (postgres-dev) and fixed monorepo-era README paths. This
+  realizes the DEC-0001 / ADR-0001 extraction trigger.
+- Embedded the Playwright/TypeScript migration POC (`automation-ts/`) into the
+  monorepo by removing its nested `.git`; verified no `.env`/`node_modules`/staging
+  password were staged.
+- Rewrote the stale `Timepieces_Test_Execution_Cheatsheet.pdf` to current reality
+  (Docker image/env vars, Allure-serve-via-Docker, inline MP4 video, BDD/TDD suite
+  split, live tag set, config precedence).
+- Committed the in-progress `SearchApiTest` / `SearchApiExploratoryTest` change
+  (capture returned products by handle and title).
+
+### OKF Synchronizations
+
+- Updated `CurrentStatus.md` (added `STAT-030`..`STAT-035`), `decisions-log.md`
+  (added `DEC-0011`..`DEC-0013`), `learnings.md` (added three symptom rows), and
+  this changelog.
+
