@@ -131,6 +131,20 @@ def build_message(cfg):
 
     subject = f"[Timepieces Allure] {status} - {passed}/{total} passed ({failed} failed) - {env} [{source}]"
 
+    # Decide the attachment BEFORE composing the body: the body text describes
+    # whether the report is attached vs linked, and set_content() must be called
+    # before add_attachment() (it is invalid once the message is multipart).
+    attach_bytes = None
+    if attach:
+        archive = zip_report()
+        if archive and archive.is_file():
+            size_mb = archive.stat().st_size / (1024 * 1024)
+            if size_mb <= cfg["max_attach_mb"]:
+                attach_bytes = archive.read_bytes()
+                log(f"attaching allure-report.zip ({size_mb:.1f} MB)")
+            else:
+                log(f"report is {size_mb:.1f} MB (> {cfg['max_attach_mb']} MB) - sending summary/link only.")
+
     lines = [
         f"Timepieces automation run - {stamp}",
         f"Source: {source}   Env: {env}   Branch: {branch or '?'} @ {sha or '?'}"
@@ -154,26 +168,7 @@ def build_message(cfg):
         lines.extend(links)
         lines.append("")
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = cfg["mail_from"]
-    msg["To"] = ", ".join(cfg["mail_to"])
-
-    attached = False
-    if attach:
-        archive = zip_report()
-        if archive and archive.is_file():
-            size_mb = archive.stat().st_size / (1024 * 1024)
-            if size_mb <= cfg["max_attach_mb"]:
-                msg.add_attachment(
-                    archive.read_bytes(), maintype="application", subtype="zip", filename="allure-report.zip"
-                )
-                attached = True
-                log(f"attached allure-report.zip ({size_mb:.1f} MB)")
-            else:
-                log(f"report is {size_mb:.1f} MB (> {cfg['max_attach_mb']} MB) - sending summary/link only.")
-
-    if attached:
+    if attach_bytes is not None:
         lines.append("The full Allure HTML report is attached (allure-report.zip): unzip and")
         lines.append("open index.html. Failure screenshots and MP4 videos are embedded in it.")
     elif links:
@@ -183,7 +178,15 @@ def build_message(cfg):
         lines.append("No report was attached or linked - run `mvn allure:report` then re-send,")
         lines.append("or grab it from the CI run's Artifacts section.")
 
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = cfg["mail_from"]
+    msg["To"] = ", ".join(cfg["mail_to"])
     msg.set_content("\n".join(lines) + "\n")
+
+    if attach_bytes is not None:
+        msg.add_attachment(attach_bytes, maintype="application", subtype="zip", filename="allure-report.zip")
+
     return msg
 
 
