@@ -32,12 +32,24 @@ these (locally as shell env vars; in CI as **repository secrets**):
 > **App Password** (Google Account → Security → App passwords) as `SMTP_PASSWORD`
 > — a normal password will not work with 2FA.
 
+## Where to put the email + app password (local)
+
+Easiest: copy `.env.example` to **`.env`** at the repo root (it's gitignored)
+and fill in `SMTP_USER`, `SMTP_PASSWORD` (the app password), and `MAIL_TO`. The
+script auto-loads `.env`, so every local/Docker run picks it up — nothing to
+export each session. Real env vars still override the file.
+
+Alternatively, set them in your shell:
+
+```powershell
+$env:SMTP_HOST='smtp.gmail.com'; $env:SMTP_USER='you@gmail.com'; $env:SMTP_PASSWORD='<app-password>'
+```
+
 ## Local
 
 The helper script emails automatically after generating the report:
 
 ```powershell
-$env:SMTP_HOST='smtp.gmail.com'; $env:SMTP_USER='you@timepieces-d2c.example'; $env:SMTP_PASSWORD='<app-password>'
 ./scripts/run-local-headed.ps1
 ```
 
@@ -70,9 +82,14 @@ SMTP_PORT, SMTP_STARTTLS, SMTP_SSL, MAIL_FROM, MAIL_TO   (optional)
 Until the secrets exist, the step runs and cleanly no-ops (the secret
 expressions resolve to empty strings).
 
+CI uses **link mode** (`MAIL_ATTACH=false`): the email carries the pass/fail
+summary plus a link to the uploaded report **artifact** and to the run page,
+instead of a `.zip` attachment — this sidesteps corporate attachment filters.
+Local and Docker runs still **attach** the zipped report by default.
+
 ## Deliverability note
 
-Some corporate mail systems quarantine `.zip` attachments. If the report doesn't
-arrive, check spam/quarantine first; if attachments are blocked, switch to a
-summary-only email plus a link to the CI **artifact** (the report is already
-uploaded as `allure-report-*`) — ask and we can wire that variant.
+Local/Docker emails attach the zipped report; some corporate mail systems
+quarantine `.zip` attachments, so check spam/quarantine if one doesn't arrive.
+To make local runs link-only too, set `MAIL_ATTACH=false` (they won't have a
+public URL, so they'll be summary-only). CI is already link-only.

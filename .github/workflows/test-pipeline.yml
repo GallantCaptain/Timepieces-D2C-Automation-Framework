@@ -104,22 +104,6 @@ jobs:
         run: |
           mvn allure:report
 
-      # Email the Allure report (no-op unless the SMTP_* repo secrets are set)
-      - name: Email Allure Report
-        if: always()
-        env:
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SMTP_STARTTLS: ${{ secrets.SMTP_STARTTLS }}
-          SMTP_SSL: ${{ secrets.SMTP_SSL }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
-          RUN_SOURCE: ci
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-        run: python3 scripts/email_allure_report.py
-
       - name: Organize Reports for Deployment
         if: always()
         run: |
@@ -133,9 +117,30 @@ jobs:
           cp -r allure-history deploy/
 
       - name: Upload Allure Report as Artifact
+        id: upload_allure
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ github.run_number }}
           path: target/site/allure-maven-plugin/
           retention-days: 30
+
+      # Email a summary + link to the uploaded report artifact (no-op unless the
+      # SMTP_* repo secrets are set). Link mode avoids corporate .zip filters.
+      - name: Email Allure Report
+        if: always()
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_STARTTLS: ${{ secrets.SMTP_STARTTLS }}
+          SMTP_SSL: ${{ secrets.SMTP_SSL }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          RUN_SOURCE: ci
+          MAIL_ATTACH: 'false'
+          REPORT_URL: ${{ steps.upload_allure.outputs.artifact-url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: python3 scripts/email_allure_report.py
