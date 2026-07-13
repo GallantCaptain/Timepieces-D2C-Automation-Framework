@@ -127,6 +127,13 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.3</version>
         </dependency>
+        <!-- Apache POI: write .xlsx test reports (attached to Allure) alongside the markdown ones. -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.3.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -324,3 +324,12 @@ This changelog is append-only. New entries must be added chronologically and mus
   expanded local/Docker command coverage (raw + manual-email paths, handy
   clean/compile/postgres commands).
 
+### Excel (.xlsx) API test reports
+
+- `SearchApiTest` and `SearchApiExploratoryTest` now also emit a downloadable
+  Excel report attached to Allure alongside the existing markdown report, via a
+  shared `ExcelReportUtil` (Apache POI `poi-ooxml`, test scope). Sheets: Summary
+  + group/category breakdown, Full Results (every executed query), and Failures
+  (non-PASS only). Added `STAT-036`. Verified end-to-end — POI reads the
+  generated workbook back with the correct sheets, headers, and failure filter.
+

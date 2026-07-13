@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +24,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.timepieces.automation.utils.ConfigReader;
+import com.timepieces.automation.utils.ExcelReportUtil;
 
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -904,5 +906,54 @@ public class SearchApiTest {
         } catch (Exception e) {
             log.error("Failed to attach the Markdown report to Allure.", e);
         }
+
+        // Also emit a downloadable .xlsx twin attached to Allure.
+        generateExcelReport();
+    }
+
+    /**
+     * Builds the Excel (.xlsx) twin of the markdown report — Summary + group
+     * breakdown, Full Results, and Failures sheets — and attaches it to Allure so
+     * it downloads alongside the existing report.
+     */
+    private void generateExcelReport() {
+        LinkedHashMap<String, String> summary = new LinkedHashMap<>();
+        summary.put("Total Queries Tested", String.valueOf(totalTests));
+        summary.put("Passed Matches", String.valueOf(passedTests));
+        summary.put("Failed Matches", String.valueOf(failedTests));
+        double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
+        summary.put("Pass Rate", String.format("%.2f%%", passRate));
+
+        String[] groupOrder = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
+                "G4_BrandMisspellings", "G5_DeepKeywords", "G6_EdgeCases", "G7_PriorityKeywords" };
+        Map<String, int[]> groupStats = new HashMap<>();
+        for (Map<String, Object> r : testResults) {
+            String group = (String) r.get("group");
+            if (group == null) {
+                group = "UNKNOWN";
+            }
+            groupStats.putIfAbsent(group, new int[] { 0, 0, 0 });
+            groupStats.get(group)[0]++;
+            if ("PASS".equals(r.get("status"))) {
+                groupStats.get(group)[1]++;
+            } else {
+                groupStats.get(group)[2]++;
+            }
+        }
+        List<Object[]> breakdown = new ArrayList<>();
+        for (String group : groupOrder) {
+            int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
+            double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
+            breakdown.add(new Object[] { group, stats[0], stats[1], stats[2], String.format("%.2f%%", rate) });
+        }
+
+        ExcelReportUtil.writeAndAttach(
+                "target/search_keyword_api_report.xlsx",
+                "Search Keyword API Report (Excel)",
+                "Group",
+                summary,
+                new String[] { "Group", "Tested", "Passed", "Failed", "Pass Rate" },
+                breakdown,
+                testResults);
     }
 }

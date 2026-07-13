@@ -41,6 +41,7 @@ Last updated: 2026-07-13
 | STAT-033 | Allure reports are hosted for click-only stakeholder access: GitHub Pages publish per run in `test-pipeline.yml` (matches dashboard `reportUrl`), plus a local `allure` docker-compose service. | `test-pipeline.yml` (Publish to Pages), `docker-compose.yml` (`allure`) | DEC-0012 |
 | STAT-034 | Docker test image ships ffmpeg + python3; a `docker-compose` `allure` service serves reports at `http://localhost:5252`. | `docker/Dockerfile`, `docker-compose.yml` | STAT-010 |
 | STAT-035 | Test dashboard extracted to dedicated repo `TimepiecesTech/qa-dashboard` (history preserved, secrets scrubbed); Playwright/TS POC embedded into the monorepo at `automation-ts/`. | `TimepiecesTech/qa-dashboard`, `automation-ts/` | DEC-0013, DEC-0001 |
+| STAT-036 | Search API suites emit a downloadable Excel (.xlsx) report attached to Allure alongside the markdown one (Summary + breakdown, Full Results, Failures sheets). | `ExcelReportUtil.java`, `SearchApiTest.java`, `SearchApiExploratoryTest.java`, `poi-ooxml` | STAT-007 |
 
  
 ## In-Progress Features
