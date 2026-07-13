@@ -347,3 +347,18 @@ This changelog is append-only. New entries must be added chronologically and mus
   shape. Verified: 0 duplicate keywords, Results columns = Category/Keyword/
   Results/Error, no Failures sheet.
 
+### Search coverage: expected results, comments, and high-priority keywords
+
+- Added an **Expected Results** column (before Actual) and a **Comment** column
+  (what is missing or extra vs. expected) to both search suites' reports (md +
+  Excel), replacing any verdict. Each keyword now carries an expected handle set:
+  product keywords → their handle; collection names → members; category terms
+  (timepieces/straps/…) → the whole set.
+- `SearchApiTest` now **always runs the high-priority keywords** (collection
+  names, every product/accessory handle, and category terms) plus real-user
+  **variants** (the slug and its spaced form). Sweep grew to 190 unique keywords
+  (HIGH_PRIORITY=98). `ExcelReportUtil` Results sheet is now Category · Keyword ·
+  Expected · Actual · Comment · Error. Verified: 0 duplicates, expected mappings
+  correct (e.g. `timepieces` → all 18 timepiece handles), and the Comment diff
+  (`Missing: …` / `Extra: …`).
+

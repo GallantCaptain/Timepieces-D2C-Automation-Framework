@@ -12,9 +12,11 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,20 +38,21 @@ import lombok.extern.log4j.Log4j2;
 /**
  * Timepieces Search API Keyword Coverage Suite.
  * <p>
- * A single, flattened, de-duplicated sweep of curated search keywords. All
- * keyword sources — the product matrix (first keyword per category per product),
- * deep 2nd keywords, generic terms, collection names, brand/misspellings,
- * priority terms and edge cases — are merged, de-duplicated (case-insensitive,
- * trimmed) and each unique keyword is searched exactly once. Misspellings and
- * variations are kept: they are distinct keywords.
+ * A single, flattened, de-duplicated sweep of curated search keywords. It always
+ * runs the business-critical <b>high-priority</b> keywords (collection names,
+ * product/accessory handles and category terms such as "timepieces"/"straps")
+ * plus realistic variants a real user would type (the handle slug and its
+ * spaced form), then the product-matrix keywords and other curated sets. Each
+ * unique keyword is searched exactly once; misspellings and variations are kept
+ * as distinct keywords.
  * <p>
- * This is a <b>keyword-coverage report</b>: each test records the exact products
- * the search API returned for its keyword, tagged with the source category. It
- * deliberately does <b>not</b> judge relevance (whether the "right" product came
- * back) — that is subjective and tuned by the developers. The only assertion is
- * API health (HTTP 200).
+ * This is a <b>keyword-coverage report</b>: for each keyword it records the
+ * <i>expected</i> products, the <i>actual</i> products the API returned, and a
+ * <i>comment</i> describing what is missing or extra. It deliberately does not
+ * emit a pass/fail verdict — relevance is subjective and tuned by the developers.
+ * The only assertion is API health (HTTP 200).
  *
- * @version 2.0
+ * @version 3.0
  * @author Avinash Rath
  * @since 2026-07-03
  */
@@ -67,32 +70,58 @@ public class SearchApiTest {
     private String userAgent;
     private String cfBypassToken;
 
-    // Curated keyword sets (category-tagged). Merged with the JSON product matrix
-    // in keywordData(), then de-duplicated so each keyword runs once.
+    // ---- High-priority catalog (always run). Collection name -> member handles. ----
+    private static final LinkedHashMap<String, String[]> COLLECTIONS = new LinkedHashMap<>();
+    static {
+        COLLECTIONS.put("Manifesta",
+                new String[] { "manifesta-mother-of-pearl", "manifesta-blue-aventurine", "manifesta-black-onyx" });
+        COLLECTIONS.put("Arvion",
+                new String[] { "arvion-navy-silver", "arvion-espresso-silver", "arvion-burgundy-gold" });
+        COLLECTIONS.put("Astonia",
+                new String[] { "astonia-trophy-gold", "astonia-dusk-gold", "astonia-bimetal-dusk-rose",
+                        "astonia-stealth-silver" });
+        COLLECTIONS.put("Monarch", new String[] { "monarch-rose-gold", "monarch-silver-black" });
+        COLLECTIONS.put("Auriqua", new String[] { "auriqua-noir-rose", "auriqua-racing-green", "auriqua-ocean-blue" });
+        COLLECTIONS.put("Astonia Sports",
+                new String[] { "astonia-sports-phantom-black", "astonia-sports-circuit-blue",
+                        "astonia-sports-podium-green" });
+    }
+
+    private static final String[] STRAPS = {
+            "fkm-rubber-strap-yellow", "fkm-rubber-strap-black", "fkm-rubber-strap-orange", "fkm-rubber-strap-white",
+            "teju-lizard-leather-strap-black", "teju-lizard-leather-strap-blue",
+            "ostrich-leather-strap-brown", "ostrich-leather-strap-black",
+            "suede-leather-strap-burgundy", "suede-leather-strap-brown", "suede-leather-strap-blue",
+            "hybrid-leather-strap-black", "hybrid-leather-strap-blue" };
+
+    private static final String[] CLASPS = {
+            "butterfly-clasp-gold-18mm", "butterfly-clasp-rose-gold-18mm", "butterfly-clasp-steel-18mm",
+            "single-deployment-clasp-black-20mm", "single-deployment-clasp-rose-gold-20mm",
+            "single-deployment-clasp-gold-20mm", "single-deployment-clasp-steel-20mm" };
+
+    private static final String[] CASES = { "watch-case", "premium-watch-case" };
+
+    // Broad, generic terms with no single expected product.
     private static final String[] GENERIC = {
             "watches", "watch", "wristwatch", "mens watch", "men's watch", "watch for men", "luxury watch",
             "luxury watch India", "premium watch", "automatic watch", "quartz watch", "limited edition",
             "sapphire crystal", "stainless steel watch", "Indian watch brand", "chronograph", "moonphase",
-            "skeleton dial", "dress watch", "leather strap" };
-
-    private static final String[] COLLECTION = {
-            "Auriqua", "Monarch", "Arvion", "Manifesta", "Astonia", "Astonia Sports", "watch strap", "watch clasp" };
+            "skeleton dial", "dress watch", "leather strap", "loom", "dial" };
 
     private static final String[] BRAND = {
             "Timepieces", "Timepieces watch", "timepieces", "Rotoros", "Rotaris", "Timepiecese", "316L steel", "numbered watch",
             "watch with warranty", "watch with serial number", "rose gold", "rubber strap" };
 
-    private static final String[] PRIORITY = {
-            "watch", "watches", "timepiece", "timepieces", "loom", "dial", "strap", "clasp", "watch case" };
-
-    // Non-empty edge inputs (the empty query is skipped — it is not a keyword).
     private static final String[] EDGE = {
             "xyzzyfoobarbaz123", "!!!@@@###", "a", "watch watch watch" };
 
-    // Select products whose 2nd (deep) keyword is also included.
     private static final String[] DEEP_HANDLES = {
             "auriqua-noir-rose", "monarch-silver-black", "arvion-navy-silver",
             "manifesta-blue-aventurine", "astonia-sports-phantom-black" };
+
+    private static final String[] CATEGORY_ORDER = {
+            "HIGH_PRIORITY", "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED", "DEEP",
+            "GENERIC", "BRAND", "EDGE_CASE" };
 
     @BeforeClass
     public void setUp() {
@@ -170,66 +199,138 @@ public class SearchApiTest {
     @DataProvider(name = "keywordData", parallel = true)
     public Object[][] keywordData() {
         List<Object[]> rows = new ArrayList<>();
-        // Case-insensitive, trimmed de-duplication; the first occurrence wins.
+        // Case-insensitive, trimmed de-duplication; the first occurrence wins, so
+        // high-priority keywords (added first) keep their expected mapping.
         Set<String> seen = new HashSet<>();
 
+        addHighPriorityKeywords(rows, seen);
+
         if (testMatrix != null) {
-            // Product matrix: first keyword of each category per product.
+            // Product matrix: first keyword of each category per product (expected = handle).
             for (Map<String, Object> product : testMatrix) {
-                addFirst(rows, seen, product, "names_keywords", "NAMES");
-                addFirst(rows, seen, product, "attributes_keywords", "ATTRIBUTES");
-                addFirst(rows, seen, product, "misspellings_keywords", "MISSPELLINGS");
-                addFirst(rows, seen, product, "related_keywords", "RELATED");
+                addProductKeyword(rows, seen, product, "names_keywords", 0, "NAMES");
+                addProductKeyword(rows, seen, product, "attributes_keywords", 0, "ATTRIBUTES");
+                addProductKeyword(rows, seen, product, "misspellings_keywords", 0, "MISSPELLINGS");
+                addProductKeyword(rows, seen, product, "related_keywords", 0, "RELATED");
             }
             // Deep: 2nd keyword for a few select products.
             for (String handle : DEEP_HANDLES) {
                 for (Map<String, Object> product : testMatrix) {
                     if (handle.equals(product.get("handle"))) {
-                        addAt(rows, seen, product, "names_keywords", 1, "DEEP");
-                        addAt(rows, seen, product, "attributes_keywords", 1, "DEEP");
-                        addAt(rows, seen, product, "misspellings_keywords", 1, "DEEP");
+                        addProductKeyword(rows, seen, product, "names_keywords", 1, "DEEP");
+                        addProductKeyword(rows, seen, product, "attributes_keywords", 1, "DEEP");
+                        addProductKeyword(rows, seen, product, "misspellings_keywords", 1, "DEEP");
                         break;
                     }
                 }
             }
         }
 
-        addAll(rows, seen, GENERIC, "GENERIC");
-        addAll(rows, seen, COLLECTION, "COLLECTION");
-        addAll(rows, seen, BRAND, "BRAND");
-        addAll(rows, seen, PRIORITY, "PRIORITY");
-        addAll(rows, seen, EDGE, "EDGE_CASE");
+        addBroad(rows, seen, GENERIC, "GENERIC");
+        addBroad(rows, seen, BRAND, "BRAND");
+        addBroad(rows, seen, EDGE, "EDGE_CASE");
 
         expectedKeywordCount = rows.size();
         log.info("Prepared {} unique keywords for the search coverage sweep.", expectedKeywordCount);
         return rows.toArray(new Object[0][]);
     }
 
-    @SuppressWarnings("unchecked")
-    private void addFirst(List<Object[]> rows, Set<String> seen, Map<String, Object> product, String key,
-            String category) {
-        List<String> kws = (List<String>) product.get(key);
-        if (kws != null && !kws.isEmpty()) {
-            addKeyword(rows, seen, kws.get(0), category);
+    /** Business-critical keywords that must always run, plus real-user variants. */
+    private void addHighPriorityKeywords(List<Object[]> rows, Set<String> seen) {
+        List<String> allTimepieces = new ArrayList<>();
+        for (String[] members : COLLECTIONS.values()) {
+            allTimepieces.addAll(Arrays.asList(members));
+        }
+        List<String> allAccessories = new ArrayList<>();
+        allAccessories.addAll(Arrays.asList(STRAPS));
+        allAccessories.addAll(Arrays.asList(CLASPS));
+        allAccessories.addAll(Arrays.asList(CASES));
+
+        // Category / type terms (singular + plural + natural phrasing).
+        addTypeTerm(rows, seen, allTimepieces, "timepieces", "timepiece");
+        addTypeTerm(rows, seen, allAccessories, "accessories", "accessory");
+        addTypeTerm(rows, seen, Arrays.asList(STRAPS), "straps", "strap", "watch strap");
+        addTypeTerm(rows, seen, Arrays.asList(CLASPS), "clasps", "clasp", "watch clasp");
+        addTypeTerm(rows, seen, Arrays.asList(CASES), "watch case", "watch-case", "cases", "case");
+
+        // Collection names -> members (with variants).
+        for (Map.Entry<String, String[]> e : COLLECTIONS.entrySet()) {
+            addWithVariants(rows, seen, e.getKey(), Arrays.asList(e.getValue()));
+        }
+
+        // Specific product / accessory handles -> themselves (with variants).
+        for (String h : allTimepieces) {
+            addWithVariants(rows, seen, h, List.of(h));
+        }
+        for (String h : STRAPS) {
+            addWithVariants(rows, seen, h, List.of(h));
+        }
+        for (String h : CLASPS) {
+            addWithVariants(rows, seen, h, List.of(h));
+        }
+        for (String h : CASES) {
+            addWithVariants(rows, seen, h, List.of(h));
         }
     }
 
+    private void addTypeTerm(List<Object[]> rows, Set<String> seen, List<String> expected, String... forms) {
+        for (String form : forms) {
+            add(rows, seen, form, "HIGH_PRIORITY", expected);
+        }
+    }
+
+    private void addWithVariants(List<Object[]> rows, Set<String> seen, String term, List<String> expected) {
+        for (String variant : variantsOf(term)) {
+            add(rows, seen, variant, "HIGH_PRIORITY", expected);
+        }
+    }
+
+    /**
+     * Realistic ways a user might type a handle/name: the slug itself, its
+     * hyphens replaced by spaces (lower-case and Title Case). Case-only variants
+     * collapse under the case-insensitive de-dup, which is intended.
+     */
+    private static List<String> variantsOf(String term) {
+        LinkedHashSet<String> variants = new LinkedHashSet<>();
+        variants.add(term.trim());
+        String spaced = term.replace('-', ' ').replaceAll("\\s+", " ").trim();
+        variants.add(spaced);
+        variants.add(spaced.toLowerCase());
+        variants.add(titleCase(spaced.toLowerCase()));
+        return new ArrayList<>(variants);
+    }
+
+    private static String titleCase(String value) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : value.split(" ")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return sb.toString();
+    }
+
     @SuppressWarnings("unchecked")
-    private void addAt(List<Object[]> rows, Set<String> seen, Map<String, Object> product, String key, int index,
-            String category) {
+    private void addProductKeyword(List<Object[]> rows, Set<String> seen, Map<String, Object> product, String key,
+            int index, String category) {
         List<String> kws = (List<String>) product.get(key);
+        String handle = (String) product.get("handle");
         if (kws != null && kws.size() > index) {
-            addKeyword(rows, seen, kws.get(index), category);
+            add(rows, seen, kws.get(index), category, handle == null ? List.of() : List.of(handle));
         }
     }
 
-    private void addAll(List<Object[]> rows, Set<String> seen, String[] kws, String category) {
+    private void addBroad(List<Object[]> rows, Set<String> seen, String[] kws, String category) {
         for (String kw : kws) {
-            addKeyword(rows, seen, kw, category);
+            add(rows, seen, kw, category, List.of());
         }
     }
 
-    private void addKeyword(List<Object[]> rows, Set<String> seen, String keyword, String category) {
+    private void add(List<Object[]> rows, Set<String> seen, String keyword, String category, List<String> expected) {
         if (keyword == null) {
             return;
         }
@@ -238,7 +339,7 @@ public class SearchApiTest {
             return;
         }
         if (seen.add(trimmed.toLowerCase())) {
-            rows.add(new Object[] { trimmed, category });
+            rows.add(new Object[] { trimmed, category, expected == null ? List.of() : expected });
         }
     }
 
@@ -327,16 +428,67 @@ public class SearchApiTest {
             this.accessories = accessories;
             this.error = error;
         }
+
+        List<String> allHandles() {
+            List<String> all = new ArrayList<>(timepieces);
+            all.addAll(accessories);
+            return all;
+        }
     }
 
-    private synchronized void recordResult(String category, String keyword, String returnedSummary, String error) {
+    private synchronized void recordResult(String category, String keyword, List<String> expected,
+            String returnedSummary, String comment, String error) {
         totalTests++;
         Map<String, Object> result = new HashMap<>();
         result.put("group", category);
         result.put("keyword", keyword);
+        result.put("expected", (expected == null || expected.isEmpty()) ? "(any relevant results)"
+                : String.join(", ", expected));
         result.put("returned", returnedSummary != null ? returnedSummary : "—");
+        result.put("comment", comment != null ? comment : "");
         result.put("error", error != null ? error : "");
         testResults.add(result);
+    }
+
+    /**
+     * Compares the expected handles against what the API returned and describes,
+     * in plain words, what is missing or extra. This replaces a subjective
+     * pass/fail verdict: the developers read it and tune the search engine.
+     */
+    private String buildComment(List<String> expected, SearchResult result) {
+        if (result.error != null) {
+            return "API error — no results returned";
+        }
+        List<String> actual = result.allHandles();
+        if (expected == null || expected.isEmpty()) {
+            return actual.isEmpty() ? "No results returned" : (actual.size() + " result(s) returned");
+        }
+        List<String> missing = new ArrayList<>();
+        for (String e : expected) {
+            if (!containsNormalized(actual, e)) {
+                missing.add(e);
+            }
+        }
+        List<String> extra = new ArrayList<>();
+        for (String a : actual) {
+            if (!containsNormalized(expected, a)) {
+                extra.add(a);
+            }
+        }
+        if (missing.isEmpty() && extra.isEmpty()) {
+            return "All " + expected.size() + " expected returned; no extras";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (missing.isEmpty()) {
+            sb.append("All expected returned. ");
+        } else {
+            sb.append("Missing ").append(missing.size()).append('/').append(expected.size())
+                    .append(": ").append(String.join(", ", missing)).append(". ");
+        }
+        if (!extra.isEmpty()) {
+            sb.append("Extra ").append(extra.size()).append(": ").append(String.join(", ", extra)).append('.');
+        }
+        return sb.toString().trim();
     }
 
     /**
@@ -355,12 +507,9 @@ public class SearchApiTest {
     }
 
     /**
-     * Collects the distinct products the API returned under {@code basePath}
-     * (e.g. {@code data.timepieces}), reading BOTH the Shopify-style handle and
-     * the display title so the complete result set is captured whichever format
-     * the API sends back. Entries that refer to the same product are collapsed via
-     * {@link #normalizeIdentifier(String)}. Returns an empty list if the path is
-     * absent.
+     * Collects the distinct products the API returned under {@code basePath},
+     * reading BOTH the Shopify-style handle and the display title so the complete
+     * result set is captured whichever format the API sends back.
      */
     private List<String> collectReturnedProducts(JsonPath jp, String basePath) {
         List<String> handles = jp.getList(basePath + ".handle");
@@ -396,18 +545,33 @@ public class SearchApiTest {
         return value.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
     }
 
+    /** True if any entry in {@code list} refers to the same product as {@code target}. */
+    private boolean containsNormalized(List<String> list, String target) {
+        String t = normalizeIdentifier(target);
+        if (t.isEmpty()) {
+            return false;
+        }
+        for (String candidate : list) {
+            if (normalizeIdentifier(candidate).equals(t)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================================================================================
     // The single keyword-coverage test
     // ==================================================================================
 
-    @Test(dataProvider = "keywordData", groups = "keywordCoverage", description = "Searches a unique keyword once and records the API results (relevance is left to the devs)")
-    public void testSearchKeyword(String keyword, String category) {
+    @Test(dataProvider = "keywordData", groups = "keywordCoverage", description = "Searches a unique keyword once and records expected vs. actual results (relevance is left to the devs)")
+    public void testSearchKeyword(String keyword, String category, List<String> expected) {
         SearchResult result = performSearch(keyword);
         throttle();
 
-        recordResult(category, keyword, formatSearchResult(result), result.error);
+        String comment = buildComment(expected, result);
+        recordResult(category, keyword, expected, formatSearchResult(result), comment, result.error);
 
-        log.info("[Search] [{}] '{}' -> {}", category, keyword, formatSearchResult(result));
+        log.info("[Search] [{}] '{}' -> {} | {}", category, keyword, formatSearchResult(result), comment);
 
         // Objective health check only — relevance is intentionally not asserted.
         assertThat(result.statusCode)
@@ -434,10 +598,7 @@ public class SearchApiTest {
                 .isEqualTo(expectedKeywordCount);
     }
 
-    /**
-     * Escapes pipe/newline characters so a value cannot break the markdown table
-     * layout.
-     */
+    /** Escapes pipe/newline characters so a value cannot break the markdown table. */
     private String sanitizeCell(Object value) {
         if (value == null) {
             return "";
@@ -457,10 +618,6 @@ public class SearchApiTest {
         return counts;
     }
 
-    private static final String[] CATEGORY_ORDER = {
-            "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED", "DEEP",
-            "GENERIC", "COLLECTION", "BRAND", "PRIORITY", "EDGE_CASE" };
-
     private void generateReport() {
         log.info("Generating search keyword coverage report file...");
         File reportFile = new File("target/search_keyword_api_report.md");
@@ -469,9 +626,9 @@ public class SearchApiTest {
             try (PrintWriter pw = new PrintWriter(reportFile, StandardCharsets.UTF_8)) {
                 pw.println("# Timepieces Search Keyword API Coverage");
                 pw.println();
-                pw.println("Each unique search keyword and the exact products the search API returned. "
-                        + "Search relevance (whether the \"right\" products came back) is intentionally not judged "
-                        + "here — that is tuned by the developers.");
+                pw.println("For each unique search keyword: the expected products, the exact products the API "
+                        + "returned, and a comment on what is missing or extra. Relevance is not judged with a "
+                        + "pass/fail here — that is tuned by the developers.");
                 pw.println();
                 pw.println("## Summary");
                 pw.println();
@@ -493,16 +650,19 @@ public class SearchApiTest {
 
                 pw.println("## Keyword Results");
                 pw.println();
-                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. "
-                        + "accessories) for that keyword.");
+                pw.println("\"Expected Results\" are the handles the keyword should surface; \"Actual Results "
+                        + "Returned\" is the exact, untruncated API response; \"Comment\" notes what is missing "
+                        + "or extra.");
                 pw.println();
-                pw.println("| Category | Keyword | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- |");
+                pw.println("| Category | Keyword | Expected Results | Actual Results Returned | Comment | Error |");
+                pw.println("| --- | --- | --- | --- | --- | --- |");
                 for (Map<String, Object> r : testResults) {
-                    pw.printf("| %s | `%s` | %s | %s |%n",
+                    pw.printf("| %s | `%s` | %s | %s | %s | %s |%n",
                             r.get("group"),
                             r.get("keyword"),
+                            sanitizeCell(r.get("expected")),
                             sanitizeCell(r.get("returned")),
+                            sanitizeCell(r.get("comment")),
                             sanitizeCell(r.get("error")));
                 }
             }
@@ -526,7 +686,8 @@ public class SearchApiTest {
 
     /**
      * Builds the Excel (.xlsx) twin of the markdown report — Summary + category
-     * counts and a Results sheet — and attaches it to Allure.
+     * counts and a Results sheet (Expected / Actual / Comment) — and attaches it
+     * to Allure.
      */
     private void generateExcelReport() {
         LinkedHashMap<String, String> summary = new LinkedHashMap<>();

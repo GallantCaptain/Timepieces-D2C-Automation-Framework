@@ -78,19 +78,21 @@ public class SearchApiExploratoryTest {
     private String cfBypassToken;
     private long randomSeed;
 
-    /** One unique search keyword plus the category it was sourced from. */
+    /** One unique search keyword, the category it was sourced from, and the product it belongs to. */
     public static class KeywordTestInstance {
         public final String keyword;
         public final String category;
+        public final String expectedHandle;
 
-        public KeywordTestInstance(String keyword, String category) {
+        public KeywordTestInstance(String keyword, String category, String expectedHandle) {
             this.keyword = keyword;
             this.category = category;
+            this.expectedHandle = expectedHandle;
         }
 
         @Override
         public String toString() {
-            return String.format("'%s' (%s)", keyword, category);
+            return String.format("'%s' (%s -> %s)", keyword, category, expectedHandle);
         }
     }
 
@@ -169,10 +171,11 @@ public class SearchApiExploratoryTest {
         // The first occurrence wins (keeps its original casing and category).
         Set<String> seen = new HashSet<>();
         for (Map<String, Object> product : testMatrix) {
-            addUnique(allInstances, seen, (List<String>) product.get("names_keywords"), "NAMES");
-            addUnique(allInstances, seen, (List<String>) product.get("attributes_keywords"), "ATTRIBUTES");
-            addUnique(allInstances, seen, (List<String>) product.get("misspellings_keywords"), "MISSPELLINGS");
-            addUnique(allInstances, seen, (List<String>) product.get("related_keywords"), "RELATED");
+            String handle = (String) product.get("handle");
+            addUnique(allInstances, seen, (List<String>) product.get("names_keywords"), "NAMES", handle);
+            addUnique(allInstances, seen, (List<String>) product.get("attributes_keywords"), "ATTRIBUTES", handle);
+            addUnique(allInstances, seen, (List<String>) product.get("misspellings_keywords"), "MISSPELLINGS", handle);
+            addUnique(allInstances, seen, (List<String>) product.get("related_keywords"), "RELATED", handle);
         }
 
         // Generate seed or read from system property for reproducibility
@@ -201,7 +204,8 @@ public class SearchApiExploratoryTest {
                 selectedInstances.size(), allInstances.size());
     }
 
-    private void addUnique(List<KeywordTestInstance> list, Set<String> seen, List<String> kws, String category) {
+    private void addUnique(List<KeywordTestInstance> list, Set<String> seen, List<String> kws, String category,
+            String expectedHandle) {
         if (kws == null) {
             return;
         }
@@ -214,7 +218,7 @@ public class SearchApiExploratoryTest {
                 continue;
             }
             if (seen.add(trimmed.toLowerCase())) {
-                list.add(new KeywordTestInstance(trimmed, category));
+                list.add(new KeywordTestInstance(trimmed, category, expectedHandle));
             }
         }
     }
@@ -298,16 +302,77 @@ public class SearchApiExploratoryTest {
             this.accessories = accessories;
             this.error = error;
         }
+
+        List<String> allHandles() {
+            List<String> all = new ArrayList<>(timepieces);
+            all.addAll(accessories);
+            return all;
+        }
     }
 
-    private synchronized void recordResult(String category, String keyword, String returnedSummary, String error) {
+    private synchronized void recordResult(String category, String keyword, String expected, String returnedSummary,
+            String comment, String error) {
         totalTests++;
         Map<String, Object> result = new HashMap<>();
         result.put("group", category);
         result.put("keyword", keyword);
+        result.put("expected", expected != null ? expected : "(any relevant results)");
         result.put("returned", returnedSummary != null ? returnedSummary : "—");
+        result.put("comment", comment != null ? comment : "");
         result.put("error", error != null ? error : "");
         testResults.add(result);
+    }
+
+    /**
+     * Compares the expected handle against what the API returned and describes what
+     * is missing or extra — a plain-words replacement for a subjective pass/fail.
+     */
+    private String buildComment(List<String> expected, SearchResult result) {
+        if (result.error != null) {
+            return "API error — no results returned";
+        }
+        List<String> actual = result.allHandles();
+        if (expected == null || expected.isEmpty()) {
+            return actual.isEmpty() ? "No results returned" : (actual.size() + " result(s) returned");
+        }
+        List<String> missing = new ArrayList<>();
+        for (String e : expected) {
+            if (!containsNormalized(actual, e)) {
+                missing.add(e);
+            }
+        }
+        List<String> extra = new ArrayList<>();
+        for (String a : actual) {
+            if (!containsNormalized(expected, a)) {
+                extra.add(a);
+            }
+        }
+        if (missing.isEmpty() && extra.isEmpty()) {
+            return "Expected product returned; no extras";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (missing.isEmpty()) {
+            sb.append("Expected product returned. ");
+        } else {
+            sb.append("Missing: ").append(String.join(", ", missing)).append(". ");
+        }
+        if (!extra.isEmpty()) {
+            sb.append("Extra ").append(extra.size()).append(": ").append(String.join(", ", extra)).append('.');
+        }
+        return sb.toString().trim();
+    }
+
+    private boolean containsNormalized(List<String> list, String target) {
+        String t = normalizeIdentifier(target);
+        if (t.isEmpty()) {
+            return false;
+        }
+        for (String candidate : list) {
+            if (normalizeIdentifier(candidate).equals(t)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -381,9 +446,14 @@ public class SearchApiExploratoryTest {
         SearchResult result = performSearch(instance.keyword);
         throttle();
 
-        recordResult(instance.category, instance.keyword, formatSearchResult(result), result.error);
+        List<String> expected = instance.expectedHandle == null ? List.of() : List.of(instance.expectedHandle);
+        String comment = buildComment(expected, result);
+        recordResult(instance.category, instance.keyword,
+                expected.isEmpty() ? "(any relevant results)" : String.join(", ", expected),
+                formatSearchResult(result), comment, result.error);
 
-        log.info("[Exploratory] [{}] '{}' -> {}", instance.category, instance.keyword, formatSearchResult(result));
+        log.info("[Exploratory] [{}] '{}' -> {} | {}", instance.category, instance.keyword,
+                formatSearchResult(result), comment);
 
         // Objective health check only — relevance is intentionally not asserted.
         assertThat(result.statusCode)
@@ -451,16 +521,19 @@ public class SearchApiExploratoryTest {
 
                 pw.println("## Keyword Results");
                 pw.println();
-                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. "
-                        + "accessories) for that keyword.");
+                pw.println("\"Expected Results\" is the product the keyword was sourced from; \"Actual Results "
+                        + "Returned\" is the exact, untruncated API response; \"Comment\" notes what is missing "
+                        + "or extra.");
                 pw.println();
-                pw.println("| Category | Keyword | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- |");
+                pw.println("| Category | Keyword | Expected Results | Actual Results Returned | Comment | Error |");
+                pw.println("| --- | --- | --- | --- | --- | --- |");
                 for (Map<String, Object> r : testResults) {
-                    pw.printf("| %s | `%s` | %s | %s |%n",
+                    pw.printf("| %s | `%s` | %s | %s | %s | %s |%n",
                             r.get("group"),
                             r.get("keyword"),
+                            sanitizeCell(r.get("expected")),
                             sanitizeCell(r.get("returned")),
+                            sanitizeCell(r.get("comment")),
                             sanitizeCell(r.get("error")));
                 }
             }

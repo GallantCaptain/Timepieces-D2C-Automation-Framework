@@ -30,9 +30,10 @@ import lombok.extern.log4j.Log4j2;
  * The workbook has two sheets: <b>Summary</b> (headline metrics + a per-category
  * breakdown) and <b>Results</b> (every unique keyword and the exact API response).
  * Result rows are read from the {@code Map} keys the tests populate:
- * {@code group} (category), {@code keyword}, {@code returned}, {@code error}.
- * There is deliberately no pass/fail column — search relevance is subjective and
- * tuned by the developers.
+ * {@code group} (category), {@code keyword}, {@code expected}, {@code returned},
+ * {@code comment}, {@code error}. There is deliberately no pass/fail column —
+ * search relevance is subjective and tuned by the developers; the {@code comment}
+ * column instead describes what is missing or extra versus the expected results.
  *
  * @version 1.0
  * @author Avinash Rath
@@ -134,7 +135,7 @@ public final class ExcelReportUtil {
     private static void buildResultsSheet(Workbook workbook, String sheetName, CellStyle header,
             String groupLabel, List<Map<String, Object>> results) {
         Sheet sheet = workbook.createSheet(sheetName);
-        String[] cols = { groupLabel, "Keyword", "Actual Results Returned", "Error" };
+        String[] cols = { groupLabel, "Keyword", "Expected Results", "Actual Results Returned", "Comment", "Error" };
         Row headerRow = sheet.createRow(0);
         for (int c = 0; c < cols.length; c++) {
             cell(headerRow, c, cols[c], header);
@@ -146,12 +147,14 @@ public final class ExcelReportUtil {
                 Row row = sheet.createRow(r++);
                 cell(row, 0, str(res.get("group")), null);
                 cell(row, 1, str(res.get("keyword")), null);
-                cell(row, 2, str(res.get("returned")), null);
-                cell(row, 3, str(res.get("error")), null);
+                cell(row, 2, str(res.get("expected")), null);
+                cell(row, 3, str(res.get("returned")), null);
+                cell(row, 4, str(res.get("comment")), null);
+                cell(row, 5, str(res.get("error")), null);
             }
         }
 
-        int[] widthChars = { 22, 30, 100, 40 };
+        int[] widthChars = { 20, 28, 55, 70, 45, 30 };
         for (int c = 0; c < widthChars.length; c++) {
             sheet.setColumnWidth(c, widthChars[c] * 256);
         }
