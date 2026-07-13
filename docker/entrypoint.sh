@@ -54,6 +54,11 @@ done
 echo
 echo "[entrypoint] overall exit=${OVERALL}"
 
+# Generate the Allure report and email it (no-op unless SMTP_* env is provided).
+echo "[entrypoint] Generating Allure report and emailing it (if SMTP configured)..."
+mvn -q allure:report || echo "[entrypoint] allure:report failed; emailing summary only."
+RUN_SOURCE=docker env="${ENV_TARGET}" python3 scripts/email_allure_report.py || true
+
 if [[ "${DEBUG_VNC:-false}" == "true" ]]; then
     echo "=============================================================="
     echo "[entrypoint] DEBUG_VNC is true. Keeping container alive for 30 minutes"

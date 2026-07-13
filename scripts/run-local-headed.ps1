@@ -106,6 +106,11 @@ $testExit = $LASTEXITCODE
 Write-Host "==> [3/3] Generating Allure report (mirrors CI 'Generate Allure Report')" -ForegroundColor Cyan
 & $Mvnw -q allure:report
 
+# Email the report (no-op unless SMTP_HOST/SMTP_USER/SMTP_PASSWORD are set in your shell).
+Write-Host "==> Emailing Allure report (skipped unless SMTP is configured)" -ForegroundColor Cyan
+$env:RUN_SOURCE = 'local'
+python (Join-Path $RepoRoot 'scripts\email_allure_report.py')
+
 if ($Serve) {
     Write-Host "==> Serving Allure report — press Ctrl+C to stop." -ForegroundColor Cyan
     & $Mvnw allure:serve

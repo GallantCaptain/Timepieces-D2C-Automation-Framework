@@ -60,3 +60,7 @@ selenium-debug.log
 
 # Lombok / annotation processor caches
 .apt_generated/
+
+# Python tooling (scripts/*.py)
+__pycache__/
+*.pyc

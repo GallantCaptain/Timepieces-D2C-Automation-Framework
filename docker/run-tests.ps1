@@ -52,6 +52,13 @@ $dockerArgs = @(
     "-e", "TAGS=$Tags"
 )
 
+# Forward SMTP / mail config from the host so the container can email the Allure
+# report (entrypoint.sh runs scripts/email_allure_report.py — a no-op if unset).
+foreach ($name in 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_STARTTLS', 'SMTP_SSL', 'MAIL_FROM', 'MAIL_TO') {
+    $val = [Environment]::GetEnvironmentVariable($name)
+    if ($val) { $dockerArgs += @("-e", "$name=$val") }
+}
+
 if ($Vnc) {
     # Diagnostic: Check if VncPort is already bound on the host
     $portActive = Get-NetTCPConnection -LocalPort $VncPort -ErrorAction SilentlyContinue

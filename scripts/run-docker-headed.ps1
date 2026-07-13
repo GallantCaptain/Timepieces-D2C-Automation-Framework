@@ -119,6 +119,8 @@ __MVNCMD__
 rc=$?
 echo "[docker] generating Allure report"
 mvn -q allure:report || true
+echo "[docker] emailing Allure report (no-op unless SMTP configured)"
+RUN_SOURCE=docker python3 scripts/email_allure_report.py || true
 echo "[docker] test exit code: $rc"
 if [ "__HEADLESS__" = "false" ]; then
   echo "[docker] holding container 30m so you can watch via VNC and inspect ./target. Ctrl+C to stop."
@@ -133,6 +135,11 @@ $bash = $bashTemplate.Replace('__HEADLESS__', $headlessValue).Replace('__VNCPORT
 $envArgs = @()
 if ($env:CF_BYPASS_TOKEN)   { $envArgs += @('-e', "CF_BYPASS_TOKEN=$($env:CF_BYPASS_TOKEN)") }
 if ($env:NEON_DATABASE_URL) { $envArgs += @('-e', "NEON_DATABASE_URL=$($env:NEON_DATABASE_URL)") }
+# Forward SMTP / mail config so the container can email the Allure report.
+foreach ($name in 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_STARTTLS', 'SMTP_SSL', 'MAIL_FROM', 'MAIL_TO') {
+    $val = [Environment]::GetEnvironmentVariable($name)
+    if ($val) { $envArgs += @('-e', "$name=$val") }
+}
 $stagingPass = if ($env:STAGING_GATE_PASS) { $env:STAGING_GATE_PASS } elseif ($env:STAGING_PASSWORD) { $env:STAGING_PASSWORD } else { $null }
 if ($stagingPass) { $envArgs += @('-e', "STAGING_GATE_PASS=$stagingPass") }
 elseif ($Environment -eq 'staging') {
