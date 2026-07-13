@@ -36,14 +36,20 @@ import io.restassured.response.Response;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Timepieces Search API Exploratory Test Suite — 250 randomized tests.
+ * Timepieces Search API Exploratory Coverage Suite.
  * <p>
- * This class reads all keywords from search_keywords.json, shuffles them
- * using a time-based seed (or configured seed), selects exactly 250
- * combinations, and executes them against the target environment
- * (defaulting to production).
- * 
- * @version 1.0
+ * Reads every keyword from {@code search_keywords.json}, de-duplicates them so
+ * each unique keyword is searched exactly once (misspellings and variations are
+ * kept — they are distinct keywords), shuffles with a time-based (or configured)
+ * seed, and samples up to {@link #TARGET_TEST_COUNT} keywords against the target
+ * environment (defaulting to production).
+ * <p>
+ * This is a <b>keyword-coverage report</b>: each test records the exact products
+ * the search API returned for its keyword. It deliberately does <b>not</b> judge
+ * relevance (whether the "right" product came back) — that is subjective and
+ * tuned by the developers. The only assertion is API health (HTTP 200).
+ *
+ * @version 2.0
  * @author Avinash Rath
  * @since 2026-07-03
  */
@@ -51,12 +57,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class SearchApiExploratoryTest {
 
-    /**
-     * How many randomized keyword/product combinations to sample and execute.
-     * The pool built from search_keywords.json (every keyword across all 40
-     * products × 4 categories) is well over a thousand instances, so this many
-     * distinct samples is comfortably available.
-     */
+    /** How many unique keywords to sample and execute. */
     private static final int TARGET_TEST_COUNT = 250;
 
     static {
@@ -71,30 +72,25 @@ public class SearchApiExploratoryTest {
     private final List<KeywordTestInstance> selectedInstances = new ArrayList<>();
     private final List<Map<String, Object>> testResults = new ArrayList<>();
     private int totalTests = 0;
-    private int passedTests = 0;
-    private int failedTests = 0;
 
     private String baseUrl;
     private String userAgent;
     private String cfBypassToken;
     private long randomSeed;
 
+    /** One unique search keyword plus the category it was sourced from. */
     public static class KeywordTestInstance {
         public final String keyword;
-        public final String expectedHandle;
-        public final String productName;
         public final String category;
 
-        public KeywordTestInstance(String keyword, String expectedHandle, String productName, String category) {
+        public KeywordTestInstance(String keyword, String category) {
             this.keyword = keyword;
-            this.expectedHandle = expectedHandle;
-            this.productName = productName;
             this.category = category;
         }
 
         @Override
         public String toString() {
-            return String.format("'%s' expected '%s' (%s - %s)", keyword, expectedHandle, productName, category);
+            return String.format("'%s' (%s)", keyword, category);
         }
     }
 
@@ -162,22 +158,21 @@ public class SearchApiExploratoryTest {
             }
         }
 
-        // 5. Build and shuffle the exploratory pool
+        // 5. Build the de-duplicated pool and sample it
         buildAndShufflePool();
     }
 
     @SuppressWarnings("unchecked")
     private void buildAndShufflePool() {
         List<KeywordTestInstance> allInstances = new ArrayList<>();
+        // Case-insensitive, trimmed de-duplication so each keyword is tested once.
+        // The first occurrence wins (keeps its original casing and category).
+        Set<String> seen = new HashSet<>();
         for (Map<String, Object> product : testMatrix) {
-            String handle = (String) product.get("handle");
-            String name = (String) product.get("name");
-
-            addInstances(allInstances, (List<String>) product.get("names_keywords"), handle, name, "NAMES");
-            addInstances(allInstances, (List<String>) product.get("attributes_keywords"), handle, name, "ATTRIBUTES");
-            addInstances(allInstances, (List<String>) product.get("misspellings_keywords"), handle, name,
-                    "MISSPELLINGS");
-            addInstances(allInstances, (List<String>) product.get("related_keywords"), handle, name, "RELATED");
+            addUnique(allInstances, seen, (List<String>) product.get("names_keywords"), "NAMES");
+            addUnique(allInstances, seen, (List<String>) product.get("attributes_keywords"), "ATTRIBUTES");
+            addUnique(allInstances, seen, (List<String>) product.get("misspellings_keywords"), "MISSPELLINGS");
+            addUnique(allInstances, seen, (List<String>) product.get("related_keywords"), "RELATED");
         }
 
         // Generate seed or read from system property for reproducibility
@@ -197,24 +192,29 @@ public class SearchApiExploratoryTest {
 
         Collections.shuffle(allInstances, new Random(randomSeed));
 
-        // Select up to TARGET_TEST_COUNT keyword instances (each mapped to its
-        // expected product handle). If the pool is somehow smaller, take all of it.
         int limit = Math.min(TARGET_TEST_COUNT, allInstances.size());
         for (int i = 0; i < limit; i++) {
             selectedInstances.add(allInstances.get(i));
         }
 
-        log.info("Selected {} exploratory keyword combinations for execution (from a pool of {}).",
+        log.info("Selected {} unique exploratory keywords for execution (from a de-duplicated pool of {}).",
                 selectedInstances.size(), allInstances.size());
     }
 
-    private void addInstances(List<KeywordTestInstance> list, List<String> kws, String handle, String name,
-            String category) {
-        if (kws != null) {
-            for (String kw : kws) {
-                if (kw != null && !kw.trim().isEmpty()) {
-                    list.add(new KeywordTestInstance(kw.trim(), handle, name, category));
-                }
+    private void addUnique(List<KeywordTestInstance> list, Set<String> seen, List<String> kws, String category) {
+        if (kws == null) {
+            return;
+        }
+        for (String kw : kws) {
+            if (kw == null) {
+                continue;
+            }
+            String trimmed = kw.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (seen.add(trimmed.toLowerCase())) {
+                list.add(new KeywordTestInstance(trimmed, category));
             }
         }
     }
@@ -298,40 +298,22 @@ public class SearchApiExploratoryTest {
             this.accessories = accessories;
             this.error = error;
         }
-
-        List<String> allHandles() {
-            List<String> all = new ArrayList<>();
-            all.addAll(timepieces);
-            all.addAll(accessories);
-            return all;
-        }
     }
 
-    private synchronized void recordResult(String group, String testName, String keyword,
-            String status, String error, String returnedSummary) {
+    private synchronized void recordResult(String category, String keyword, String returnedSummary, String error) {
         totalTests++;
-        if ("PASS".equals(status)) {
-            passedTests++;
-        } else {
-            failedTests++;
-        }
-
         Map<String, Object> result = new HashMap<>();
-        result.put("group", group);
-        result.put("name", testName);
+        result.put("group", category);
         result.put("keyword", keyword);
-        result.put("category", group);
-        result.put("status", status);
-        result.put("error", error != null ? error : "");
         result.put("returned", returnedSummary != null ? returnedSummary : "—");
+        result.put("error", error != null ? error : "");
         testResults.add(result);
     }
 
     /**
      * Formats one search's actual API response in full, split by category
      * (timepieces vs. accessories) exactly as the API returns it — never
-     * truncated — so this is the real payload shape a developer can act on,
-     * not just a flat "N handles" count.
+     * truncated — so this is the real payload shape a developer can act on.
      */
     private String formatSearchResult(SearchResult result) {
         if (result.error != null) {
@@ -347,10 +329,9 @@ public class SearchApiExploratoryTest {
      * Collects the distinct products the API returned under {@code basePath}
      * (e.g. {@code data.timepieces}), reading BOTH the Shopify-style handle and
      * the display title so the complete result set is captured whichever format
-     * the API sends back. Entries that refer to the same product (a handle and
-     * its title) are collapsed via {@link #normalizeIdentifier(String)}, keeping
-     * the handle for display when present. Returns an empty list if the path is
-     * absent.
+     * the API sends back. Entries that refer to the same product are collapsed
+     * via {@link #normalizeIdentifier(String)}. Returns an empty list if the path
+     * is absent.
      */
     private List<String> collectReturnedProducts(JsonPath jp, String basePath) {
         List<String> handles = jp.getList(basePath + ".handle");
@@ -375,37 +356,15 @@ public class SearchApiExploratoryTest {
     }
 
     /**
-     * Canonicalizes a product identifier so a handle
-     * ("butterfly-clasp-gold-18mm") and its display name
-     * ("Butterfly Clasp — Gold (18mm)") compare as equal: lowercases, then
-     * replaces every run of non-alphanumeric characters (hyphens, em dashes,
-     * parentheses, spaces, …) with a single space, and trims. Both examples
-     * collapse to "butterfly clasp gold 18mm".
+     * Canonicalizes a product identifier so a handle and its display name collapse
+     * to the same value: lowercases, replaces runs of non-alphanumerics with a
+     * single space, and trims.
      */
     private static String normalizeIdentifier(String value) {
         if (value == null) {
             return "";
         }
         return value.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
-    }
-
-    /**
-     * Format-insensitive containment check: true if any entry in
-     * {@code returned} refers to the same product as {@code expected}, comparing
-     * on the normalized form (see {@link #normalizeIdentifier(String)}) so a
-     * handle-vs-display-name difference does not cause a false miss.
-     */
-    private boolean containsNormalized(List<String> returned, String expected) {
-        String target = normalizeIdentifier(expected);
-        if (target.isEmpty()) {
-            return false;
-        }
-        for (String candidate : returned) {
-            if (normalizeIdentifier(candidate).equals(target)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @DataProvider(name = "exploratorySearchData", parallel = true)
@@ -417,48 +376,34 @@ public class SearchApiExploratoryTest {
         return data;
     }
 
-    @Test(dataProvider = "exploratorySearchData", groups = "exploratory", description = "Validates a randomly selected keyword returns its expected product handle")
+    @Test(dataProvider = "exploratorySearchData", groups = "exploratory", description = "Searches a unique keyword once and records the API results (relevance is left to the devs)")
     public void testExploratoryKeyword(KeywordTestInstance instance) {
         SearchResult result = performSearch(instance.keyword);
         throttle();
 
-        boolean found = containsNormalized(result.allHandles(), instance.expectedHandle);
-        String status = found ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
+        recordResult(instance.category, instance.keyword, formatSearchResult(result), result.error);
 
-        recordResult(instance.category, instance.productName, instance.keyword, status,
-                result.error != null ? result.error
-                        : (found ? null
-                                : "Expected handle '" + instance.expectedHandle + "' not in results (got: "
-                                        + result.allHandles() + ")"),
-                formatSearchResult(result));
+        log.info("[Exploratory] [{}] '{}' -> {}", instance.category, instance.keyword, formatSearchResult(result));
 
-        log.info("[Exploratory] [{}] {} — '{}' {} expected handle '{}' for '{}'",
-                instance.category, status, instance.keyword, found ? "found" : "MISSED",
-                instance.expectedHandle, instance.productName);
-
+        // Objective health check only — relevance is intentionally not asserted.
         assertThat(result.statusCode)
-                .as("Search API for '%s' should return HTTP 200", instance.keyword)
+                .as("Search API for '%s' should respond HTTP 200 (result: %s)", instance.keyword,
+                        result.error != null ? result.error : "ok")
                 .isEqualTo(200);
-        assertThat(found)
-                .as("Search API query '%s' should return product '%s' (%s)",
-                        instance.keyword, instance.expectedHandle, instance.productName)
-                .isTrue();
     }
 
-    @Test(dependsOnMethods = "testExploratoryKeyword", alwaysRun = true, groups = "report", description = "Generates the comprehensive exploratory search analysis report")
+    @Test(dependsOnMethods = "testExploratoryKeyword", alwaysRun = true, groups = "report", description = "Generates the exploratory search keyword coverage report")
     public void generateSearchReport() {
         generateReport();
 
-        double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
         log.info("========================================");
-        log.info("Exploratory Search Test Suite Complete");
+        log.info("Exploratory Search Coverage Complete");
         log.info("Random Seed: {}", randomSeed);
-        log.info("Total: {}, Passed: {}, Failed: {}, Pass Rate: {}%",
-                totalTests, passedTests, failedTests, String.format("%.2f", passRate));
+        log.info("Unique keywords tested: {}", totalTests);
         log.info("========================================");
 
         assertThat(totalTests)
-                .as("All %d selected exploratory search tests should have executed.", selectedInstances.size())
+                .as("All %d selected exploratory keywords should have executed.", selectedInstances.size())
                 .isEqualTo(selectedInstances.size());
     }
 
@@ -473,101 +418,55 @@ public class SearchApiExploratoryTest {
     }
 
     private void generateReport() {
-        log.info("Generating detailed exploratory search analysis report file...");
+        log.info("Generating exploratory search keyword coverage report file...");
         File reportFile = new File("target/exploratory_search_api_report.md");
         try {
             reportFile.getParentFile().mkdirs();
             try (PrintWriter pw = new PrintWriter(reportFile, StandardCharsets.UTF_8)) {
-                pw.println("# Timepieces Exploratory Search Bar Keyword API Test Analysis");
+                pw.println("# Timepieces Exploratory Search Keyword API Coverage");
                 pw.println();
-                pw.println(
-                        "This report summarizes the verification of randomly sampled search keywords against the search API.");
+                pw.println("Each unique search keyword sampled and the exact products the search API returned. "
+                        + "Search relevance (whether the \"right\" products came back) is intentionally not judged "
+                        + "here — that is tuned by the developers.");
                 pw.println();
-                pw.println("## Executive Summary");
+                pw.println("## Summary");
                 pw.println();
                 pw.println("| Metric | Value |");
                 pw.println("| --- | --- |");
                 pw.printf("| **Target Environment** | %s |%n", baseUrl);
                 pw.printf("| **Random Seed Used** | %d |%n", randomSeed);
-                pw.printf("| **Total Queries Tested** | %d |%n", totalTests);
-                pw.printf("| **Passed Matches** | %d |%n", passedTests);
-                pw.printf("| **Failed Matches** | %d |%n", failedTests);
-                double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
-                pw.printf("| **Pass Rate** | %.2f%% |%n", passRate);
+                pw.printf("| **Unique Keywords Tested** | %d |%n", totalTests);
                 pw.println();
 
-                // Group-wise breakdown
-                pw.println("## Category breakdown");
+                pw.println("## Keywords per Category");
                 pw.println();
-                pw.println("| Category | Tested | Passed | Failed | Pass Rate |");
-                pw.println("| --- | --- | --- | --- | --- |");
-
-                Map<String, int[]> groupStats = new HashMap<>();
-                for (Map<String, Object> r : testResults) {
-                    String group = (String) r.get("group");
-                    if (group == null)
-                        group = "UNKNOWN";
-                    String status = (String) r.get("status");
-                    groupStats.putIfAbsent(group, new int[] { 0, 0, 0 });
-                    groupStats.get(group)[0]++; // Total
-                    if ("PASS".equals(status)) {
-                        groupStats.get(group)[1]++; // Passed
-                    } else {
-                        groupStats.get(group)[2]++; // Failed
-                    }
-                }
-
-                String[] groupOrder = { "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED" };
-                for (String group : groupOrder) {
-                    int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
-                    double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
-                    pw.printf("| %s | %d | %d | %d | %.2f%% |%n", group, stats[0], stats[1], stats[2], rate);
+                pw.println("| Category | Keywords |");
+                pw.println("| --- | --- |");
+                Map<String, Integer> counts = categoryCounts();
+                String[] categoryOrder = { "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED" };
+                for (String category : categoryOrder) {
+                    pw.printf("| %s | %d |%n", category, counts.getOrDefault(category, 0));
                 }
                 pw.println();
 
-                // Failed tests detail — includes the exact API results returned, not just the
-                // pass/fail verdict, so a failure can be sent to developers as-is.
-                pw.println("## List of Failed Search Queries");
+                pw.println("## Keyword Results");
                 pw.println();
-                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. accessories) for that query.");
+                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. "
+                        + "accessories) for that keyword.");
                 pw.println();
-                pw.println("| Category | Test Name (Product) | Keyword | Status | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- | --- | --- |");
-
+                pw.println("| Category | Keyword | Actual Results Returned | Error |");
+                pw.println("| --- | --- | --- | --- |");
                 for (Map<String, Object> r : testResults) {
-                    if (!"PASS".equals(r.get("status"))) {
-                        pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
-                                r.get("group"),
-                                r.get("name"),
-                                r.get("keyword"),
-                                r.get("status"),
-                                sanitizeCell(r.get("returned")),
-                                sanitizeCell(r.get("error")));
-                    }
-                }
-                pw.println();
-
-                // Full results detail — complete, untruncated, categorized (timepieces vs.
-                // accessories) API response for every executed query — the exact payload a
-                // developer needs, not just a pass/fail flag.
-                pw.println("## Full Results");
-                pw.println();
-                pw.println("| Category | Test Name (Product) | Keyword | Status | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- | --- | --- |");
-
-                for (Map<String, Object> r : testResults) {
-                    pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
+                    pw.printf("| %s | `%s` | %s | %s |%n",
                             r.get("group"),
-                            r.get("name"),
                             r.get("keyword"),
-                            r.get("status"),
                             sanitizeCell(r.get("returned")),
                             sanitizeCell(r.get("error")));
                 }
             }
-            log.info("Search analysis report successfully written to: {}", reportFile.getAbsolutePath());
+            log.info("Search coverage report successfully written to: {}", reportFile.getAbsolutePath());
         } catch (Exception e) {
-            log.error("Failed to write search analysis report.", e);
+            log.error("Failed to write search coverage report.", e);
         }
 
         try {
@@ -583,41 +482,30 @@ public class SearchApiExploratoryTest {
         generateExcelReport();
     }
 
+    private Map<String, Integer> categoryCounts() {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Map<String, Object> r : testResults) {
+            String category = (String) r.get("group");
+            counts.merge(category == null ? "UNKNOWN" : category, 1, Integer::sum);
+        }
+        return counts;
+    }
+
     /**
      * Builds the Excel (.xlsx) twin of the markdown report — Summary + category
-     * breakdown, Full Results, and Failures sheets — and attaches it to Allure so
-     * it downloads alongside the existing report.
+     * counts and a Results sheet — and attaches it to Allure.
      */
     private void generateExcelReport() {
         LinkedHashMap<String, String> summary = new LinkedHashMap<>();
         summary.put("Target Environment", baseUrl);
         summary.put("Random Seed Used", String.valueOf(randomSeed));
-        summary.put("Total Queries Tested", String.valueOf(totalTests));
-        summary.put("Passed Matches", String.valueOf(passedTests));
-        summary.put("Failed Matches", String.valueOf(failedTests));
-        double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
-        summary.put("Pass Rate", String.format("%.2f%%", passRate));
+        summary.put("Unique Keywords Tested", String.valueOf(totalTests));
 
-        String[] groupOrder = { "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED" };
-        Map<String, int[]> groupStats = new HashMap<>();
-        for (Map<String, Object> r : testResults) {
-            String group = (String) r.get("group");
-            if (group == null) {
-                group = "UNKNOWN";
-            }
-            groupStats.putIfAbsent(group, new int[] { 0, 0, 0 });
-            groupStats.get(group)[0]++;
-            if ("PASS".equals(r.get("status"))) {
-                groupStats.get(group)[1]++;
-            } else {
-                groupStats.get(group)[2]++;
-            }
-        }
+        Map<String, Integer> counts = categoryCounts();
+        String[] categoryOrder = { "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED" };
         List<Object[]> breakdown = new ArrayList<>();
-        for (String group : groupOrder) {
-            int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
-            double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
-            breakdown.add(new Object[] { group, stats[0], stats[1], stats[2], String.format("%.2f%%", rate) });
+        for (String category : categoryOrder) {
+            breakdown.add(new Object[] { category, counts.getOrDefault(category, 0) });
         }
 
         ExcelReportUtil.writeAndAttach(
@@ -625,7 +513,7 @@ public class SearchApiExploratoryTest {
                 "Exploratory Search Keyword API Report (Excel)",
                 "Category",
                 summary,
-                new String[] { "Category", "Tested", "Passed", "Failed", "Pass Rate" },
+                new String[] { "Category", "Keywords" },
                 breakdown,
                 testResults);
     }

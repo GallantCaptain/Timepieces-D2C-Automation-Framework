@@ -333,3 +333,17 @@ This changelog is append-only. New entries must be added chronologically and mus
   (non-PASS only). Added `STAT-036`. Verified end-to-end — POI reads the
   generated workbook back with the correct sheets, headers, and failure filter.
 
+### Search API suites -> keyword-coverage reports
+
+- Refactored `SearchApiTest` and `SearchApiExploratoryTest` into keyword-coverage
+  reports. Each unique keyword is searched once (case-insensitive de-dup;
+  misspellings/variations kept as distinct), and the report records only
+  Category · Keyword · Actual Results Returned · Error — the subjective pass/fail
+  Status column and the redundant Test Name column are removed (search relevance
+  is tuned by the devs). Tests now assert only API health (HTTP 200).
+  `SearchApiTest` became one flattened, de-duplicated sweep (106 unique keywords
+  across NAMES/ATTRIBUTES/MISSPELLINGS/RELATED/DEEP/GENERIC/COLLECTION/BRAND/
+  PRIORITY/EDGE_CASE); `ExcelReportUtil` moved to a two-sheet Summary + Results
+  shape. Verified: 0 duplicate keywords, Results columns = Category/Keyword/
+  Results/Error, no Failures sheet.
+

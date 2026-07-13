@@ -27,11 +27,12 @@ import lombok.extern.log4j.Log4j2;
  * markdown one. Used by {@code SearchApiTest} and {@code SearchApiExploratoryTest}.
  *
  * <p>
- * The workbook has three sheets: <b>Summary</b> (headline metrics + a per-group
- * breakdown), <b>Full Results</b> (every executed query), and <b>Failures</b>
- * (non-PASS rows only). Result rows are read from the same {@code Map} keys the
- * tests already populate: {@code group}, {@code name}, {@code keyword},
- * {@code status}, {@code returned}, {@code error}.
+ * The workbook has two sheets: <b>Summary</b> (headline metrics + a per-category
+ * breakdown) and <b>Results</b> (every unique keyword and the exact API response).
+ * Result rows are read from the {@code Map} keys the tests populate:
+ * {@code group} (category), {@code keyword}, {@code returned}, {@code error}.
+ * There is deliberately no pass/fail column — search relevance is subjective and
+ * tuned by the developers.
  *
  * @version 1.0
  * @author Avinash Rath
@@ -65,8 +66,7 @@ public final class ExcelReportUtil {
         try (Workbook workbook = new XSSFWorkbook()) {
             CellStyle header = headerStyle(workbook);
             buildSummarySheet(workbook, header, summary, breakdownHeader, breakdownRows);
-            buildResultsSheet(workbook, "Full Results", header, groupLabel, results, false);
-            buildResultsSheet(workbook, "Failures", header, groupLabel, results, true);
+            buildResultsSheet(workbook, "Results", header, groupLabel, results);
 
             File out = new File(filePath);
             if (out.getParentFile() != null) {
@@ -132,9 +132,9 @@ public final class ExcelReportUtil {
     }
 
     private static void buildResultsSheet(Workbook workbook, String sheetName, CellStyle header,
-            String groupLabel, List<Map<String, Object>> results, boolean failuresOnly) {
+            String groupLabel, List<Map<String, Object>> results) {
         Sheet sheet = workbook.createSheet(sheetName);
-        String[] cols = { groupLabel, "Test Name", "Keyword", "Status", "Actual Results Returned", "Error" };
+        String[] cols = { groupLabel, "Keyword", "Actual Results Returned", "Error" };
         Row headerRow = sheet.createRow(0);
         for (int c = 0; c < cols.length; c++) {
             cell(headerRow, c, cols[c], header);
@@ -143,21 +143,15 @@ public final class ExcelReportUtil {
         int r = 1;
         if (results != null) {
             for (Map<String, Object> res : results) {
-                String status = str(res.get("status"));
-                if (failuresOnly && "PASS".equals(status)) {
-                    continue;
-                }
                 Row row = sheet.createRow(r++);
                 cell(row, 0, str(res.get("group")), null);
-                cell(row, 1, str(res.get("name")), null);
-                cell(row, 2, str(res.get("keyword")), null);
-                cell(row, 3, status, null);
-                cell(row, 4, str(res.get("returned")), null);
-                cell(row, 5, str(res.get("error")), null);
+                cell(row, 1, str(res.get("keyword")), null);
+                cell(row, 2, str(res.get("returned")), null);
+                cell(row, 3, str(res.get("error")), null);
             }
         }
 
-        int[] widthChars = { 22, 34, 24, 12, 90, 40 };
+        int[] widthChars = { 22, 30, 100, 40 };
         for (int c = 0; c < widthChars.length; c++) {
             sheet.setColumnWidth(c, widthChars[c] * 256);
         }

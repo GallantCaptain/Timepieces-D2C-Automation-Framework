@@ -34,25 +34,24 @@ import io.restassured.response.Response;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Timepieces Search API Test Suite — 109 tests total.
- * Groups:
- * G1 — Product Matrix (40): Each product tested with first keyword per category
- * G2 — Generic Watch Keywords (20): High-intent terms like "watches", "watch",
- * etc.
- * G3 — Collection Search (8): Collection-level searches (Auriqua, Monarch,
- * etc.)
- * G4 — Brand & Misspellings (12): Brand name variants and global misspellings
- * G5 — Deep Keywords (15): 2nd/3rd keywords from select products
- * G6 — Edge Cases (5): Empty, nonsense, special chars
- * G7 — Priority Keyword Coverage (9): Business-critical bare terms that must
- * always return relevant results — watch, watches, timepiece, timepieces,
- * loom, dial, strap, clasp, watch case. See "Automated Search API Test
- * Results" report for the business rationale and any anomalies found.
+ * Timepieces Search API Keyword Coverage Suite.
+ * <p>
+ * A single, flattened, de-duplicated sweep of curated search keywords. All
+ * keyword sources — the product matrix (first keyword per category per product),
+ * deep 2nd keywords, generic terms, collection names, brand/misspellings,
+ * priority terms and edge cases — are merged, de-duplicated (case-insensitive,
+ * trimmed) and each unique keyword is searched exactly once. Misspellings and
+ * variations are kept: they are distinct keywords.
+ * <p>
+ * This is a <b>keyword-coverage report</b>: each test records the exact products
+ * the search API returned for its keyword, tagged with the source category. It
+ * deliberately does <b>not</b> judge relevance (whether the "right" product came
+ * back) — that is subjective and tuned by the developers. The only assertion is
+ * API health (HTTP 200).
  *
- * @version 1.0
+ * @version 2.0
  * @author Avinash Rath
-* @Description "Description of SearchApiTest"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2
@@ -62,12 +61,38 @@ public class SearchApiTest {
     private List<Map<String, Object>> testMatrix;
     private final List<Map<String, Object>> testResults = new ArrayList<>();
     private int totalTests = 0;
-    private int passedTests = 0;
-    private int failedTests = 0;
+    private int expectedKeywordCount = 0;
 
     private String baseUrl;
     private String userAgent;
     private String cfBypassToken;
+
+    // Curated keyword sets (category-tagged). Merged with the JSON product matrix
+    // in keywordData(), then de-duplicated so each keyword runs once.
+    private static final String[] GENERIC = {
+            "watches", "watch", "wristwatch", "mens watch", "men's watch", "watch for men", "luxury watch",
+            "luxury watch India", "premium watch", "automatic watch", "quartz watch", "limited edition",
+            "sapphire crystal", "stainless steel watch", "Indian watch brand", "chronograph", "moonphase",
+            "skeleton dial", "dress watch", "leather strap" };
+
+    private static final String[] COLLECTION = {
+            "Auriqua", "Monarch", "Arvion", "Manifesta", "Astonia", "Astonia Sports", "watch strap", "watch clasp" };
+
+    private static final String[] BRAND = {
+            "Timepieces", "Timepieces watch", "timepieces", "Rotoros", "Rotaris", "Timepiecese", "316L steel", "numbered watch",
+            "watch with warranty", "watch with serial number", "rose gold", "rubber strap" };
+
+    private static final String[] PRIORITY = {
+            "watch", "watches", "timepiece", "timepieces", "loom", "dial", "strap", "clasp", "watch case" };
+
+    // Non-empty edge inputs (the empty query is skipped — it is not a keyword).
+    private static final String[] EDGE = {
+            "xyzzyfoobarbaz123", "!!!@@@###", "a", "watch watch watch" };
+
+    // Select products whose 2nd (deep) keyword is also included.
+    private static final String[] DEEP_HANDLES = {
+            "auriqua-noir-rose", "monarch-silver-black", "arvion-navy-silver",
+            "manifesta-blue-aventurine", "astonia-sports-phantom-black" };
 
     @BeforeClass
     public void setUp() {
@@ -112,43 +137,115 @@ public class SearchApiTest {
         // 4. Bypass gatekeeper password wall
         String password = ConfigReader.get("staging.password");
         if (password == null || password.isEmpty()) {
-            password = "CHANGE_ME";
+            password = System.getenv("STAGING_PASSWORD");
         }
 
-        log.info("Bypassing staging gate password wall...");
-        try {
-            var reqSpec = given()
-                    .header("User-Agent", userAgent)
-                    .header("Content-Type", "application/json")
-                    .header("Referer", baseUrl + "/");
+        if (password != null && !password.isEmpty()) {
+            log.info("Bypassing staging gate password wall...");
+            try {
+                var reqSpec = given()
+                        .header("User-Agent", userAgent)
+                        .header("Content-Type", "application/json")
+                        .header("Referer", baseUrl + "/");
 
-            if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
-                reqSpec.header("x-automation-bypass", cfBypassToken);
+                if (cfBypassToken != null && !cfBypassToken.isEmpty()) {
+                    reqSpec.header("x-automation-bypass", cfBypassToken);
+                }
+
+                Response verifyResponse = reqSpec
+                        .body(Map.of("password", password))
+                        .post("/api/verify-password");
+
+                log.info("Verify Password Status Code: {}", verifyResponse.getStatusCode());
+            } catch (Exception e) {
+                log.warn("Password verification request failed. Proceeding anyway (in case gate is disabled).", e);
             }
+        }
+    }
 
-            Response verifyResponse = reqSpec
-                    .body(Map.of("password", password))
-                    .post("/api/verify-password");
+    // ==================================================================================
+    // Keyword collection (single de-duplicated sweep)
+    // ==================================================================================
 
-            log.info("Verify Password Status Code: {}", verifyResponse.getStatusCode());
-            log.info("Verify Password Response: {}", verifyResponse.getBody().asString());
-        } catch (Exception e) {
-            log.warn("Password verification request failed. Proceeding anyway (in case gate is disabled).", e);
+    @DataProvider(name = "keywordData", parallel = true)
+    public Object[][] keywordData() {
+        List<Object[]> rows = new ArrayList<>();
+        // Case-insensitive, trimmed de-duplication; the first occurrence wins.
+        Set<String> seen = new HashSet<>();
+
+        if (testMatrix != null) {
+            // Product matrix: first keyword of each category per product.
+            for (Map<String, Object> product : testMatrix) {
+                addFirst(rows, seen, product, "names_keywords", "NAMES");
+                addFirst(rows, seen, product, "attributes_keywords", "ATTRIBUTES");
+                addFirst(rows, seen, product, "misspellings_keywords", "MISSPELLINGS");
+                addFirst(rows, seen, product, "related_keywords", "RELATED");
+            }
+            // Deep: 2nd keyword for a few select products.
+            for (String handle : DEEP_HANDLES) {
+                for (Map<String, Object> product : testMatrix) {
+                    if (handle.equals(product.get("handle"))) {
+                        addAt(rows, seen, product, "names_keywords", 1, "DEEP");
+                        addAt(rows, seen, product, "attributes_keywords", 1, "DEEP");
+                        addAt(rows, seen, product, "misspellings_keywords", 1, "DEEP");
+                        break;
+                    }
+                }
+            }
         }
 
+        addAll(rows, seen, GENERIC, "GENERIC");
+        addAll(rows, seen, COLLECTION, "COLLECTION");
+        addAll(rows, seen, BRAND, "BRAND");
+        addAll(rows, seen, PRIORITY, "PRIORITY");
+        addAll(rows, seen, EDGE, "EDGE_CASE");
+
+        expectedKeywordCount = rows.size();
+        log.info("Prepared {} unique keywords for the search coverage sweep.", expectedKeywordCount);
+        return rows.toArray(new Object[0][]);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addFirst(List<Object[]> rows, Set<String> seen, Map<String, Object> product, String key,
+            String category) {
+        List<String> kws = (List<String>) product.get(key);
+        if (kws != null && !kws.isEmpty()) {
+            addKeyword(rows, seen, kws.get(0), category);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addAt(List<Object[]> rows, Set<String> seen, Map<String, Object> product, String key, int index,
+            String category) {
+        List<String> kws = (List<String>) product.get(key);
+        if (kws != null && kws.size() > index) {
+            addKeyword(rows, seen, kws.get(index), category);
+        }
+    }
+
+    private void addAll(List<Object[]> rows, Set<String> seen, String[] kws, String category) {
+        for (String kw : kws) {
+            addKeyword(rows, seen, kw, category);
+        }
+    }
+
+    private void addKeyword(List<Object[]> rows, Set<String> seen, String keyword, String category) {
+        if (keyword == null) {
+            return;
+        }
+        String trimmed = keyword.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        if (seen.add(trimmed.toLowerCase())) {
+            rows.add(new Object[] { trimmed, category });
+        }
     }
 
     // ==================================================================================
     // Shared Search Helper
     // ==================================================================================
 
-    /**
-     * Performs a search API call: requests a token, then searches with the keyword.
-     *
-     * @param keyword the search term
-     * @return SearchResult containing response status, handles found, and raw
-     *         response
-     */
     private SearchResult performSearch(String keyword) {
         try {
             // 1. Request Search Token
@@ -208,7 +305,7 @@ public class SearchApiTest {
         }
     }
 
-    /** Tiny throttle between API calls to be gentle on the staging server. */
+    /** Tiny throttle between API calls to be gentle on the server. */
     private void throttle() {
         try {
             Thread.sleep(10);
@@ -230,44 +327,22 @@ public class SearchApiTest {
             this.accessories = accessories;
             this.error = error;
         }
-
-        List<String> allHandles() {
-            List<String> all = new ArrayList<>();
-            all.addAll(timepieces);
-            all.addAll(accessories);
-            return all;
-        }
-
-        boolean hasResults() {
-            return !timepieces.isEmpty() || !accessories.isEmpty();
-        }
     }
 
-    private synchronized void recordResult(String group, String testName, String keyword,
-            String status, String error, String returnedSummary) {
+    private synchronized void recordResult(String category, String keyword, String returnedSummary, String error) {
         totalTests++;
-        if ("PASS".equals(status)) {
-            passedTests++;
-        } else {
-            failedTests++;
-        }
-
         Map<String, Object> result = new HashMap<>();
-        result.put("group", group);
-        result.put("name", testName);
+        result.put("group", category);
         result.put("keyword", keyword);
-        result.put("category", group);
-        result.put("status", status);
-        result.put("error", error != null ? error : "");
         result.put("returned", returnedSummary != null ? returnedSummary : "—");
+        result.put("error", error != null ? error : "");
         testResults.add(result);
     }
 
     /**
      * Formats one search's actual API response in full, split by category
      * (timepieces vs. accessories) exactly as the API returns it — never
-     * truncated — so this is the real payload shape a developer can act on,
-     * not just a flat "N handles" count.
+     * truncated — so this is the real payload shape a developer can act on.
      */
     private String formatSearchResult(SearchResult result) {
         if (result.error != null) {
@@ -283,9 +358,8 @@ public class SearchApiTest {
      * Collects the distinct products the API returned under {@code basePath}
      * (e.g. {@code data.timepieces}), reading BOTH the Shopify-style handle and
      * the display title so the complete result set is captured whichever format
-     * the API sends back. Entries that refer to the same product (a handle and
-     * its title) are collapsed via {@link #normalizeIdentifier(String)}, keeping
-     * the handle for display when present. Returns an empty list if the path is
+     * the API sends back. Entries that refer to the same product are collapsed via
+     * {@link #normalizeIdentifier(String)}. Returns an empty list if the path is
      * absent.
      */
     private List<String> collectReturnedProducts(JsonPath jp, String basePath) {
@@ -311,12 +385,9 @@ public class SearchApiTest {
     }
 
     /**
-     * Canonicalizes a product identifier so a handle
-     * ("butterfly-clasp-gold-18mm") and its display name
-     * ("Butterfly Clasp — Gold (18mm)") compare as equal: lowercases, then
-     * replaces every run of non-alphanumeric characters (hyphens, em dashes,
-     * parentheses, spaces, …) with a single space, and trims. Both examples
-     * collapse to "butterfly clasp gold 18mm".
+     * Canonicalizes a product identifier so a handle and its display name collapse
+     * to the same value: lowercases, replaces runs of non-alphanumerics with a
+     * single space, and trims.
      */
     private static String normalizeIdentifier(String value) {
         if (value == null) {
@@ -325,462 +396,43 @@ public class SearchApiTest {
         return value.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
     }
 
-    /**
-     * Format-insensitive containment check: true if any entry in
-     * {@code returned} refers to the same product as {@code expected}, comparing
-     * on the normalized form (see {@link #normalizeIdentifier(String)}) so a
-     * handle-vs-display-name difference does not cause a false miss.
-     */
-    private boolean containsNormalized(List<String> returned, String expected) {
-        String target = normalizeIdentifier(expected);
-        if (target.isEmpty()) {
-            return false;
-        }
-        for (String candidate : returned) {
-            if (normalizeIdentifier(candidate).equals(target)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     // ==================================================================================
-    // GROUP 1: Product-Specific Matrix Tests (40 tests)
+    // The single keyword-coverage test
     // ==================================================================================
 
-    @DataProvider(name = "productMatrixData", parallel = true)
-    public Object[][] productMatrixData() {
-        // Wait for testMatrix to be loaded
-        if (testMatrix == null || testMatrix.isEmpty()) {
-            return new Object[0][0];
-        }
-
-        Object[][] data = new Object[testMatrix.size()][1];
-        for (int i = 0; i < testMatrix.size(); i++) {
-            data[i][0] = testMatrix.get(i);
-        }
-        return data;
-    }
-
-    @Test(dataProvider = "productMatrixData", groups = "G1_ProductMatrix", description = "Validates each product is returned for its first keyword across all 4 categories")
-    @SuppressWarnings("unchecked")
-    public void testProductKeywordMatrix(Map<String, Object> product) {
-        String handle = (String) product.get("handle");
-        String name = (String) product.get("name");
-
-        Map<String, List<String>> categories = Map.of(
-                "NAMES", (List<String>) product.get("names_keywords"),
-                "ATTRIBUTES", (List<String>) product.get("attributes_keywords"),
-                "MISSPELLINGS", (List<String>) product.get("misspellings_keywords"),
-                "RELATED", (List<String>) product.get("related_keywords"));
-
-        int catsPassed = 0;
-        int catsTested = 0;
-        StringBuilder failDetails = new StringBuilder();
-        // Captures the actual API response for every one of the up to 4 searches this
-        // test performs, so developers can see exactly what came back per category —
-        // not just the pass/fail verdict.
-        StringBuilder resultsDetail = new StringBuilder();
-
-        for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
-            String catName = entry.getKey();
-            List<String> kws = entry.getValue();
-            if (kws == null || kws.isEmpty())
-                continue;
-
-            String kw = kws.get(0);
-            catsTested++;
-
-            SearchResult result = performSearch(kw);
-            throttle();
-
-            resultsDetail.append(String.format("[%s '%s'] %s; ", catName, kw, formatSearchResult(result)));
-
-            if (result.error != null) {
-                failDetails.append(String.format("[%s] API error for '%s': %s; ", catName, kw, result.error));
-                continue;
-            }
-
-            if (containsNormalized(result.allHandles(), handle)) {
-                catsPassed++;
-            } else {
-                failDetails.append(String.format("[%s] '%s' not found for keyword '%s' (got %d results); ",
-                        catName, handle, kw, result.allHandles().size()));
-            }
-        }
-
-        String status = (catsPassed >= 1) ? "PASS" : "FAIL";
-        recordResult("G1_ProductMatrix", name, handle, status,
-                failDetails.length() > 0 ? failDetails.toString() : null, resultsDetail.toString());
-
-        log.info("[G1] {} — {}/{} categories passed for '{}'", status, catsPassed, catsTested, name);
-        assertThat(catsPassed)
-                .as("Product '%s' (%s) should be found for at least 1 keyword category", name, handle)
-                .isGreaterThanOrEqualTo(1);
-    }
-
-    // ==================================================================================
-    // GROUP 2: Generic Watch Keyword Tests (20 tests)
-    // ==================================================================================
-
-    @DataProvider(name = "genericKeywordData", parallel = true)
-    public Object[][] genericKeywordData() {
-        return new Object[][] {
-                { "watches", "Should return any timepieces or accessories" },
-                { "watch", "Singular form should return results" },
-                { "wristwatch", "Common synonym for watch" },
-                { "mens watch", "Gender-specific search term" },
-                { "men's watch", "Apostrophe variant of gender search" },
-                { "watch for men", "Phrase-based gender search" },
-                { "luxury watch", "Premium positioning keyword" },
-                { "luxury watch India", "Geo-targeted luxury search" },
-                { "premium watch", "Alternative premium keyword" },
-                { "automatic watch", "Movement-type keyword" },
-                { "quartz watch", "Movement-type keyword" },
-                { "limited edition", "Exclusivity keyword" },
-                { "sapphire crystal", "Material/feature keyword" },
-                { "stainless steel watch", "Material keyword" },
-                { "Indian watch brand", "Brand origin keyword" },
-                { "chronograph", "Complication-type keyword" },
-                { "moonphase", "Complication-type keyword" },
-                { "skeleton dial", "Dial style keyword" },
-                { "dress watch", "Occasion-based keyword" },
-                { "leather strap", "Material keyword for straps and watches" }
-        };
-    }
-
-    @Test(dataProvider = "genericKeywordData", groups = "G2_GenericKeywords", description = "Validates generic watch-related keywords return non-empty search results")
-    public void testGenericWatchKeyword(String keyword, String rationale) {
+    @Test(dataProvider = "keywordData", groups = "keywordCoverage", description = "Searches a unique keyword once and records the API results (relevance is left to the devs)")
+    public void testSearchKeyword(String keyword, String category) {
         SearchResult result = performSearch(keyword);
         throttle();
 
-        boolean hasResults = result.hasResults();
-        String status = hasResults ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
+        recordResult(category, keyword, formatSearchResult(result), result.error);
 
-        recordResult("G2_GenericKeywords", keyword, keyword, status,
-                result.error != null ? result.error : (hasResults ? null : "Empty results"),
-                formatSearchResult(result));
+        log.info("[Search] [{}] '{}' -> {}", category, keyword, formatSearchResult(result));
 
-        log.info("[G2] {} — '{}' returned {} results. {}", status, keyword,
-                result.allHandles().size(), rationale);
-
-        if (result.error != null) {
-            log.warn("[G2] API error for '{}': {}", keyword, result.error);
-        }
-
+        // Objective health check only — relevance is intentionally not asserted.
         assertThat(result.statusCode)
-                .as("Search for '%s' should return HTTP 200", keyword)
+                .as("Search API for '%s' should respond HTTP 200 (result: %s)", keyword,
+                        result.error != null ? result.error : "ok")
                 .isEqualTo(200);
-        assertThat(result.allHandles())
-                .as("Search for '%s' should return at least one result — %s", keyword, rationale)
-                .isNotEmpty();
     }
 
     // ==================================================================================
-    // GROUP 3: Collection / Type Search Tests (8 tests)
+    // Report Generation (runs after the sweep)
     // ==================================================================================
 
-    @DataProvider(name = "collectionSearchData", parallel = true)
-    public Object[][] collectionSearchData() {
-        return new Object[][] {
-                { "Auriqua", new String[] { "auriqua-noir-rose", "auriqua-racing-green", "auriqua-ocean-blue" } },
-                { "Monarch", new String[] { "monarch-silver-black", "monarch-rose-gold" } },
-                { "Arvion", new String[] { "arvion-navy-silver", "arvion-burgundy-gold", "arvion-espresso-silver" } },
-                { "Manifesta",
-                        new String[] { "manifesta-blue-aventurine", "manifesta-black-onyx",
-                                "manifesta-mother-of-pearl" } },
-                { "Astonia",
-                        new String[] { "astonia-stealth-silver", "astonia-dusk-gold", "astonia-bimetal-dusk-rose",
-                                "astonia-trophy-gold" } },
-                { "Astonia Sports",
-                        new String[] { "astonia-sports-phantom-black", "astonia-sports-circuit-blue",
-                                "astonia-sports-podium-green" } },
-                { "watch strap",
-                        new String[] { "suede-leather-strap-burgundy", "suede-leather-strap-brown",
-                                "suede-leather-strap-blue",
-                                "fkm-rubber-strap-black", "fkm-rubber-strap-yellow", "fkm-rubber-strap-orange",
-                                "fkm-rubber-strap-white",
-                                "teju-lizard-leather-strap-black", "teju-lizard-leather-strap-blue",
-                                "ostrich-leather-strap-black", "ostrich-leather-strap-brown",
-                                "hybrid-leather-strap-black", "hybrid-leather-strap-blue" } },
-                { "watch clasp",
-                        new String[] { "butterfly-clasp-gold-18mm", "butterfly-clasp-steel-18mm",
-                                "butterfly-clasp-rose-gold-18mm",
-                                "single-deployment-clasp-steel-20mm", "single-deployment-clasp-black-20mm",
-                                "single-deployment-clasp-rose-gold-20mm", "single-deployment-clasp-rose-gold-22mm",
-                                "single-deployment-clasp-gold-20mm" } }
-        };
-    }
-
-    @Test(dataProvider = "collectionSearchData", groups = "G3_CollectionSearch", description = "Validates collection/type keywords return at least one matching product from the collection")
-    public void testCollectionSearch(String keyword, String[] expectedHandles) {
-        SearchResult result = performSearch(keyword);
-        throttle();
-
-        List<String> allReturned = result.allHandles();
-        boolean foundAny = false;
-        List<String> matchedHandles = new ArrayList<>();
-
-        for (String expected : expectedHandles) {
-            if (containsNormalized(allReturned, expected)) {
-                foundAny = true;
-                matchedHandles.add(expected);
-            }
-        }
-
-        String status = foundAny ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
-        recordResult("G3_CollectionSearch", keyword, keyword, status,
-                result.error != null ? result.error : (foundAny ? null : "No collection members found"),
-                formatSearchResult(result));
-
-        log.info("[G3] {} — '{}' matched {}/{} collection handles: {}", status, keyword,
-                matchedHandles.size(), expectedHandles.length, matchedHandles);
-
-        assertThat(result.statusCode)
-                .as("Search for '%s' should return HTTP 200", keyword)
-                .isEqualTo(200);
-        assertThat(foundAny)
-                .as("Search for '%s' should return at least one product from the collection", keyword)
-                .isTrue();
-    }
-
-    // ==================================================================================
-    // GROUP 4: Brand & Misspelling Tests (12 tests)
-    // ==================================================================================
-
-    @DataProvider(name = "brandMisspellingData", parallel = true)
-    public Object[][] brandMisspellingData() {
-        return new Object[][] {
-                { "Timepieces", "Exact brand name" },
-                { "Timepieces watch", "Brand + category" },
-                { "timepieces", "Lowercase brand name (case insensitivity)" },
-                { "Rotoros", "Common misspelling variant 1" },
-                { "Rotaris", "Common misspelling variant 2" },
-                { "Timepiecese", "Common misspelling variant 3" },
-                { "316L steel", "Technical material specification" },
-                { "numbered watch", "Unique Timepieces feature keyword" },
-                { "watch with warranty", "Trust/assurance keyword" },
-                { "watch with serial number", "Authenticity keyword" },
-                { "rose gold", "Popular color/finish keyword" },
-                { "rubber strap", "Accessory material keyword" }
-        };
-    }
-
-    @Test(dataProvider = "brandMisspellingData", groups = "G4_BrandMisspellings", description = "Validates brand name and common misspellings return results")
-    public void testBrandAndMisspellingSearch(String keyword, String description) {
-        SearchResult result = performSearch(keyword);
-        throttle();
-
-        boolean hasResults = result.hasResults();
-        String status = hasResults ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
-
-        recordResult("G4_BrandMisspellings", keyword + " (" + description + ")", keyword, status,
-                result.error != null ? result.error : (hasResults ? null : "Empty results"),
-                formatSearchResult(result));
-
-        log.info("[G4] {} — '{}' ({}) returned {} results", status, keyword, description,
-                result.allHandles().size());
-
-        assertThat(result.statusCode)
-                .as("Search for '%s' should return HTTP 200", keyword)
-                .isEqualTo(200);
-        assertThat(result.allHandles())
-                .as("Search for '%s' (%s) should return at least one result", keyword, description)
-                .isNotEmpty();
-    }
-
-    // ==================================================================================
-    // GROUP 5: Deep Keyword Tests (15 tests)
-    // Tests 2nd and 3rd keywords from select products across all collections
-    // ==================================================================================
-
-    @DataProvider(name = "deepKeywordData", parallel = true)
-    public Object[][] deepKeywordData() {
-        if (testMatrix == null || testMatrix.isEmpty()) {
-            return new Object[0][0];
-        }
-
-        // Select 5 representative products (1 per main watch collection)
-        String[] targetHandles = {
-                "auriqua-noir-rose", // Auriqua
-                "monarch-silver-black", // Monarch
-                "arvion-navy-silver", // Arvion
-                "manifesta-blue-aventurine", // Manifesta
-                "astonia-sports-phantom-black" // Astonia Sports
-        };
-
-        // For each product, test 3 deeper keywords (2nd keyword from NAMES, ATTRIBUTES,
-        // MISSPELLINGS)
-        List<Object[]> rows = new ArrayList<>();
-
-        for (String targetHandle : targetHandles) {
-            for (Map<String, Object> product : testMatrix) {
-                if (targetHandle.equals(product.get("handle"))) {
-                    String name = (String) product.get("name");
-
-                    // 2nd NAMES keyword (index 1)
-                    addDeepKeyword(rows, product, "names_keywords", 1, targetHandle, name, "NAMES[1]");
-                    // 2nd ATTRIBUTES keyword (index 1)
-                    addDeepKeyword(rows, product, "attributes_keywords", 1, targetHandle, name, "ATTRIBUTES[1]");
-                    // 2nd MISSPELLINGS keyword (index 1)
-                    addDeepKeyword(rows, product, "misspellings_keywords", 1, targetHandle, name, "MISSPELLINGS[1]");
-                    break;
-                }
-            }
-        }
-
-        return rows.toArray(new Object[0][0]);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void addDeepKeyword(List<Object[]> rows, Map<String, Object> product,
-            String jsonKey, int index, String handle, String name, String label) {
-        List<String> kws = (List<String>) product.get(jsonKey);
-        if (kws != null && kws.size() > index) {
-            rows.add(new Object[] { kws.get(index), handle, name, label });
-        }
-    }
-
-    @Test(dataProvider = "deepKeywordData", groups = "G5_DeepKeywords", description = "Validates 2nd/3rd keywords from select products return the expected product")
-    public void testDeepKeyword(String keyword, String expectedHandle, String productName, String label) {
-        SearchResult result = performSearch(keyword);
-        throttle();
-
-        boolean found = containsNormalized(result.allHandles(), expectedHandle);
-        String status = found ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
-
-        recordResult("G5_DeepKeywords", productName + " " + label, keyword, status,
-                result.error != null ? result.error
-                        : (found ? null : "Product '" + expectedHandle + "' not in results"),
-                formatSearchResult(result));
-
-        log.info("[G5] {} — '{}' {} '{}' for {} ({})", status, keyword,
-                found ? "found" : "MISSED", expectedHandle, productName, label);
-
-        assertThat(result.statusCode)
-                .as("Search for '%s' should return HTTP 200", keyword)
-                .isEqualTo(200);
-        // Soft assertion — deep keywords may not always match, log but don't hard-fail
-        if (!found) {
-            log.warn("[G5] Deep keyword '{}' did not return product '{}' ({}). {} results returned.",
-                    keyword, expectedHandle, productName, result.allHandles().size());
-        }
-        assertThat(found)
-                .as("Search for deep keyword '%s' should return product '%s' (%s)", keyword, expectedHandle,
-                        productName)
-                .isTrue();
-    }
-
-    // ==================================================================================
-    // GROUP 6: Negative & Edge Case Tests (5 tests)
-    // ==================================================================================
-
-    @DataProvider(name = "edgeCaseData", parallel = true)
-    public Object[][] edgeCaseData() {
-        return new Object[][] {
-                { "", "Empty query" },
-                { "xyzzyfoobarbaz123", "Complete nonsense string" },
-                { "!!!@@@###", "Special characters only" },
-                { "a", "Single character query" },
-                { "watch watch watch", "Repeated word query" }
-        };
-    }
-
-    @Test(dataProvider = "edgeCaseData", groups = "G6_EdgeCases", description = "Validates edge case queries don't crash the API (graceful error or empty results)")
-    public void testEdgeCaseSearch(String keyword, String description) {
-        SearchResult result = performSearch(keyword);
-        throttle();
-
-        // For edge cases, we just want no crash — status 200 is ideal, but 400 is also
-        // acceptable
-        boolean graceful = (result.statusCode == 200 || result.statusCode == 400);
-        String status = graceful ? "PASS" : "FAIL";
-
-        recordResult("G6_EdgeCases", description, keyword, status,
-                graceful ? null
-                        : "Unexpected status: " + result.statusCode + " " + (result.error != null ? result.error : ""),
-                formatSearchResult(result));
-
-        log.info("[G6] {} — '{}' ({}) returned status {} with {} results", status, keyword,
-                description, result.statusCode, result.allHandles().size());
-
-        assertThat(result.statusCode)
-                .as("Edge case '%s' (%s) should return HTTP 200 or 400, not crash", keyword, description)
-                .isIn(200, 400);
-    }
-
-    // ==================================================================================
-    // GROUP 7: Priority Keyword Coverage Tests (9 tests)
-    // These 9 bare terms are business-critical: product/marketing consider them the
-    // core vocabulary customers use to find watches and accessories, so each is tested
-    // standalone (not buried inside a longer phrase) with its own PASS/FAIL signal.
-    // ==================================================================================
-
-    @DataProvider(name = "priorityKeywordData", parallel = true)
-    public Object[][] priorityKeywordData() {
-        return new Object[][] {
-                { "watch", "Core singular generic term for the entire timepiece catalog" },
-                { "watches", "Core plural generic term for the entire timepiece catalog" },
-                { "timepiece", "Singular synonym for watch; validates synonym-level search relevance" },
-                { "timepieces", "Plural synonym for watch; validates synonym-level search relevance" },
-                { "loom", "Woven/NATO-style strap material term; validates strap-material synonym coverage" },
-                { "dial", "Bare watch-face component term (not a compound like 'skeleton dial')" },
-                { "strap", "Bare accessory category term for the Strap product line" },
-                { "clasp", "Bare accessory category term for the Clasp product line" },
-                { "watch case", "Accessory category phrase for the Case product line" }
-        };
-    }
-
-    @Test(dataProvider = "priorityKeywordData", groups = "G7_PriorityKeywords", description = "Validates business-critical bare keywords always return relevant search results")
-    public void testPriorityKeyword(String keyword, String rationale) {
-        SearchResult result = performSearch(keyword);
-        throttle();
-
-        boolean hasResults = result.hasResults();
-        String status = hasResults ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
-
-        recordResult("G7_PriorityKeywords", keyword, keyword, status,
-                result.error != null ? result.error : (hasResults ? null : "Empty results — " + rationale),
-                formatSearchResult(result));
-
-        log.info("[G7] {} — '{}' returned {} results. {}", status, keyword,
-                result.allHandles().size(), rationale);
-
-        if (result.error != null) {
-            log.warn("[G7] API error for priority keyword '{}': {}", keyword, result.error);
-        }
-
-        assertThat(result.statusCode)
-                .as("Priority keyword search for '%s' should return HTTP 200", keyword)
-                .isEqualTo(200);
-        assertThat(result.allHandles())
-                .as("Priority keyword '%s' should return at least one relevant result — %s", keyword, rationale)
-                .isNotEmpty();
-    }
-
-    // ==================================================================================
-    // Report Generation (runs after all tests)
-    // ==================================================================================
-
-    @Test(dependsOnGroups = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
-            "G4_BrandMisspellings", "G5_DeepKeywords",
-            "G6_EdgeCases", "G7_PriorityKeywords" }, alwaysRun = true, groups = "report", description = "Generates the comprehensive search analysis report after all test groups complete")
+    @Test(dependsOnMethods = "testSearchKeyword", alwaysRun = true, groups = "report", description = "Generates the search keyword coverage report after the sweep completes")
     public void generateSearchReport() {
         generateReport();
 
-        double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
         log.info("========================================");
-        log.info("API Search Test Suite Complete");
-        log.info("Total: {}, Passed: {}, Failed: {}, Pass Rate: {}%",
-                totalTests, passedTests, failedTests, String.format("%.2f", passRate));
+        log.info("Search Keyword Coverage Complete");
+        log.info("Unique keywords tested: {}", totalTests);
         log.info("========================================");
 
-        assertThat(totalTests).as("At least 104 search tests should have executed.").isGreaterThanOrEqualTo(104);
+        assertThat(totalTests)
+                .as("All %d unique keywords should have executed.", expectedKeywordCount)
+                .isEqualTo(expectedKeywordCount);
     }
-
-    // ==================================================================================
-    // Private Helpers
-    // ==================================================================================
 
     /**
      * Escapes pipe/newline characters so a value cannot break the markdown table
@@ -796,111 +448,72 @@ public class SearchApiTest {
                 .replace("\n", " ");
     }
 
+    private Map<String, Integer> categoryCounts() {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Map<String, Object> r : testResults) {
+            String category = (String) r.get("group");
+            counts.merge(category == null ? "UNKNOWN" : category, 1, Integer::sum);
+        }
+        return counts;
+    }
+
+    private static final String[] CATEGORY_ORDER = {
+            "NAMES", "ATTRIBUTES", "MISSPELLINGS", "RELATED", "DEEP",
+            "GENERIC", "COLLECTION", "BRAND", "PRIORITY", "EDGE_CASE" };
+
     private void generateReport() {
-        log.info("Generating detailed search analysis report file...");
+        log.info("Generating search keyword coverage report file...");
         File reportFile = new File("target/search_keyword_api_report.md");
         try {
             reportFile.getParentFile().mkdirs();
             try (PrintWriter pw = new PrintWriter(reportFile, StandardCharsets.UTF_8)) {
-                pw.println("# Timepieces Search Bar Keyword API Test Analysis");
+                pw.println("# Timepieces Search Keyword API Coverage");
                 pw.println();
-                pw.println(
-                        "This report summarizes the verification of Timepieces Search Bar keywords against the staging search API.");
+                pw.println("Each unique search keyword and the exact products the search API returned. "
+                        + "Search relevance (whether the \"right\" products came back) is intentionally not judged "
+                        + "here — that is tuned by the developers.");
                 pw.println();
-                pw.println("## Executive Summary");
+                pw.println("## Summary");
                 pw.println();
                 pw.println("| Metric | Value |");
                 pw.println("| --- | --- |");
-                pw.printf("| **Total Queries Tested** | %d |%n", totalTests);
-                pw.printf("| **Passed Matches** | %d |%n", passedTests);
-                pw.printf("| **Failed Matches** | %d |%n", failedTests);
-                double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
-                pw.printf("| **Pass Rate** | %.2f%% |%n", passRate);
+                pw.printf("| **Target Environment** | %s |%n", baseUrl);
+                pw.printf("| **Unique Keywords Tested** | %d |%n", totalTests);
                 pw.println();
 
-                // Group-wise breakdown
-                pw.println("## Group-wise Results");
+                pw.println("## Keywords per Category");
                 pw.println();
-                pw.println("| Group | Tested | Passed | Failed | Pass Rate |");
-                pw.println("| --- | --- | --- | --- | --- |");
-
-                Map<String, int[]> groupStats = new HashMap<>();
-                for (Map<String, Object> r : testResults) {
-                    String group = (String) r.get("group");
-                    if (group == null)
-                        group = "UNKNOWN";
-                    String status = (String) r.get("status");
-                    groupStats.putIfAbsent(group, new int[] { 0, 0, 0 });
-                    groupStats.get(group)[0]++; // Total
-                    if ("PASS".equals(status)) {
-                        groupStats.get(group)[1]++; // Passed
-                    } else {
-                        groupStats.get(group)[2]++; // Failed
-                    }
-                }
-
-                String[] groupOrder = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
-                        "G4_BrandMisspellings", "G5_DeepKeywords", "G6_EdgeCases", "G7_PriorityKeywords" };
-                for (String group : groupOrder) {
-                    int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
-                    double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
-                    pw.printf("| %s | %d | %d | %d | %.2f%% |%n", group, stats[0], stats[1], stats[2], rate);
+                pw.println("| Category | Keywords |");
+                pw.println("| --- | --- |");
+                Map<String, Integer> counts = categoryCounts();
+                for (String category : CATEGORY_ORDER) {
+                    pw.printf("| %s | %d |%n", category, counts.getOrDefault(category, 0));
                 }
                 pw.println();
 
-                // Failed tests detail — includes the exact API results returned, not just the
-                // pass/fail verdict, so a failure can be sent to developers as-is.
-                pw.println("## List of Failed Search Queries");
+                pw.println("## Keyword Results");
                 pw.println();
-                pw.println("The following keywords failed to return their expected results. \"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. accessories) for that query.");
+                pw.println("\"Actual Results Returned\" is the exact, untruncated API response (timepieces vs. "
+                        + "accessories) for that keyword.");
                 pw.println();
-                pw.println("| Group | Test Name | Keyword | Status | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- | --- | --- |");
-
+                pw.println("| Category | Keyword | Actual Results Returned | Error |");
+                pw.println("| --- | --- | --- | --- |");
                 for (Map<String, Object> r : testResults) {
-                    if (!"PASS".equals(r.get("status"))) {
-                        pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
-                                r.get("group"),
-                                r.get("name"),
-                                r.get("keyword"),
-                                r.get("status"),
-                                sanitizeCell(r.get("returned")),
-                                sanitizeCell(r.get("error")));
-                    }
-                }
-                pw.println();
-
-                // Full results detail — every executed query, regardless of pass/fail, with
-                // the complete, untruncated, categorized (timepieces vs. accessories) API
-                // response — the exact payload a developer needs, not just a pass/fail flag.
-                pw.println("## Full Results");
-                pw.println();
-                pw.println("Every executed search query and its outcome, including the exact, untruncated handles returned by the API, split by category.");
-                pw.println();
-                pw.println("| Group | Test Name | Keyword | Status | Actual Results Returned | Error |");
-                pw.println("| --- | --- | --- | --- | --- | --- |");
-
-                for (Map<String, Object> r : testResults) {
-                    pw.printf("| %s | %s | `%s` | %s | %s | %s |%n",
+                    pw.printf("| %s | `%s` | %s | %s |%n",
                             r.get("group"),
-                            r.get("name"),
                             r.get("keyword"),
-                            r.get("status"),
                             sanitizeCell(r.get("returned")),
                             sanitizeCell(r.get("error")));
                 }
             }
-            log.info("Search analysis report successfully written to: {}", reportFile.getAbsolutePath());
+            log.info("Search coverage report successfully written to: {}", reportFile.getAbsolutePath());
         } catch (Exception e) {
-            log.error("Failed to write search analysis report.", e);
+            log.error("Failed to write search coverage report.", e);
         }
-        // --- TO ATTACH THE REPORT TO ALLURE ---
+
         try {
-            // Read the generated markdown file into a String
             String markdownContent = new String(Files.readAllBytes(Paths.get(reportFile.getAbsolutePath())),
                     StandardCharsets.UTF_8);
-
-            // Attach it to the Allure Report with the text/markdown MIME type
             Allure.addAttachment("Search Keyword API Report", "text/markdown", markdownContent);
             log.info("Successfully attached Search Keyword API Report to Allure.");
         } catch (Exception e) {
@@ -912,47 +525,26 @@ public class SearchApiTest {
     }
 
     /**
-     * Builds the Excel (.xlsx) twin of the markdown report — Summary + group
-     * breakdown, Full Results, and Failures sheets — and attaches it to Allure so
-     * it downloads alongside the existing report.
+     * Builds the Excel (.xlsx) twin of the markdown report — Summary + category
+     * counts and a Results sheet — and attaches it to Allure.
      */
     private void generateExcelReport() {
         LinkedHashMap<String, String> summary = new LinkedHashMap<>();
-        summary.put("Total Queries Tested", String.valueOf(totalTests));
-        summary.put("Passed Matches", String.valueOf(passedTests));
-        summary.put("Failed Matches", String.valueOf(failedTests));
-        double passRate = totalTests > 0 ? ((double) passedTests / totalTests) * 100 : 0;
-        summary.put("Pass Rate", String.format("%.2f%%", passRate));
+        summary.put("Target Environment", baseUrl);
+        summary.put("Unique Keywords Tested", String.valueOf(totalTests));
 
-        String[] groupOrder = { "G1_ProductMatrix", "G2_GenericKeywords", "G3_CollectionSearch",
-                "G4_BrandMisspellings", "G5_DeepKeywords", "G6_EdgeCases", "G7_PriorityKeywords" };
-        Map<String, int[]> groupStats = new HashMap<>();
-        for (Map<String, Object> r : testResults) {
-            String group = (String) r.get("group");
-            if (group == null) {
-                group = "UNKNOWN";
-            }
-            groupStats.putIfAbsent(group, new int[] { 0, 0, 0 });
-            groupStats.get(group)[0]++;
-            if ("PASS".equals(r.get("status"))) {
-                groupStats.get(group)[1]++;
-            } else {
-                groupStats.get(group)[2]++;
-            }
-        }
+        Map<String, Integer> counts = categoryCounts();
         List<Object[]> breakdown = new ArrayList<>();
-        for (String group : groupOrder) {
-            int[] stats = groupStats.getOrDefault(group, new int[] { 0, 0, 0 });
-            double rate = stats[0] > 0 ? ((double) stats[1] / stats[0]) * 100 : 0;
-            breakdown.add(new Object[] { group, stats[0], stats[1], stats[2], String.format("%.2f%%", rate) });
+        for (String category : CATEGORY_ORDER) {
+            breakdown.add(new Object[] { category, counts.getOrDefault(category, 0) });
         }
 
         ExcelReportUtil.writeAndAttach(
                 "target/search_keyword_api_report.xlsx",
                 "Search Keyword API Report (Excel)",
-                "Group",
+                "Category",
                 summary,
-                new String[] { "Group", "Tested", "Passed", "Failed", "Pass Rate" },
+                new String[] { "Category", "Keywords" },
                 breakdown,
                 testResults);
     }
