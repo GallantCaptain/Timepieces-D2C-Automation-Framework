@@ -60,6 +60,7 @@ Last updated: 2026-07-13
 | BLK-002 | Dashboard flow execution is disabled when `GITHUB_TOKEN` is absent. | On-demand test launches unavailable. | PAT/secret with `actions:write` | TASK-DASH-001 |
 | BLK-003 | OTP verification has no attempt limit on staging based on committed security probe notes. | Authentication security exposure remains open until product/app fix. | Application-side rate limiting/lockout | ISSUE-002 |
 | BLK-004 | Java language server crash root cause is TBD. | IDE stability risk. | Investigation of `hs_err_pid4140.log`, JDK/JDT LS versions | ISSUE-006 |
+| BLK-006 | GitHub Pages is not enabled on `qa-automation`, so the published report links (dashboard + emailed) return 404. Confirmed the automation account lacks admin, so it cannot self-enable. | Stakeholders cannot open per-run Allure reports via the link. | Repo admin: Settings → Pages → Source = `gh-pages` branch, `/ (root)` | STAT-033, DEC-0012 |
 
 > BLK-005 (compile-breaking placeholder stubs in refactored page objects) was **resolved 2026-06-24** — stubs removed, methods added, `mvnw test-compile` → BUILD SUCCESS. See resolved ISSUE-008.
 

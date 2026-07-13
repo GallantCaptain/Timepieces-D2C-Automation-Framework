@@ -313,4 +313,14 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Updated `CurrentStatus.md` (added `STAT-030`..`STAT-035`), `decisions-log.md`
   (added `DEC-0011`..`DEC-0013`), `learnings.md` (added three symptom rows), and
   this changelog.
+- Confirmed the automation account cannot enable GitHub Pages (lacks admin on
+  `qa-automation`; `POST /pages` → 404). Logged `BLK-006`; enabling Pages is a
+  repo-admin handoff task. Verified the email→link→report mechanism end-to-end
+  against a locally-hosted report (the Pages link is correct but 404s until an
+  admin enables Pages).
+- Refreshed `Timepieces_Test_Execution_Cheatsheet.pdf` with the report email +
+  hosting commands (local run helper `run-local-headed.ps1`, `docker compose up
+  -d allure`, the GitHub Pages report link, `scripts/email_allure_report.py`) and
+  expanded local/Docker command coverage (raw + manual-email paths, handy
+  clean/compile/postgres commands).
 
