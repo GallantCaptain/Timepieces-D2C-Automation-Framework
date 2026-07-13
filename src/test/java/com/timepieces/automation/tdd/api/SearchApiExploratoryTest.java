@@ -14,9 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -32,10 +34,10 @@ import io.restassured.response.Response;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Timepieces Search API Exploratory Test Suite — 50 randomized tests.
+ * Timepieces Search API Exploratory Test Suite — 250 randomized tests.
  * <p>
  * This class reads all keywords from search_keywords.json, shuffles them
- * using a time-based seed (or configured seed), selects exactly 50
+ * using a time-based seed (or configured seed), selects exactly 250
  * combinations, and executes them against the target environment
  * (defaulting to production).
  * 
@@ -46,6 +48,14 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class SearchApiExploratoryTest {
+
+    /**
+     * How many randomized keyword/product combinations to sample and execute.
+     * The pool built from search_keywords.json (every keyword across all 40
+     * products × 4 categories) is well over a thousand instances, so this many
+     * distinct samples is comfortably available.
+     */
+    private static final int TARGET_TEST_COUNT = 250;
 
     static {
         // Set env system property to production BEFORE ConfigReader loads, if not
@@ -185,17 +195,15 @@ public class SearchApiExploratoryTest {
 
         Collections.shuffle(allInstances, new Random(randomSeed));
 
-        // Select 50 unique keywords (mapping each to its expected handle)
-        int count = 0;
-        for (KeywordTestInstance instance : allInstances) {
-            if (count >= 50) {
-                break;
-            }
-            selectedInstances.add(instance);
-            count++;
+        // Select up to TARGET_TEST_COUNT keyword instances (each mapped to its
+        // expected product handle). If the pool is somehow smaller, take all of it.
+        int limit = Math.min(TARGET_TEST_COUNT, allInstances.size());
+        for (int i = 0; i < limit; i++) {
+            selectedInstances.add(allInstances.get(i));
         }
 
-        log.info("Selected 50 exploratory keyword combinations for execution.");
+        log.info("Selected {} exploratory keyword combinations for execution (from a pool of {}).",
+                selectedInstances.size(), allInstances.size());
     }
 
     private void addInstances(List<KeywordTestInstance> list, List<String> kws, String handle, String name,
@@ -258,13 +266,8 @@ public class SearchApiExploratoryTest {
             }
 
             JsonPath jp = searchResponse.jsonPath();
-            List<String> timepieces = jp.getList("data.timepieces.handle");
-            List<String> accessories = jp.getList("data.accessories.handle");
-
-            if (timepieces == null)
-                timepieces = List.of();
-            if (accessories == null)
-                accessories = List.of();
+            List<String> timepieces = collectReturnedProducts(jp, "data.timepieces");
+            List<String> accessories = collectReturnedProducts(jp, "data.accessories");
 
             return new SearchResult(200, timepieces, accessories, null);
 
@@ -338,6 +341,71 @@ public class SearchApiExploratoryTest {
                 result.timepieces.size(), tp, result.accessories.size(), ac);
     }
 
+    /**
+     * Collects the distinct products the API returned under {@code basePath}
+     * (e.g. {@code data.timepieces}), reading BOTH the Shopify-style handle and
+     * the display title so the complete result set is captured whichever format
+     * the API sends back. Entries that refer to the same product (a handle and
+     * its title) are collapsed via {@link #normalizeIdentifier(String)}, keeping
+     * the handle for display when present. Returns an empty list if the path is
+     * absent.
+     */
+    private List<String> collectReturnedProducts(JsonPath jp, String basePath) {
+        List<String> handles = jp.getList(basePath + ".handle");
+        List<String> titles = jp.getList(basePath + ".title");
+        List<String> merged = new ArrayList<>();
+        Set<String> seenNormalized = new HashSet<>();
+        if (handles != null) {
+            for (String h : handles) {
+                if (h != null && !h.isBlank() && seenNormalized.add(normalizeIdentifier(h))) {
+                    merged.add(h);
+                }
+            }
+        }
+        if (titles != null) {
+            for (String t : titles) {
+                if (t != null && !t.isBlank() && seenNormalized.add(normalizeIdentifier(t))) {
+                    merged.add(t);
+                }
+            }
+        }
+        return merged;
+    }
+
+    /**
+     * Canonicalizes a product identifier so a handle
+     * ("butterfly-clasp-gold-18mm") and its display name
+     * ("Butterfly Clasp — Gold (18mm)") compare as equal: lowercases, then
+     * replaces every run of non-alphanumeric characters (hyphens, em dashes,
+     * parentheses, spaces, …) with a single space, and trims. Both examples
+     * collapse to "butterfly clasp gold 18mm".
+     */
+    private static String normalizeIdentifier(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
+    }
+
+    /**
+     * Format-insensitive containment check: true if any entry in
+     * {@code returned} refers to the same product as {@code expected}, comparing
+     * on the normalized form (see {@link #normalizeIdentifier(String)}) so a
+     * handle-vs-display-name difference does not cause a false miss.
+     */
+    private boolean containsNormalized(List<String> returned, String expected) {
+        String target = normalizeIdentifier(expected);
+        if (target.isEmpty()) {
+            return false;
+        }
+        for (String candidate : returned) {
+            if (normalizeIdentifier(candidate).equals(target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @DataProvider(name = "exploratorySearchData", parallel = true)
     public Object[][] exploratorySearchData() {
         Object[][] data = new Object[selectedInstances.size()][1];
@@ -352,7 +420,7 @@ public class SearchApiExploratoryTest {
         SearchResult result = performSearch(instance.keyword);
         throttle();
 
-        boolean found = result.allHandles().contains(instance.expectedHandle);
+        boolean found = containsNormalized(result.allHandles(), instance.expectedHandle);
         String status = found ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
 
         recordResult(instance.category, instance.productName, instance.keyword, status,
@@ -387,7 +455,9 @@ public class SearchApiExploratoryTest {
                 totalTests, passedTests, failedTests, String.format("%.2f", passRate));
         log.info("========================================");
 
-        assertThat(totalTests).as("Exactly 50 exploratory search tests should have executed.").isEqualTo(50);
+        assertThat(totalTests)
+                .as("All %d selected exploratory search tests should have executed.", selectedInstances.size())
+                .isEqualTo(selectedInstances.size());
     }
 
     private String sanitizeCell(Object value) {

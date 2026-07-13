@@ -13,8 +13,10 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -194,13 +196,8 @@ public class SearchApiTest {
             }
 
             JsonPath jp = searchResponse.jsonPath();
-            List<String> timepieces = jp.getList("data.timepieces.handle");
-            List<String> accessories = jp.getList("data.accessories.handle");
-
-            if (timepieces == null)
-                timepieces = List.of();
-            if (accessories == null)
-                accessories = List.of();
+            List<String> timepieces = collectReturnedProducts(jp, "data.timepieces");
+            List<String> accessories = collectReturnedProducts(jp, "data.accessories");
 
             return new SearchResult(200, timepieces, accessories, null);
 
@@ -280,6 +277,71 @@ public class SearchApiTest {
                 result.timepieces.size(), tp, result.accessories.size(), ac);
     }
 
+    /**
+     * Collects the distinct products the API returned under {@code basePath}
+     * (e.g. {@code data.timepieces}), reading BOTH the Shopify-style handle and
+     * the display title so the complete result set is captured whichever format
+     * the API sends back. Entries that refer to the same product (a handle and
+     * its title) are collapsed via {@link #normalizeIdentifier(String)}, keeping
+     * the handle for display when present. Returns an empty list if the path is
+     * absent.
+     */
+    private List<String> collectReturnedProducts(JsonPath jp, String basePath) {
+        List<String> handles = jp.getList(basePath + ".handle");
+        List<String> titles = jp.getList(basePath + ".title");
+        List<String> merged = new ArrayList<>();
+        Set<String> seenNormalized = new HashSet<>();
+        if (handles != null) {
+            for (String h : handles) {
+                if (h != null && !h.isBlank() && seenNormalized.add(normalizeIdentifier(h))) {
+                    merged.add(h);
+                }
+            }
+        }
+        if (titles != null) {
+            for (String t : titles) {
+                if (t != null && !t.isBlank() && seenNormalized.add(normalizeIdentifier(t))) {
+                    merged.add(t);
+                }
+            }
+        }
+        return merged;
+    }
+
+    /**
+     * Canonicalizes a product identifier so a handle
+     * ("butterfly-clasp-gold-18mm") and its display name
+     * ("Butterfly Clasp — Gold (18mm)") compare as equal: lowercases, then
+     * replaces every run of non-alphanumeric characters (hyphens, em dashes,
+     * parentheses, spaces, …) with a single space, and trims. Both examples
+     * collapse to "butterfly clasp gold 18mm".
+     */
+    private static String normalizeIdentifier(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
+    }
+
+    /**
+     * Format-insensitive containment check: true if any entry in
+     * {@code returned} refers to the same product as {@code expected}, comparing
+     * on the normalized form (see {@link #normalizeIdentifier(String)}) so a
+     * handle-vs-display-name difference does not cause a false miss.
+     */
+    private boolean containsNormalized(List<String> returned, String expected) {
+        String target = normalizeIdentifier(expected);
+        if (target.isEmpty()) {
+            return false;
+        }
+        for (String candidate : returned) {
+            if (normalizeIdentifier(candidate).equals(target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================================================================================
     // GROUP 1: Product-Specific Matrix Tests (40 tests)
     // ==================================================================================
@@ -337,7 +399,7 @@ public class SearchApiTest {
                 continue;
             }
 
-            if (result.allHandles().contains(handle)) {
+            if (containsNormalized(result.allHandles(), handle)) {
                 catsPassed++;
             } else {
                 failDetails.append(String.format("[%s] '%s' not found for keyword '%s' (got %d results); ",
@@ -458,7 +520,7 @@ public class SearchApiTest {
         List<String> matchedHandles = new ArrayList<>();
 
         for (String expected : expectedHandles) {
-            if (allReturned.contains(expected)) {
+            if (containsNormalized(allReturned, expected)) {
                 foundAny = true;
                 matchedHandles.add(expected);
             }
@@ -582,7 +644,7 @@ public class SearchApiTest {
         SearchResult result = performSearch(keyword);
         throttle();
 
-        boolean found = result.allHandles().contains(expectedHandle);
+        boolean found = containsNormalized(result.allHandles(), expectedHandle);
         String status = found ? "PASS" : (result.error != null ? "API_ERROR" : "FAIL");
 
         recordResult("G5_DeepKeywords", productName + " " + label, keyword, status,
