@@ -1,0 +1,26 @@
+{
+  "name": "timepieces-automation-ts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright/TypeScript proof-of-concept and migration template for the Timepieces Selenium/Java automation framework.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:bdd": "cucumber-js",
+    "test:bdd:dry": "cucumber-js --dry-run",
+    "test:tdd": "playwright test",
+    "test:tdd:list": "playwright test --list",
+    "test:all": "npm run typecheck && npm run test:bdd && npm run test:tdd"
+  },
+  "author": "Avinash Rath",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.0.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.0",
+    "dotenv": "^17.4.2",
+    "playwright": "^1.61.1",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3"
+  }
+}
