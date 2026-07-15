@@ -20,11 +20,17 @@ import lombok.extern.log4j.Log4j2;
  * than duplicated per family.
  *
  * <p>
- * LOCATOR SOURCE: mapped from the 2026-07-15 live PDP screenshots. No element
- * carries a {@code data-testid}, so every locator is a best-effort fallback
- * (placeholder / text-anchor) tagged {@code // ROLLOUT-GAP · VERIFY} — these
- * should be confirmed by a targeted scrape that actually opens the form (the
- * chunk-1E scrape captured the CTA but not the form internals).
+ * LOCATOR SOURCE: confirmed by the targeted verify scrape (TASK-PDP-005,
+ * {@code docs/scrape-artifacts/phase1/verify-register-share.md}, 2026-07-15). No
+ * element carries a {@code data-testid}, so the locators are placeholder /
+ * semantic / text-anchor fallbacks tagged {@code // ROLLOUT-GAP}. NOTE: the modal
+ * container class ({@code div.fixed.inset-0.z-[9999]}) is shared with the 3D
+ * viewer, so the heading — not the container — confirms this modal is open.
+ *
+ * <p>
+ * REQUIRED-FIELD BEHAVIOR: the submit button stays {@code disabled} until Full
+ * name, Email, and Phone are all filled AND the consent checkbox is ticked (see
+ * {@link #isSubmitEnabled()}).
  *
  * <p>
  * SUBMISSION WARNING: {@link #submit()} registers REAL interest against the
@@ -55,18 +61,17 @@ public class PdpRegisterInterestModalComponent extends BasePage<PdpRegisterInter
     // Trigger = the sticky "Register Interest" CTA on the PDP (title-case).
     private final By ctaTrigger = By.xpath(
             "//div[contains(@class,'desktop-sticky-sidebar')]//button[contains(normalize-space(),'Register Interest')]"); // ROLLOUT-GAP: text-anchor
-    // Modal heading confirms the form opened.
-    private final By modalHeading = By.xpath("//*[normalize-space()='Register your interest']"); // ROLLOUT-GAP · VERIFY: text-anchor
-    private final By fullNameInput = By.cssSelector("input[placeholder='Enter full name']"); // ROLLOUT-GAP · VERIFY: placeholder
-    private final By emailInput = By.cssSelector("input[placeholder='Enter email address']"); // ROLLOUT-GAP · VERIFY: placeholder
-    private final By phoneInput = By.cssSelector("input[placeholder='Enter phone number']"); // ROLLOUT-GAP · VERIFY: placeholder
+    // Modal heading (h2) confirms the form opened (container class is shared with 3D viewer).
+    private final By modalHeading = By.xpath("//h2[normalize-space()='Register your interest']"); // ROLLOUT-GAP: text-anchor
+    private final By fullNameInput = By.cssSelector("input[placeholder='Enter full name']"); // ROLLOUT-GAP: placeholder
+    private final By emailInput = By.cssSelector("input[placeholder='Enter email address']"); // ROLLOUT-GAP: placeholder
+    private final By phoneInput = By.cssSelector("input[placeholder='Enter phone number']"); // ROLLOUT-GAP: placeholder
+    // Country toggle shows the flag + dial code (e.g. "🇮🇳+91"); scoped to the open modal via the heading.
     private final By phoneCountryToggle = By.xpath(
-            "//*[normalize-space()='Register your interest']/following::button[contains(normalize-space(),'+')][1]"); // ROLLOUT-GAP · VERIFY: structural
+            "//h2[normalize-space()='Register your interest']/following::button[contains(normalize-space(),'+91')][1]"); // ROLLOUT-GAP: text-anchor
     private final By agreeCheckbox = By.xpath(
-            "//*[normalize-space()='Register your interest']/following::input[@type='checkbox'][1]"); // ROLLOUT-GAP · VERIFY: structural
-    // Submit is sentence-case ("Register interest") — distinct from the title-case CTA.
-    private final By submitButton = By.xpath(
-            "//button[normalize-space()='Register interest']"); // ROLLOUT-GAP · VERIFY: text-anchor
+            "//h2[normalize-space()='Register your interest']/following::input[@type='checkbox'][1]"); // ROLLOUT-GAP: structural
+    private final By submitButton = By.cssSelector("button[type='submit']"); // ROLLOUT-GAP: semantic
     private final By closeButton = By.cssSelector("button[aria-label='Close']"); // ROLLOUT-GAP: aria
 
     // ==========================================
@@ -160,7 +165,8 @@ public class PdpRegisterInterestModalComponent extends BasePage<PdpRegisterInter
     }
 
     /**
-     * B.8 Submits the register-interest form.
+     * B.8 Submits the register-interest form. The submit button is disabled until
+     * all fields are filled AND {@link #acceptConsent()} has been called.
      * <p>
      * WARNING: this registers REAL interest against the backend. Do NOT call
      * against production in automated runs — see the class-level warning.
@@ -213,5 +219,20 @@ public class PdpRegisterInterestModalComponent extends BasePage<PdpRegisterInter
      */
     public boolean isSubmitButtonDisplayed() {
         return isDisplayed(submitButton);
+    }
+
+    /**
+     * V.4 Verifies the submit button is currently enabled. The form gates this on
+     * all fields being filled AND the consent checkbox being ticked, so this is
+     * false until {@link #acceptConsent()} (and the field entries) are done —
+     * useful for asserting the client-side validation. No-wait check.
+     *
+     * @return true if the submit button is present and enabled.
+     */
+    public boolean isSubmitEnabled() {
+        return driver.findElements(submitButton).stream()
+                .findFirst()
+                .map(btn -> btn.isEnabled() && btn.getAttribute("disabled") == null)
+                .orElse(false);
     }
 }

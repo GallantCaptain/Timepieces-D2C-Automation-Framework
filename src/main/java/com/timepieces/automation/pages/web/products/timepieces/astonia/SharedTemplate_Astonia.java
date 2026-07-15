@@ -14,18 +14,18 @@ import lombok.extern.log4j.Log4j2;
  * family pages.
  *
  * <p>
- * ASTONIA SHAPE (Phase-0 scrape, 2026-07-10): lume ✔, 3D ✔ (canvas
- * {@code aria-label='Astonia'}; ABSENT on Astonia Trophy Gold). Astonia products
- * are fully allocated, so the primary CTA renders as a DISABLED
- * "Interest submitted" (see {@link #isInterestSubmittedState()}) rather than the
- * enabled "Register Interest" of the active families — so the inherited
- * register-interest methods do not apply while Astonia is sold out. Astonia also
- * uses different title/gallery markup, overridden below.
+ * ASTONIA SHAPE: lume ✔, 3D ✔ (canvas {@code aria-label='Astonia'}; ABSENT on
+ * Astonia Trophy Gold). The 2026-07-15 verify scrape confirmed Astonia behaves
+ * like the active families — the primary CTA is the enabled "Register Interest"
+ * (it opens the shared register-interest form), and the share button, floating
+ * CTA, and Book Consultation link are all present. (The Phase-0 scrape's
+ * "Interest submitted / disabled" reading was inaccurate and has been removed.)
+ * Astonia only differs in its title/gallery markup, overridden below.
  *
  * <p>
- * NOTE: Astonia's share / floating-CTA / consultation state was not captured in
- * the Phase-0 scrape (it predates those checklist items) — a re-scrape is tracked
- * under TASK-PDP-004 / TASK-PDP-005.
+ * NOTE: the title/gallery overrides are from the Phase-0 scrape and are not yet
+ * re-verified; a full Astonia re-scrape (matching the other families) would
+ * confirm them.
  *
  * @version 1.0
  * @author Avinash Rath
@@ -35,9 +35,6 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class SharedTemplate_Astonia<SELF extends SharedTemplate_Astonia<SELF>> extends SharedTimepiecePdp<SELF> {
-
-    // Astonia's sold-out CTA — disabled "Interest submitted".
-    private final By interestSubmittedButton = By.cssSelector(".desktop-sticky-sidebar button[disabled]"); // ROLLOUT-GAP: structural
 
     // ==========================================
     // Constructor
@@ -64,25 +61,5 @@ public abstract class SharedTemplate_Astonia<SELF extends SharedTemplate_Astonia
     @Override
     protected By imageGalleryLocator() {
         return By.cssSelector("div.w-full.aspect-square.bg-white"); // ROLLOUT-GAP: semantic-class
-    }
-
-    // ==========================================
-    // VERIFICATION METHODS (Astonia-specific)
-    // ==========================================
-    /**
-     * Verifies the product is in the sold-out "Interest submitted" state — the
-     * primary CTA is disabled and labelled accordingly. No-wait check.
-     *
-     * @return true if the CTA is disabled and reads "Interest submitted".
-     */
-    public boolean isInterestSubmittedState() {
-        return driver.findElements(interestSubmittedButton).stream()
-                .findFirst()
-                .map(btn -> {
-                    String text = btn.getText() == null ? "" : btn.getText().trim();
-                    boolean disabled = btn.getAttribute("disabled") != null || !btn.isEnabled();
-                    return disabled && text.toLowerCase().contains("interest");
-                })
-                .orElse(false);
     }
 }

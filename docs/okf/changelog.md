@@ -542,3 +542,26 @@ This changelog is append-only. New entries must be added chronologically and mus
   state still needs a re-scrape (TASK-PDP-005).
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (114 main + 28 test).
   Added `STAT-043`; `TASK-PDP-004` → Completed. Next: Phase 2 (accessory PDPs).
+
+### Applied the register/share verify scrape (TASK-PDP-005) + Astonia correction
+
+- Ran the targeted verify scrape (`docs/scrape-artifacts/phase1/verify-register-share.md`)
+  and replaced the best-effort `ROLLOUT-GAP · VERIFY` locators with confirmed ones:
+  - Share button: `button[aria-label='Share']` → `button[aria-label='Share product']`
+    (opens the native OS share sheet via `navigator.share`; no in-page fallback).
+  - Register-interest form (`PdpRegisterInterestModalComponent`): submit →
+    `button[type='submit']`; heading scoped to `h2`; phone country toggle scoped
+    to the open modal via `+91`; name/email/phone placeholders confirmed. The
+    modal container class is shared with the 3D viewer, so the heading (not the
+    container) confirms the modal. Documented the required-field rule (submit
+    disabled until all fields + consent) and added `isSubmitEnabled()`.
+- CORRECTION: the verify scrape found **Astonia is NOT sold out** — its primary
+  CTA is the enabled "Register Interest" that opens the register-interest form,
+  and the share button, floating bar, and Book Consultation link are all present
+  (same as the active families). Removed `SharedTemplate_Astonia`'s inaccurate
+  `isInterestSubmittedState()` + disabled-CTA locator (no external callers) and
+  corrected the Astonia notes in `SharedTimepiecePdp`. Astonia's title/gallery
+  overrides remain from Phase-0 and are flagged as not-yet-re-verified.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (114 main + 28 test).
+  Added `STAT-044`; `TASK-PDP-005` → Completed. Also wrote the Phase-2 accessories
+  discovery brief (`docs/scrape-artifacts/phase2/BRIEF-2-accessories-discovery.md`).

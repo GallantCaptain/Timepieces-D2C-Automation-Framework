@@ -40,9 +40,8 @@ import lombok.extern.log4j.Log4j2;
  * 2026-07-10/15 production scrapes ({@code docs/scrape-artifacts/}). The PDP core
  * carries NO {@code data-testid}s, so locators fall back to aria-labels /
  * semantic classes / text anchors, tagged {@code // ROLLOUT-GAP}. The
- * register-interest form fields and the share button are best-effort (mapped from
- * live screenshots), tagged {@code // ROLLOUT-GAP · VERIFY} pending a targeted
- * scrape (TASK-PDP-005).
+ * register-interest form fields and the share button were confirmed by the
+ * targeted verify scrape (TASK-PDP-005, {@code verify-register-share.md}).
  *
  * FLUENT INTERFACE: business methods that remain on the page return {@code this}
  * (typed as the concrete subclass via CRTP) for chaining.
@@ -138,8 +137,8 @@ public abstract class SharedTimepiecePdp<SELF extends SharedTimepiecePdp<SELF>> 
     private final By productPrice = By.cssSelector("div.product-price span"); // ROLLOUT-GAP: structural
 
     // Primary CTA — "Register Interest" (title-case), enabled even at FULLY
-    // ALLOCATED for the active families. Astonia (sold out) shows a disabled
-    // "Interest submitted" instead, so this simply won't match there.
+    // ALLOCATED. Present and enabled on ALL six families (the verify scrape
+    // confirmed Astonia is NOT sold out — it shows the same enabled CTA).
     private final By registerInterestButton = By.xpath(
             "//div[contains(@class,'desktop-sticky-sidebar')]//button[contains(normalize-space(),'Register Interest')]"); // ROLLOUT-GAP: text-anchor
     private final By floatingRegisterInterestButton = By.xpath(
@@ -149,9 +148,9 @@ public abstract class SharedTimepiecePdp<SELF extends SharedTimepiecePdp<SELF>> 
     private final By wishlistButton = By.cssSelector(".desktop-sticky-sidebar button[title='Add to wishlist']"); // ROLLOUT-GAP: aria/title
     private final By wishlistButtonActive = By.cssSelector(".desktop-sticky-sidebar button[title='Remove from wishlist']"); // ROLLOUT-GAP: aria/title
 
-    // Share button — opens the browser/OS share sheet (native; only the trigger is
-    // automatable). Best-effort selector, confirm via targeted scrape.
-    private final By sharePdpButton = By.cssSelector("button[aria-label='Share']"); // ROLLOUT-GAP · VERIFY: aria
+    // Share button — opens the native OS share sheet via navigator.share (only the
+    // trigger is automatable; no in-page fallback). Confirmed by the verify scrape.
+    private final By sharePdpButton = By.cssSelector("button[aria-label='Share product']"); // ROLLOUT-GAP: aria
 
     // Lume (light/night) toggle — present on every family EXCEPT Manifesta.
     private final By lumeToggleButton = By.cssSelector("button[aria-label='Show lume view']"); // ROLLOUT-GAP: aria
@@ -448,9 +447,9 @@ public abstract class SharedTimepiecePdp<SELF extends SharedTimepiecePdp<SELF>> 
     }
 
     /**
-     * V.6 Verifies the primary "Register Interest" CTA is present and enabled
-     * (the active families keep it clickable even when fully allocated). No-wait
-     * check — returns false for the sold-out Astonia family (no matching CTA).
+     * V.6 Verifies the primary "Register Interest" CTA is present and enabled. All
+     * six families keep it clickable even when fully allocated (the verify scrape
+     * confirmed Astonia included). No-wait check.
      *
      * @return true if the CTA is present and enabled.
      */
