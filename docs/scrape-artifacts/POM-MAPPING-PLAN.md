@@ -158,12 +158,21 @@ Hierarchy: `SharedAccessoryPdp` → (`SharedTemplate_WatchCase`,
 
 ## Phase 3 — Content & account-adjacent pages (14 files)
 
-| Chunk | Group | Files | Notes |
-| --- | --- | --- | --- |
-| 3A | **Legal** | Guarantee, Privacy, Refund, Shipping, TermsOfService (5) | static text; light heading/section locators |
-| 3B | **Orders** (auth-gated) | OrderHistory, OrderDetails, TrackOrders (partial), Wishlist (4) | needs an **authenticated session** — Antigravity logs in via the human-solved Cloudflare + OTP relay used for the pilot |
-| 3C | **Other content** | TimepiecesWall, ShareYourMoment (partial), SiteMap, Updates (4) | |
-| 3D | **Friends & Partners** | FriendsAndPartners (1) | compile-fixed in Phase 0 groundwork; map real content |
+Detailed plan (2026-07-15). Two-thirds are **public** and easy; the Orders +
+Wishlist chunk is **auth-gated** and left last. Execution order:
+**3A → 3C → 3D → 3B** (public first; auth-gated last).
+
+| Chunk | Group | Files | Auth | URL discovery | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 3A | **Legal** | `GuaranteePolicyPage`, `PrivacyPolicyPage`, `RefundPolicyPage`, `ShippingPolicyPage`, `TermsOfServicePage` (5) | public | scrape needs the real paths (no `PAGE_PATH` set) — follow the **footer legal links** (`a[data-testid='footer-legal']`); likely `/policies/…` | Static prose. Candidate `SharedPolicyPage` base if the 5 share one template (heading + prose sections + last-updated + maybe the same side-drawer as the accessory Return/Guarantee). |
+| 3C | **Other content** | `TimepiecesWallPage` (`/timepieces-wall`), `ShareYourMomentPage` (`/timepieces-wall/share`, partial 12 loc), `SiteMapPage` (`/sitemap`), `UpdatesPage` (`/updates`) (4) | public | paths known (in scaffolds) | Mixed: TimepiecesWall = UGC/social wall; ShareYourMoment = an upload/submission **form**; SiteMap = link index; Updates = news list. Confirm ShareYourMoment isn't login-gated. |
+| 3D | **Friends & Partners** | `FriendsAndPartners` (`/friends-and-partners`) (1) | public | path known | Partner directory (the scaffold held ~90 raw partner URLs). Map the partner-link grid + any category filter. |
+| 3B | **Orders + Wishlist** (auth-gated) | `OrderHistoryPage`, `OrderDetailsPage`, `TrackOrdersPage` (partial 4 loc), `WishlistPage` (4) | **login required** | paths behind account menu; discover after login | Needs an **authenticated Antigravity session** — log in via the human-solved Cloudflare + OTP relay (as in the pilot). Highest value: `WishlistPage` unblocks the `WishlistSteps` `PendingException` glue; Orders unblock order-management scenarios. `AccountPage` (partial, 3 loc/5 m) can be finished here too. |
+
+Per-chunk loop is unchanged (brief → Antigravity scrape → map → compile → OKF →
+commit). AFTER all four chunks are mapped: author Phase-3 **test cases** (BDD
+`.feature` + TDD TestNG) and push to Zephyr, THEN wire the step definitions —
+matching the accessories flow (map → test cases → glue).
 
 ## Phase 4 — Timepieces World microsite (8 files)
 
