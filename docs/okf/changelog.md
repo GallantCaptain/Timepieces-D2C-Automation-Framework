@@ -650,3 +650,18 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: clean compile (118 main + 30 test) → BUILD SUCCESS; a Cucumber
   dry-run over `@Accessories` resolved every step to glue with ZERO undefined
   steps. Added `STAT-048`.
+
+### Phase 3 chunk 3A — Legal / policy pages
+
+- Antigravity discovered the policy URLs via the footer legal link: all 5 live at
+  `/policies/<slug>` (guarantee-policy, privacy-policy, refund-policy,
+  shipping-policy, terms-of-service) and share ONE template.
+- Built `SharedPolicyPage` (prose content block `div.prose.prose-lg.prose-invert`,
+  main heading via first-h1/h2 [Shipping's title is an h2, not h1], last-updated
+  line, section-heading count, "Back to Policies" / "View all policies" nav,
+  contact mailto). Filled the 5 policy classes with real `PAGE_PATH` +
+  `PAGE_TITLE` ("<Policy> | Timepieces"). No `data-testid`s on the policy body — all
+  fallbacks tagged `ROLLOUT-GAP`.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (119 main + 30 test).
+  Added `STAT-049`. Phase 3 next: 3C other content, 3D Friends & Partners, then
+  3B orders + wishlist (auth-gated).
