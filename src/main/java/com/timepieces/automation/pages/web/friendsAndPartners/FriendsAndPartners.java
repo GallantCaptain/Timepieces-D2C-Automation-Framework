@@ -53,15 +53,27 @@ public class FriendsAndPartners extends StoreFrontBasePage<FriendsAndPartners> {
     // The Page Path Variable
     private static final String PAGE_PATH = "/friends-and-partners";
 
-    // The Page Title Variable {Keep whether Unique or Not}
-    // Decide if it needs to be added to assertions if not unique
-    private static final String PAGE_TITLE = "Timepieces | Friends & Partners";
+    // The Page Title Variable (confirmed by the 2026-07-16 scrape).
+    private static final String PAGE_TITLE = "Friends & Partners | Timepieces Watches";
 
     // ==========================================
     // Constructor
     // ==========================================
     public FriendsAndPartners(WebDriver driver) {
         super(driver);
+    }
+
+    // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     // ==========================================
@@ -162,6 +174,21 @@ public class FriendsAndPartners extends StoreFrontBasePage<FriendsAndPartners> {
      * https://www.timepieces-d2c.example/policies
      * https://www.timepieces-d2c.example/sitemap
      */
+    // The main "Friends & Partners" heading.
+    private final By mainHeading = By.xpath("//h1[contains(normalize-space(),'Friends & Partners')]"); // ROLLOUT-GAP: text-anchor
+    // The intro paragraph under the heading.
+    private final By introText = By.xpath("//p[contains(normalize-space(),'The individuals who embody')]"); // ROLLOUT-GAP: text-anchor
+    // All partner profile cards (each links to /friends-and-partners/<slug>).
+    private final By profileCards = By.cssSelector("a[href^='/friends-and-partners/']"); // ROLLOUT-GAP: structural
+    // The video-icon badge that marks cards which have an associated video.
+    private final By videoBadges = By.cssSelector("a[href^='/friends-and-partners/'] div.absolute.top-3.left-3"); // ROLLOUT-GAP: utility-class
+    // Dynamic: a section filter TAB button by its exact label (Voices / Founders & Makers / Thought Leaders).
+    private final By sectionTabTemplate = By.xpath("//button[normalize-space()='%s']"); // ROLLOUT-GAP: text-anchor
+    // Dynamic: a section HEADING (h2) by its exact label (may be visually hidden per active filter).
+    private final By sectionHeadingTemplate = By.xpath("//h2[normalize-space()='%s']"); // ROLLOUT-GAP: text-anchor
+    // Dynamic: a profile card by the person's name (its first inner h2).
+    private final By profileCardByNameTemplate = By.xpath("//a[starts-with(@href,'/friends-and-partners/')][.//h2[normalize-space()='%s']]"); // ROLLOUT-GAP: text-anchor
+
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
@@ -169,8 +196,120 @@ public class FriendsAndPartners extends StoreFrontBasePage<FriendsAndPartners> {
     // ==========================================
     // BUSINESS LIBRARY
     // ==========================================
+    /**
+     * B.1 Clicks a section filter tab by its label to filter the grid
+     * ("Voices", "Founders & Makers", "Thought Leaders").
+     *
+     * @param sectionLabel the exact tab label.
+     * @return this page instance for method chaining.
+     */
+    public FriendsAndPartners selectSection(String sectionLabel) {
+        log.info("Selecting Friends & Partners section: [{}]", sectionLabel);
+        clickElement(formatLocator(sectionTabTemplate, sectionLabel));
+        return this;
+    }
+
+    /**
+     * B.2 Clicks a partner profile card by the person's name, navigating to their
+     * profile page.
+     *
+     * @param name the exact person name shown on the card.
+     * @return this page instance for method chaining.
+     */
+    public FriendsAndPartners clickProfile(String name) {
+        log.info("Opening partner profile: [{}]", name);
+        clickElement(formatLocator(profileCardByNameTemplate, name));
+        return this;
+    }
+
+    /**
+     * B.3 Returns the main heading ("Friends & Partners") text.
+     *
+     * @return the trimmed heading text.
+     */
+    public String getMainHeadingText() {
+        return getText(mainHeading);
+    }
 
     // ==========================================
     // VERIFICATION METHODS
     // ==========================================
+    /**
+     * V.1 Verifies the browser title matches {@code Friends & Partners | Timepieces
+     * Watches}.
+     *
+     * @return true if the document title contains the expected page title.
+     */
+    public boolean isPageTitleCorrect() {
+        String actual = driver.getTitle();
+        return actual != null && actual.contains(PAGE_TITLE);
+    }
+
+    /**
+     * V.2 Verifies the main heading is displayed.
+     *
+     * @return true if the main heading is displayed.
+     */
+    public boolean isMainHeadingDisplayed() {
+        return isDisplayed(mainHeading);
+    }
+
+    /**
+     * V.3 Verifies the intro paragraph is displayed.
+     *
+     * @return true if the intro text is displayed.
+     */
+    public boolean isIntroDisplayed() {
+        return isDisplayed(introText);
+    }
+
+    /**
+     * V.4 Counts the partner profile cards currently rendered.
+     *
+     * @return the number of profile cards.
+     */
+    public int getProfileCardCount() {
+        return driver.findElements(profileCards).size();
+    }
+
+    /**
+     * V.5 Counts the cards carrying a video badge (i.e. profiles that have a
+     * video).
+     *
+     * @return the number of video-badged cards.
+     */
+    public int getVideoBadgeCount() {
+        return driver.findElements(videoBadges).size();
+    }
+
+    /**
+     * V.6 Verifies a section filter tab with the given label exists.
+     *
+     * @param sectionLabel the exact tab label.
+     * @return true if the tab is present.
+     */
+    public boolean hasSectionTab(String sectionLabel) {
+        return !driver.findElements(formatLocator(sectionTabTemplate, sectionLabel)).isEmpty();
+    }
+
+    /**
+     * V.7 Verifies a section heading with the given label is present in the DOM
+     * (it may be visually hidden depending on the active filter).
+     *
+     * @param sectionLabel the exact section heading label.
+     * @return true if the section heading is present.
+     */
+    public boolean hasSectionHeading(String sectionLabel) {
+        return !driver.findElements(formatLocator(sectionHeadingTemplate, sectionLabel)).isEmpty();
+    }
+
+    /**
+     * V.8 Verifies a profile card for the given person name is present.
+     *
+     * @param name the exact person name.
+     * @return true if the profile card is present.
+     */
+    public boolean hasProfileCard(String name) {
+        return !driver.findElements(formatLocator(profileCardByNameTemplate, name)).isEmpty();
+    }
 }

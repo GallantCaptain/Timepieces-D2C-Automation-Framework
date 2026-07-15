@@ -698,3 +698,40 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-050`.
   Phase 3 next: 3D Friends & Partners (public), then 3B orders + wishlist
   (auth-gated — needs the authenticated Antigravity session).
+
+### Phase 3 chunk 3D — Friends & Partners
+
+- Antigravity mapped the public Friends & Partners landing page + one
+  representative partner profile (`kush-maini` / `vivek-oberoi`).
+- `FriendsAndPartners` (`/friends-and-partners`): the scrape corrected two
+  scaffold assumptions — the real title is `Friends & Partners | Timepieces Watches`
+  (not "Timepieces | Friends & Partners"), and the scaffold was MISSING the
+  `getPagePath()`/`getPageTitle()` overrides (it had the constants but never
+  wired them), so `open()` was navigating to the bare base URL — both fixed. The
+  3 "sections" (Founders & Makers, Thought Leaders, Voices) are filter TABS with
+  matching `h2` headings; 69 profile cards (`a[href^='/friends-and-partners/']`,
+  name = first inner `h2`, role = second); a video badge
+  (`div.absolute.top-3.left-3`) marks the cards that have a video. Methods:
+  `selectSection`, `clickProfile`, `getProfileCardCount`, `getVideoBadgeCount`,
+  `hasSectionTab`, `hasSectionHeading`, `hasProfileCard`.
+- NEW `PartnerProfilePage` (`/friends-and-partners/<slug>`): the profile shape
+  warranted its own class. Path-agnostic via `openProfile(slug)` (mirrors
+  `GenericAccessoryPdp`'s caller-navigates pattern). Title pattern
+  `<Name> | Friends & Partners | Timepieces Watches`. Hero: name `h1`, tagline `h1`
+  "A Timepieces Man", role `p`, portrait as a CSS background-image. IMPORTANT: there
+  is NO "Play Video" button (the brief guessed one) — profiles that feature a
+  video embed an inline autoplaying/muted/looping YouTube `<iframe>`
+  (`isVideoPresent()`, only some profiles). The "numbered watches bought" render
+  in a FIXED sticky bottom bar (highlighted watch → its PDP + a serial like
+  `#009`); partners with multiple watches also get a "See More" button that
+  expands a drawer (`max-h-0` → `max-h-[60vh]`) listing the rest, each linking to
+  a `/products/<handle>` PDP. Methods: `getProfileName`, `getTaglineText`,
+  `getRoleText`, `getHighlightedWatchHref`, `clickSeeMore`,
+  `clickBackToFriendsAndPartners`, `isTitleForPartner`, `isTaglineCorrect`,
+  `isVideoPresent`, `isStickyWatchBarDisplayed`, `hasSeeMoreDrawer`,
+  `isWatchesDrawerExpanded`, `getDrawerWatchCount`, `allWatchLinksArePdps`.
+- No `data-testid` on either body (only the shared header/footer) — all
+  fallbacks tagged `ROLLOUT-GAP`.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-051`. Phase
+  3 next (and last): 3B Orders + Wishlist — AUTH-GATED, needs the authenticated
+  Antigravity session (human-solved Cloudflare + OTP relay).
