@@ -516,3 +516,29 @@ This changelog is append-only. New entries must be added chronologically and mus
   Added `STAT-042`. **Phase 1 (all 6 timepiece families) is complete.** Next:
   `TASK-PDP-004` base refactor (dedupe the 6 templates into `SharedTimepiecePdp`
   and roll register/share onto every family), then Phase 2 (accessories).
+
+### Timepiece PDP base refactor — SharedTimepiecePdp (TASK-PDP-004)
+
+- Extracted `SharedTimepiecePdp`, a single CRTP base
+  (`web/products/timepieces/SharedTimepiecePdp.java`) holding ALL shared
+  timepiece-PDP behavior: title/price/gallery, "Register Interest" CTA + the
+  shared register-interest form modal, floating CTA, share button, wishlist, lume
+  toggle, 3D viewer, spec accordion, sibling-variant nav, owners modal, Book
+  Consultation, FAQ, and background-video count.
+- Refit all six family templates (`SharedTemplate_Astonia`/`_Monarch`/`_Arvion`/
+  `_AstoniaSports`/`_Auriqua`/`_Manifesta`) to thin subclasses that only supply
+  hooks: `familyName()` (3D canvas aria-label), `hasLume()` (Manifesta → false),
+  `has3DViewer()` (Auriqua → false; Astonia Trophy Gold overrides at variant
+  level), and Astonia's overridden `productTitleLocator()` / `imageGalleryLocator()`
+  (it uses different markup). The six templates went from ~2,700 to ~309 total
+  lines (99 insertions, 2,616 deletions).
+- This ALSO rolled the register-interest form + share button onto EVERY timepiece
+  family in one pass (previously wired into Manifesta only), satisfying the
+  "register/share on every timepiece PDP" requirement.
+- No external code called any timepiece PDP method (only a `PendingException`
+  comment stub in `CartCheckoutSteps`), so the rename/move broke nothing.
+- Astonia is the sold-out pilot (disabled "Interest submitted" CTA), so the
+  inherited register-interest methods no-op there; its share/floating/consultation
+  state still needs a re-scrape (TASK-PDP-005).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (114 main + 28 test).
+  Added `STAT-043`; `TASK-PDP-004` → Completed. Next: Phase 2 (accessory PDPs).
