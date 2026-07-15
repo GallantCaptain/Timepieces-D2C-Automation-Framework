@@ -203,7 +203,7 @@ then the 6 pages against them.
 | 0 | Astonia pilot + 2 PLPs + Contact + House | 9 (+Auriqua fix) | ✅ Done 2026-07-15 |
 | 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ✅ Done 2026-07-15 — 1A Monarch, 1B Arvion, 1C Astonia Sports, 1D Auriqua (lume, NO 3D), 1E Manifesta (NO lume, 3D yes). Shared components: `PdpOwnersModalComponent`, `PdpRegisterInterestModalComponent`. **Base refactor done (TASK-PDP-004): `SharedTimepiecePdp` — 6 templates ~2700→309 lines, register/share/owners on every family.** |
 | 2 | Accessory PDP families (cases/clasps/straps) | 29 | ✅ Done 2026-07-15 — `SharedAccessoryPdp` base + `SharedStrapPdp` layer; 2A watch case, 2B butterfly clasps, 2C single-deployment clasps (Rose Gold 20/22mm split), 2D–2H straps (FKM/Hybrid/Ostrich/Suede/Teju) all mapped |
-| 3 | Content & account-adjacent (legal/orders/other/F&P) | 14 | ⏳ In progress — 3A Legal ✅ (`SharedPolicyPage` + 5 policy pages, 2026-07-15); 3C other / 3D F&P / 3B orders+wishlist (auth) pending |
+| 3 | Content & account-adjacent (legal/orders/other/F&P) | 14 | ⏳ In progress — 3A Legal ✅ (`SharedPolicyPage` + 5 policy pages, 2026-07-15); 3C Other content ✅ (`TimepiecesWallPage` [WebGL canvas wall], `ShareYourMomentPage` [login-gated submit], `SiteMapPage`, `UpdatesPage`, 2026-07-16); 3D F&P / 3B orders+wishlist (auth) pending |
 | 4 | Timepieces World microsite | 8 | ⬜ |
 | 5 | Loose ends (drop card, drop-page review) | 1+ | ⬜ |
 | — | Razorpay checkout | — | 🚫 User-owned |

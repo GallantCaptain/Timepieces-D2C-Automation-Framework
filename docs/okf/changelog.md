@@ -665,3 +665,36 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (119 main + 30 test).
   Added `STAT-049`. Phase 3 next: 3C other content, 3D Friends & Partners, then
   3B orders + wishlist (auth-gated).
+
+### Phase 3 chunk 3C — Other content pages
+
+- Antigravity mapped the 4 remaining public content pages. They do NOT share a
+  template (unlike the policies), so each got its own page object filled in.
+- `TimepiecesWallPage` (`/timepieces-wall`): the polaroid testimonials + photos are
+  rendered INSIDE a WebGL `<canvas>` via Three.js (data from `/api/timepieces-wall`)
+  — there is no per-card DOM to assert on. Modeled the draggable wall container,
+  the canvas, the background `<audio>`, and the music on/off toggle (whose
+  `aria-label` flips between "Play background music" and "Mute background music");
+  `isMusicPlaying()`/`isMusicMuted()` read that state.
+- `ShareYourMomentPage` (`/timepieces-wall/share`): replaced the empty scaffold
+  locators with real ones. Heading is `h1` "Show your Timepieces moment"; the gated
+  "Share your moment" CTA opens a login modal ("Sign in to share your Timepieces
+  moment" / "Only Timepieces owners can submit reviews…"); the "Submit your moment"
+  button is rendered `disabled` until authenticated (`isSubmitMomentDisabled()`);
+  the watch-photo carousel is an auto-scrolling `div.carousel-track`
+  (`pointer-events-none`, no prev/next); plus Go-to-Timepieces-Wall + a Google-review
+  cross-sell link.
+- `SiteMapPage` (`/sitemap`): set the real title `Sitemap | Timepieces` (was
+  commented out). `h1` "Sitemap" + `h2` section headings (Main Pages, Collections,
+  Products, Accessories, All Accessories) over ~60 links; `hasSection(name)` +
+  `hasLinkContaining(hrefFragment)` + `getAllLinkHrefs()`.
+- `UpdatesPage` (`/updates`): set the real title `Timepieces Updates` (was commented
+  out). Content-filter row (`div.flex.gap-2.overflow-x-auto`) with buttons "All",
+  "Drops & Releases", "Delivery Updates", "Community", "Production & Quality"
+  (`selectFilter(label)` / `getFilterLabels()` / `hasFilter(label)`); clickable
+  news cards; hero Swiper slide-dots; View-more pagination.
+- No element on any of the 4 bodies carries a `data-testid` (only the shared
+  header/footer do) — every locator is a fallback tagged `ROLLOUT-GAP`.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-050`.
+  Phase 3 next: 3D Friends & Partners (public), then 3B orders + wishlist
+  (auth-gated — needs the authenticated Antigravity session).
