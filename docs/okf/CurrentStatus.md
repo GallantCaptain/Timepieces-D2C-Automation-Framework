@@ -1,6 +1,6 @@
 # Current Implementation Status
 
-Last updated: 2026-07-13
+Last updated: 2026-07-15
  
 ## Completed Features
  
@@ -42,6 +42,7 @@ Last updated: 2026-07-13
 | STAT-034 | Docker test image ships ffmpeg + python3; a `docker-compose` `allure` service serves reports at `http://localhost:5252`. | `docker/Dockerfile`, `docker-compose.yml` | STAT-010 |
 | STAT-035 | Test dashboard extracted to dedicated repo `TimepiecesTech/qa-dashboard` (history preserved, secrets scrubbed); Playwright/TS POC embedded into the monorepo at `automation-ts/`. | `TimepiecesTech/qa-dashboard`, `automation-ts/` | DEC-0013, DEC-0001 |
 | STAT-036 | Search API suites are keyword-coverage reports: each unique keyword searched once (deduped), recording Category · Keyword · Expected Results · Actual Results · Comment (what's missing/extra) · Error — no subjective pass/fail; attached to Allure as markdown + Excel. `SearchApiTest` always runs the high-priority keywords (collections, product/accessory handles, category terms) plus real-user variants. Tests assert only API health (HTTP 200). | `ExcelReportUtil.java`, `SearchApiTest.java`, `SearchApiExploratoryTest.java`, `poi-ooxml` | STAT-007 |
+| STAT-037 | PDP locator mapping Phase 0 implemented from the Antigravity scrape: `SharedTemplate_Astonia` (16 locators, 11 business + 15 verification methods — lume toggle, 3D viewer, spec accordion, sibling-variant nav, wishlist, "Interest submitted" sold-out state) + 4 Astonia variants (real paths/titles, `AstoniaTrophyGold` overrides 3D-absence); `AllTimepiecesPage` + `AllAccessoriesPage` (added missing path/title) fully `data-testid`-driven; `ContactPage` + `TimepiecesHousePage` on fallback locators. Non-`data-testid` locators tagged `// ROLLOUT-GAP`. Fixed `AuriquaOceanBlue` CRTP self-type. Clean compile 111 main + 28 test sources → BUILD SUCCESS. Full Phase 1–5 plan recorded at `docs/scrape-artifacts/POM-MAPPING-PLAN.md`. | `SharedTemplate_Astonia.java`, `Astonia{StealthSilver,DuskGold,DuskRose,TrophyGold}.java`, `AllTimepiecesPage.java`, `AllAccessoriesPage.java`, `ContactPage.java`, `TimepiecesHousePage.java`, `docs/scrape-artifacts/POM-MAPPING-PLAN.md` | TASK-PDP-001 |
 
  
 ## In-Progress Features

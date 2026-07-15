@@ -19,11 +19,11 @@ import lombok.extern.log4j.Log4j2;
  * to view the product models in better detail in 3D. All product except
  * Astonia Trophy Gold has the 3D viewer toggle. There is also a planned
  * AR functionality 'tbd' sometime around the end of the year.
- * 
+ *
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this}
  * (AstoniaStealthSilver) to allow method chaining in step definitions.
- * 
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of AstoniaStealthSilver"
@@ -34,6 +34,12 @@ import lombok.extern.log4j.Log4j2;
 public class AstoniaStealthSilver extends SharedTemplate_Astonia<AstoniaStealthSilver> {
 
     // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    private static final String PAGE_PATH = "/products/astonia-stealth-silver";
+    private static final String PAGE_TITLE = "Astonia Stealth Silver, Astonia Watch - Timepieces";
+
+    // ==========================================
     // Constructor
     // ==========================================
     public AstoniaStealthSilver(WebDriver driver) {
@@ -41,8 +47,22 @@ public class AstoniaStealthSilver extends SharedTemplate_Astonia<AstoniaStealthS
     }
 
     // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
+
+    // ==========================================
     // LOCATORS
     // ==========================================
+    // Inherited from SharedTemplate_Astonia — no variant-specific overrides.
 
     // ==========================================
     // PRIVATE HELPERS

@@ -29,17 +29,16 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of WatchCaseBlack"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2
-public class WatchCaseBlack extends SharedTemplate_WatchCase<WatchCaseBlack> {
+public class PremiumWatchCaseBlack extends SharedTemplate_WatchCase<PremiumWatchCaseBlack> {
 
     // ==========================================
     // Constructor
     // ==========================================
-    public WatchCaseBlack(WebDriver driver) {
+    public PremiumWatchCaseBlack(WebDriver driver) {
         super(driver);
     }
 

@@ -21,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this} (AstoniaDuskGold) to
  * allow method chaining in step definitions.
- * 
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of AstoniaDuskGold"
@@ -32,6 +32,12 @@ import lombok.extern.log4j.Log4j2;
 public class AstoniaDuskGold extends SharedTemplate_Astonia<AstoniaDuskGold> {
 
     // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    private static final String PAGE_PATH = "/products/astonia-dusk-gold";
+    private static final String PAGE_TITLE = "Astonia Dusk Gold, Astonia Watch - Timepieces World";
+
+    // ==========================================
     // Constructor
     // ==========================================
     public AstoniaDuskGold(WebDriver driver) {
@@ -39,8 +45,22 @@ public class AstoniaDuskGold extends SharedTemplate_Astonia<AstoniaDuskGold> {
     }
 
     // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
+
+    // ==========================================
     // LOCATORS
     // ==========================================
+    // Inherited from SharedTemplate_Astonia — no variant-specific overrides.
 
     // ==========================================
     // PRIVATE HELPERS

@@ -362,3 +362,48 @@ This changelog is append-only. New entries must be added chronologically and mus
   correct (e.g. `timepieces` → all 18 timepiece handles), and the Comment diff
   (`Missing: …` / `Extra: …`).
 
+
+## 2026-07-15
+
+### PDP locator mapping — Phase 0 pilot implemented from the Antigravity scrape
+
+- Translated the 8 production scrape artifacts (STAT-029) into real Page Object
+  Model code. Copied the artifacts into the repo at
+  `docs/scrape-artifacts/phase0/` for traceability.
+- **Astonia timepiece PDP family** (`SharedTemplate_Astonia` + 4 variants):
+  filled the shared template with 16 locators and 11 business / 15 verification
+  methods — lume (light/night) image toggle, 3D viewer open/close, specification
+  accordion, sibling-variant navigation (by product `href`), wishlist toggle,
+  product title/price getters, and the sold-out "Interest submitted" CTA state.
+  Variants set real `PAGE_PATH`/`PAGE_TITLE` (`AstoniaDuskRose` → real handle
+  `astonia-bimetal-dusk-rose`); `AstoniaTrophyGold` overrides `has3DViewer()` →
+  false and adds `is3DViewerAbsent()` (it is the only Astonia without a 3D viewer).
+- **PLPs:** `AllTimepiecesPage` (category tabs, filter/sort drawer, product grid,
+  next-release drop cards) and `AllAccessoriesPage` (same, plus the previously
+  **missing** `PAGE_PATH` `/accessories/all` and `PAGE_TITLE`) — both fully
+  `data-testid`-driven (`collection-*` / `accessories-*`).
+- **`ContactPage`:** enquiry-form field entry + support links (WhatsApp/email/
+  toll-free via stable `href`), with a no-submit safety guard documented (real
+  ticket). **`TimepiecesHousePage`:** store cards scoped by city via XPath (Selenium
+  CSS has no `:has()`/`:contains()`), event-video audio toggle; confirmed the
+  existing `PAGE_TITLE` is the real experience-center title.
+- Every non-`data-testid` PDP/content locator is tagged `// ROLLOUT-GAP` with its
+  fallback tier so it is swapped when the `data-testid` rollout reaches the page.
+- **Bonus fix:** corrected a CRTP self-type bug in the user's new
+  `AuriquaOceanBlue` (`<AuriquaNoirRose>` → `<AuriquaOceanBlue>`).
+- Verified: `mvnw -o clean test-compile` → **BUILD SUCCESS** (111 main + 28 test
+  sources). Added `STAT-037`; `TASK-PDP-001` → Completed.
+
+### Full POM-mapping plan (Phases 1–5) recorded
+
+- Surveyed all 102 page/component files: ~71 remain incomplete scaffolds
+  (excluding base abstracts and the user-owned Razorpay checkout). Recorded a
+  phased plan at `docs/scrape-artifacts/POM-MAPPING-PLAN.md`: Phase 1 = remaining
+  timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta, 19
+  files, chunks 1A–1E); Phase 2 = accessory families (cases/clasps/straps, 29);
+  Phase 3 = content & account-adjacent pages (legal/orders/other/F&P, 14); Phase
+  4 = Timepieces World microsite (8); Phase 5 = loose ends. Razorpay is user-owned
+  and excluded. Superseded the coarse `TASK-PDP-002` with this structure.
+- Recorded the Single-Deployment Clasp Rose Gold 20mm/22mm modelling decision
+  (two separate URL-backed classes with a `selectSize22mm()` sibling-nav method;
+  reconfirm during the Phase-2C scrape that the capsule toggle navigates).
