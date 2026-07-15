@@ -119,15 +119,42 @@ size toggles, no loom/3D. One chunk per accessory type.
 | 2G | **Suede Leather Straps** | `SharedTemplate_SuedeLeatherStrap` + Blue, Brown, Burgundy (4) | |
 | 2H | **Teju Lizard Leather Straps** | `SharedTemplate_TejuLizardLeatherStrap` + Black, Blue (3) | |
 
-**Decision — Single-Deployment Clasp Rose Gold (20mm/22mm):** model as **two
-separate classes** (`SingleDeploymentClaspRoseGold20mm` / `...22mm`), both
-extending the shared template, with a `selectSize22mm()` business method that
-returns the sibling page type. Rationale: two distinct SKUs / handles / URLs, and
-the framework's one-class-per-URL invariant underpins `open()`/title/URL
-verification. The capsule toggle is just sibling navigation (same as Astonia
-variant cards). **Confirm during the 2C scrape** that the toggle navigates to a
-distinct URL; if it turns out to be client-side only (same URL, no navigation),
-fall back to a single class with a size-state parameter.
+**Decision — Single-Deployment Clasp Rose Gold (20mm/22mm): RESOLVED → two
+classes.** The 2026-07-15 discovery scrape confirmed the size card-buttons
+**navigate to distinct PDP URLs** (clicking 22mm → `/accessories/clasp/
+single-deployment-clasp-rose-gold-22mm`), and the COLOR card-buttons navigate too.
+So every color/size is its own URL/class: `SingleDeploymentClaspRoseGold20mm` +
+`SingleDeploymentClaspRoseGold22mm`, both extending the shared clasp template,
+with a `selectSize("22mm")`/`selectColor(...)` nav method. (TASK-PDP-003 closed.)
+Note: the 20mm and 22mm pages share the SAME `<title>` ("Single Deployment Clasp,
+Rose Gold") — only the URL distinguishes them, so title verification can't tell
+them apart; `open()`/path can.
+
+### Accessory PDP template (from the discovery scrape)
+
+All accessory PDPs share ONE template (watch case / clasp / strap identical),
+so it maps as a `SharedAccessoryPdp` base analogous to `SharedTimepiecePdp`:
+- Common: `h1` title, price (`div` ₹ text — ROLLOUT-GAP, no clean selector),
+  compatibility caption, **enabled "Add to cart" CTA** (accessories are
+  PURCHASABLE — unlike the sold-out timepieces; this is what unblocks the
+  cart/checkout BDD steps), no quantity selector, wishlist
+  (`button[title='Add to wishlist']`), gallery (`.desktop-image-gallery` /
+  `.product-media-carousel`), **color/size card-button switcher**
+  (`.flex.flex-wrap.gap-2` → `button[title='<name>']` + `aria-pressed`, each
+  navigates to a distinct PDP), Description/Technical-details accordions
+  (`div.w-full.border-t`), **Return & Guarantee side drawers**
+  (`button[aria-label='Open guarantee details']` / `…return and refunds…`, drawer
+  `div.fixed.inset-0.z-[9999]`, close `button[aria-label='Close']`, backdrop
+  `div.absolute.inset-0.bg-black/50.backdrop-blur-sm`), and a bottom model
+  carousel (`div.relative.group` → `a[href*='/accessories/…']`).
+- **Straps only** (add a `SharedStrapPdp` layer over the base): a **dial-try
+  carousel** ("A new look for your watch"; `button.strap-nav.strap-prev/next`,
+  compatible-watch dial images) + a **clasp-upgrade cross-sell** card ("Upgrade
+  your strap"; `+ Add`).
+
+Hierarchy: `SharedAccessoryPdp` → (`SharedTemplate_WatchCase`,
+`SharedTemplate_ButterflyClasp`, `SharedTemplate_SingleDeploymentClasp`) and
+`SharedAccessoryPdp` → `SharedStrapPdp` → (the 5 strap family templates).
 
 ## Phase 3 — Content & account-adjacent pages (14 files)
 
