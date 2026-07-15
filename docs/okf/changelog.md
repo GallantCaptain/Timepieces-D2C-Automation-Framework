@@ -587,3 +587,22 @@ This changelog is append-only. New entries must be added chronologically and mus
   titles are inferred from the verified "Single Deployment Clasp, <Color>" pattern.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (116 main + 28 test).
   Added `STAT-045`.
+
+### Phase 2 accessory mapping COMPLETE — SharedStrapPdp + straps (2D–2H) + butterfly (2B)
+
+- Built `SharedStrapPdp` over `SharedAccessoryPdp`, adding the two strap-only
+  features: the dial-try carousel ("A new look for your watch";
+  `button.strap-nav.strap-prev/next`) and the clasp-upgrade cross-sell ("+ Add").
+- Mapped every remaining accessory family:
+  - 2B Butterfly Clasps: `SharedTemplate_ButterflyClasp` + Gold/RoseGold/Steel (18mm).
+  - 2D–2H Straps: 5 family templates (FKM Rubber, Hybrid/Ostrich/Suede Leather,
+    Teju Lizard) + 13 variants (FKM Black/Orange/White/Yellow, Hybrid Black/Blue,
+    Ostrich Black/Brown, Suede Blue/Brown/Burgundy, Teju Black/Blue).
+- Strap variants inherit a family-level `PAGE_TITLE` from their family template
+  (per-color identity is the URL/path — strap browser titles vary and carry typos,
+  e.g. FKM Black's title reads "…in Bkack"). Clasp/watch-case variants keep
+  per-variant titles.
+- Every accessory PDP is now mapped; accessories carry the real enabled
+  "Add to cart" that unblocks the cart/checkout BDD flows.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (117 main + 28 test).
+  Added `STAT-046`. Phase 2 done; Phases 3–5 remain.

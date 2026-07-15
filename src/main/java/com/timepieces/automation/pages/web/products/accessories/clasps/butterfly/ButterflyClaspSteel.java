@@ -5,44 +5,35 @@ import org.openqa.selenium.WebDriver;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Butterfly Clasp Steel:
- * https://www.timepieces-d2c.example/accessories/clasp/butterfly-clasp-steel-18mm
- * The Butterfly Clasp Steel PDP page. This page contains details about
- * the Butterfly Clasp Steel. It is a variant of the Butterfly
- * Clasp family of accessories. The other clasps can be navigated to
- * in the PDP page with a card to toggle between each. The page also has a
- * sticky header and footer and scroll-to-section functionality. There are
- * Accordion panels that with accordion toggles to hide/show the product
- * details.
- * There are feature/category card-buttons to switch between the different
- * clasp variants based on the model color and in some cases the size. For now
- * the clasp size variant is available only for Single Deployment Rose Gold
- * clasp (choose between the 20mm or 22mm variants). All other Single Deployment
- * Clasps offer only one size option, 20mm. Butterfly Clasps also offer only
- * one size option, 18mm. Clicking on the Return & Refund or the Guarantee
- * links opens a side drawer with the full details. The side drawer can be
- * closed by clicking on the anywhere outside the drawer or on the 'X' button in
- * the top-right corner of the drawer. At the bottom, the there is a carousel of
- * the all the clasps models and variants in a scrollable card list. Clicking on
- * any of the cards takes the user to that pdp.
- * The clasps are of two types: Butterfly, and Single Deployment Clasps.
- * 
- * Compatiblity List:
- * Butterfly Clasp: Leather Straps (Teju Lizard, Ostrich & Suede Leather Straps)
- * Single Deployment Clasp: Hybrid & Rubber Straps (Hybrid & FKM Rubber Straps)
- * 
+ * ButterflyClaspSteel: https://www.timepieces-d2c.example/accessories/clasp/butterfly-clasp-steel-18mm
+ * The Steel (18mm) variant of the Butterfly Clasp family. Standard accessory PDP
+ * shape (Add to cart, color card-button switcher that navigates, Description/
+ * Technical accordions, Return/Guarantee side drawers, model carousel). Butterfly
+ * Clasps pair with Leather straps (Teju Lizard, Ostrich & Suede). Confirmed
+ * behavior lives in {@link SharedTemplate_ButterflyClasp} / {@code SharedAccessoryPdp}.
+ *
+ * <p>
+ * SCRAPE NOTE (2026-07-15): enabled "Add to cart" CTA (purchasable). The color
+ * card-buttons navigate to distinct PDPs; single size (18mm).
+ *
  * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this}
- * (ButterflyClaspSteel) to allow method chaining in step definitions.
- * 
+ * All methods that remain on this page return {@code this} (ButterflyClaspSteel) to allow method
+ * chaining in step definitions.
+ *
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of ButterflyClaspSteel"
-* @since 2026-07-03
+ * @since 2026-07-03
  */
 
 @Log4j2
 public class ButterflyClaspSteel extends SharedTemplate_ButterflyClasp<ButterflyClaspSteel> {
+
+    // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    private static final String PAGE_PATH = "/accessories/clasp/butterfly-clasp-steel-18mm";
+    // Distinguishing substring (contains-match); color word inferred from the verified 'Butterfly Clasp, <Color>' pattern.
+    private static final String PAGE_TITLE = "Butterfly Clasp, Steel";
 
     // ==========================================
     // Constructor
@@ -52,19 +43,15 @@ public class ButterflyClaspSteel extends SharedTemplate_ButterflyClasp<Butterfly
     }
 
     // ==========================================
-    // LOCATORS
+    // PAGE METADATA (drives the inherited fluent open())
     // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
 
-    // ==========================================
-    // PRIVATE HELPERS
-    // ==========================================
-
-    // ==========================================
-    // BUSINESS LIBRARY
-    // ==========================================
-
-    // ==========================================
-    // VERIFICATION METHODS
-    // ==========================================
-
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
 }

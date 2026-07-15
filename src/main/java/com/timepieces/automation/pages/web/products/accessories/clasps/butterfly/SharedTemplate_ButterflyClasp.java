@@ -1,27 +1,24 @@
 package com.timepieces.automation.pages.web.products.accessories.clasps.butterfly;
 
-import org.openqa.selenium.WebDriver;
+import com.timepieces.automation.pages.web.products.accessories.SharedAccessoryPdp;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
+import org.openqa.selenium.WebDriver;
 
 import lombok.extern.log4j.Log4j2;
 
 /**
- * The Shared Template page exists solely to be inherited by the individual
- * butterfly clasp PDP pages as most of the pages share the same design
- * templates.
- * For those with a unique or missing feature, the individual pages will
- * have the feature but will have the same methods with the same name to
- * allow for method chaining in step definitions.
- * 
- * GENERIC SELF-TYPE (CRTP): parameterised with a recursive self-type so the
- * inherited fluent {@code open()} returns the concrete variant page. Each variant
- * binds itself, e.g. {@code class ButterflyClaspGold extends
- * SharedTemplate_ButterflyClasp<ButterflyClaspGold>}.
+ * Shared template for the Butterfly Clasp accessory PDP pages. All shared
+ * accessory PDP behavior lives in {@link SharedAccessoryPdp}; this thin subclass
+ * groups the Butterfly Clasp variants (Gold / Rose Gold / Steel).
+ *
  * <p>
- * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this} (the concrete variant)
- * to allow method chaining in step definitions.
+ * VARIANT MODEL: Butterfly Clasps are single-size (18mm); the COLOR card-buttons
+ * NAVIGATE to distinct PDP URLs (confirmed 2026-07-15), so each color is its own
+ * class. Butterfly Clasps pair with Leather straps (Teju Lizard, Ostrich &amp;
+ * Suede).
+ *
+ * GENERIC SELF-TYPE (CRTP): each variant binds itself, e.g.
+ * {@code class ButterflyClaspGold extends SharedTemplate_ButterflyClasp<ButterflyClaspGold>}.
  *
  * @param <SELF> the concrete Butterfly Clasp variant subtype
  * @since 2026-07-03
@@ -32,11 +29,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class SharedTemplate_ButterflyClasp<SELF extends SharedTemplate_ButterflyClasp<SELF>>
-        extends StoreFrontBasePage<SELF> {
-
-    // ==========================================
-    // Page Constants
-    // ==========================================
+        extends SharedAccessoryPdp<SELF> {
 
     // ==========================================
     // Constructor
@@ -44,20 +37,4 @@ public abstract class SharedTemplate_ButterflyClasp<SELF extends SharedTemplate_
     public SharedTemplate_ButterflyClasp(WebDriver driver) {
         super(driver);
     }
-
-    // ==========================================
-    // LOCATORS
-    // ==========================================
-
-    // ==========================================
-    // PRIVATE HELPERS
-    // ==========================================
-
-    // ==========================================
-    // BUSINESS LIBRARY
-    // ==========================================
-
-    // ==========================================
-    // VERIFICATION METHODS
-    // ==========================================
 }

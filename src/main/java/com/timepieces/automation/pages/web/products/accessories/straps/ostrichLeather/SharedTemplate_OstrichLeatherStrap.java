@@ -1,33 +1,26 @@
 package com.timepieces.automation.pages.web.products.accessories.straps.ostrichLeather;
 
-import org.openqa.selenium.WebDriver;
+import com.timepieces.automation.pages.web.products.accessories.straps.SharedStrapPdp;
 
-import com.timepieces.automation.pages.StoreFrontBasePage;
+import org.openqa.selenium.WebDriver;
 
 import lombok.extern.log4j.Log4j2;
 
 /**
- * The Shared Template page exists solely to be inherited by the individual
- * Ostrich Leather Strap PDP pages, as most of the variant pages share the same
- * design template. For a variant with a unique or missing feature, the
- * individual page still exposes the same method names so that method chaining
- * in step definitions behaves identically across the whole family.
+ * Shared template for the Ostrich Leather Strap PDP pages. All shared accessory +
+ * strap behavior lives in {@code SharedStrapPdp} / {@code SharedAccessoryPdp}.
  * <p>
- * Ostrich Leather Straps are compatible with the Monarch, Arvion and Manifesta
- * timepieces (Brown pairs with Monarch and Arvion; Black additionally pairs with
- * Manifesta). The family shares the strap PDP layout: sticky header/footer,
- * scroll-to-section navigation, accordion product-detail panels, the Return &
- * Refund / Guarantee side drawer, the compatible-dial variant carousel, and the
- * bottom scrollable card list of all strap models.
+ * Ostrich Leather Straps (Black / Brown) are compatible with the Monarch, Arvion
+ * and Manifesta timepieces (Brown pairs with Monarch and Arvion; Black
+ * additionally pairs with Manifesta) and pair with Butterfly Clasps. The color
+ * card-buttons NAVIGATE to distinct PDP URLs, so each color is its own class.
+ *
  * <p>
- * GENERIC SELF-TYPE (CRTP): parameterised with a recursive self-type so the
- * inherited fluent {@code open()} returns the concrete variant page. Each variant
- * binds itself, e.g. {@code class OstrichLeatherStrapBlack extends
- * SharedTemplate_OstrichLeatherStrap<OstrichLeatherStrapBlack>}.
- * <p>
- * FLUENT INTERFACE:
- * All methods that remain on this page return {@code this} (the concrete variant)
- * to allow method chaining in step definitions.
+ * TITLE: family-level {@code PAGE_TITLE} substring ("Ostrich Leather Watch Strap",
+ * verified) shared by all colors — per-color identity is the URL/path.
+ *
+ * GENERIC SELF-TYPE (CRTP): each variant binds itself, e.g.
+ * {@code class OstrichLeatherStrapBlack extends SharedTemplate_OstrichLeatherStrap<OstrichLeatherStrapBlack>}.
  *
  * @param <SELF> the concrete Ostrich Leather Strap variant subtype
  * @since 2026-07-03
@@ -38,11 +31,10 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class SharedTemplate_OstrichLeatherStrap<SELF extends SharedTemplate_OstrichLeatherStrap<SELF>>
-        extends StoreFrontBasePage<SELF> {
+        extends SharedStrapPdp<SELF> {
 
-    // ==========================================
-    // Page Constants
-    // ==========================================
+    // Family-level title substring (contains-match), shared by all colors.
+    private static final String PAGE_TITLE = "Ostrich Leather Watch Strap";
 
     // ==========================================
     // Constructor
@@ -51,19 +43,8 @@ public abstract class SharedTemplate_OstrichLeatherStrap<SELF extends SharedTemp
         super(driver);
     }
 
-    // ==========================================
-    // LOCATORS
-    // ==========================================
-
-    // ==========================================
-    // PRIVATE HELPERS
-    // ==========================================
-
-    // ==========================================
-    // BUSINESS LIBRARY
-    // ==========================================
-
-    // ==========================================
-    // VERIFICATION METHODS
-    // ==========================================
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
 }
