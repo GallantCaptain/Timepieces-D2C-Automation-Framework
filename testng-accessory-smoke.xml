@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Opt-in suite for the accessory PDP UI smoke (TDD). NOT part of the default
+  testng.xml (it needs a real browser and reaches the live storefront).
+  Run: mvnw -o test "-Dsurefire.suite=testng-accessory-smoke.xml" "-Denv=production"
+-->
+<suite name="AccessoryPdpSmokeSuite" verbose="1">
+    <test name="AccessoryPdpSmoke">
+        <classes>
+            <class name="com.timepieces.automation.tdd.ui.AccessoryPdpSmokeTest"/>
+        </classes>
+    </test>
+</suite>

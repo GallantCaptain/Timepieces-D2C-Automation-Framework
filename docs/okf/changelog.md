@@ -606,3 +606,25 @@ This changelog is append-only. New entries must be added chronologically and mus
   "Add to cart" that unblocks the cart/checkout BDD flows.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (117 main + 28 test).
   Added `STAT-046`. Phase 2 done; Phases 3–5 remain.
+
+### Accessory test cases (BDD + TDD) authored + registered in Zephyr (QA-T68–QA-T87)
+
+- BDD feature files under `src/test/resources/features/02_catalog_product_discovery/`:
+  `Accessory_Product_Details.feature` (core details, add-to-cart, color/size
+  card-button navigation, accordions, Return/Guarantee side drawers, wishlist,
+  model carousel) and `Accessory_Strap_Configurator.feature` (dial-try carousel,
+  clasp-upgrade cross-sell, combined strap+clasp purchase).
+- TDD: `AccessoryPdpSmokeTest` (5 TestNG UI smokes driving the accessory Page
+  Objects — watch case, butterfly clasp, SD clasp, rubber strap, leather strap —
+  asserting the purchasable core + strap configurator). Opt-in via
+  `testng-accessory-smoke.xml`; NOT in the default `testng.xml` (needs a browser +
+  the live site, and CI staging is Cloudflare-blocked).
+- Registered all 20 in Zephyr Scale project QA as QA-T68..QA-T87 (15 BDD `bdd`
+  scripts + 5 TDD `plain` scripts) via `scripts/add_accessory_tcs.py`, which reads
+  `ZEPHYR_TOKEN` from the environment (not hardcoded). Token confirmed valid
+  (HTTP 200). The "Straps" tag isn't a Zephyr custom-field option, so strap cases
+  reuse Accessories/Regression tags.
+- SECURITY: logged ISSUE-013 — the older `scripts/add_*.py` hardcode a live,
+  committed Zephyr token; recommend rotating it and moving to a secret.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (117 main + 29 test).
+  Added `STAT-047`.
