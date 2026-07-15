@@ -491,3 +491,28 @@ This changelog is append-only. New entries must be added chronologically and mus
   Auriqua Ocean Blue …"). AuriquaOceanBlue keeps the Phase-0 CRTP self-type fix.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
   Added `STAT-041`. Only chunk 1E (Manifesta, no loom) remains in Phase 1.
+
+### PDP mapping Phase 1 chunk 1E — Manifesta (+ shared register-interest form); Phase 1 COMPLETE
+
+- Implemented `SharedTemplate_Manifesta` + `ManifestaBlackOnyx`/
+  `ManifestaBlueAventurine`/`ManifestaMotherOfPearl` from the 2026-07-15 Antigravity
+  scrape (`docs/scrape-artifacts/phase1/manifesta-*.md`). All three are LIVE (not a
+  locked drop despite the SEP-2026 teaser). DELTA: Manifesta has NO lume
+  (`hasLume()`→false) but DOES have the 3D viewer (`canvas[aria-label='Manifesta']`).
+  Prices: black-onyx 1,00,000, blue-aventurine 95,000, mother-of-pearl 1,15,000
+  (titles stored as the distinguishing variant-name substring; site title word
+  order varies).
+- Built `PdpRegisterInterestModalComponent` — the "Register your interest" form
+  modal (Full name / Email / Phone + country toggle / consent checkbox / submit)
+  that the "Register Interest" CTA opens on every timepiece PDP — mapped ONCE as a
+  Component Object and wired into the Manifesta template (`openRegisterInterest()`).
+  Added a PDP share button (`clickShare()` / `isShareButtonDisplayed()`). The
+  owners capsule-toggle was already modelled by `PdpOwnersModalComponent`
+  (`filterByVariant`).
+- The register-form + share locators are best-effort (mapped from live
+  screenshots), tagged `ROLLOUT-GAP · VERIFY` pending a targeted form scrape
+  (TASK-PDP-005).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (113 main + 28 test).
+  Added `STAT-042`. **Phase 1 (all 6 timepiece families) is complete.** Next:
+  `TASK-PDP-004` base refactor (dedupe the 6 templates into `SharedTimepiecePdp`
+  and roll register/share onto every family), then Phase 2 (accessories).
