@@ -1,5 +1,7 @@
 package com.timepieces.automation.pages.web.products.accessories;
 
+import java.util.List;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
@@ -418,5 +420,22 @@ public abstract class SharedAccessoryPdp<SELF extends SharedAccessoryPdp<SELF>> 
      */
     public int getModelCarouselCardCount() {
         return driver.findElements(modelCarouselCards).size();
+    }
+
+    /**
+     * V.17 Verifies that every recommended-model card links to an
+     * {@code /accessories/} product page (and that at least one card exists).
+     *
+     * @return true if all model cards' hrefs contain "/accessories/".
+     */
+    public boolean allModelCardsLinkToAccessories() {
+        List<org.openqa.selenium.WebElement> cards = getElements(modelCarouselCards);
+        if (cards.isEmpty()) {
+            return false;
+        }
+        return cards.stream().allMatch(card -> {
+            String href = card.getAttribute("href");
+            return href != null && href.contains("/accessories/");
+        });
     }
 }

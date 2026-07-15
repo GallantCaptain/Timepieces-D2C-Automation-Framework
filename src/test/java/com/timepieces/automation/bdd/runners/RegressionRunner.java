@@ -21,6 +21,8 @@ import lombok.extern.log4j.Log4j2;
                 "src/test/resources/features/01_authentication_identity/API_Backed_UI_Session.feature",
                 "src/test/resources/features/03_checkout_payments/Checkout_Idempotency.feature",
                 "src/test/resources/features/02_catalog_product_discovery/Global_Footer_Navigation.feature",
+                "src/test/resources/features/02_catalog_product_discovery/Accessory_Product_Details.feature",
+                "src/test/resources/features/02_catalog_product_discovery/Accessory_Strap_Configurator.feature",
                 "src/test/resources/features/04_checkout_secure_funnel/Cart_Addition_And_Domestic_Checkout.feature",
                 "src/test/resources/features/04_checkout_secure_funnel/Checkout_Form_Validation.feature",
                 "src/test/resources/features/05_payment_integration/Payment_Integration_Validation.feature",

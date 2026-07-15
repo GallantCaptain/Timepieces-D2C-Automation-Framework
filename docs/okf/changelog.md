@@ -628,3 +628,25 @@ This changelog is append-only. New entries must be added chronologically and mus
   committed Zephyr token; recommend rotating it and moving to a secret.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (117 main + 29 test).
   Added `STAT-047`.
+
+### Accessory BDD step definitions wired (AccessorySteps)
+
+- Implemented `AccessorySteps` glue for `Accessory_Product_Details.feature` +
+  `Accessory_Strap_Configurator.feature` and registered both in `RegressionRunner`
+  (@Regression). Added a concrete `GenericAccessoryPdp` (drives any accessory PDP
+  by URL, exposing the full accessory + strap surface) and
+  `SharedAccessoryPdp.allModelCardsLinkToAccessories()`.
+- Fully implemented (real POM assertions): navigate to accessory PDP, title/price/
+  compat displayed, enabled "Add to cart", color variant navigation (via the
+  handle-linked model carousel, since color card-buttons share a title) + size
+  navigation (20mm/22mm) with URL assertions, accordion expand, Return/Guarantee
+  side drawers (open + close via X and via backdrop), wishlist toggle + active
+  check, model carousel + all-cards-link-to-/accessories, strap dial-try carousel
+  displayed + next/prev, clasp-upgrade card displayed + "+ Add".
+- Left as `PendingException` (cart-drawer internals pending project-wide; matches
+  `CartCheckoutSteps`): cart badge count, cart-drawer line-item contents, the
+  visual dial-preview "updates to next/previous watch" transitions, and dial
+  compatibility filtering.
+- Verified: clean compile (118 main + 30 test) → BUILD SUCCESS; a Cucumber
+  dry-run over `@Accessories` resolved every step to glue with ZERO undefined
+  steps. Added `STAT-048`.
