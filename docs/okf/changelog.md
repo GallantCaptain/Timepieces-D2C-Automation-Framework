@@ -407,3 +407,30 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Recorded the Single-Deployment Clasp Rose Gold 20mm/22mm modelling decision
   (two separate URL-backed classes with a `selectSize22mm()` sibling-nav method;
   reconfirm during the Phase-2C scrape that the capsule toggle navigates).
+
+### PDP mapping Phase 1 chunk 1A — Monarch + shared owners modal
+
+- Implemented `SharedTemplate_Monarch` + `MonarchRoseGold`/`MonarchSilverBlack`
+  from the 2026-07-15 Antigravity scrape (`docs/scrape-artifacts/phase1/`). The
+  scrape resolved several Javadoc-vs-reality gaps: both variants have the lume
+  toggle AND the same 3D canvas viewer as Astonia (`canvas[aria-label='Monarch']`)
+  — there is no THREE.js "AR" iframe; the primary CTA is "Register Interest" and
+  is ENABLED even though the product is FULLY ALLOCATED (Astonia's was a disabled
+  "Interest submitted"); there is a floating Register-Interest bar; and there is
+  NO band-color selector, NO video unmute control, and NO side/top scroll nav.
+- Built `PdpOwnersModalComponent` — the "See all {Family} owners" social-proof
+  modal (variant-filter + "Search owners…"), identical across timepiece PDPs, so
+  mapped ONCE as a Component Object and wired into both `SharedTemplate_Monarch`
+  and (additively) `SharedTemplate_Astonia`.
+- **Correction:** an earlier note framed a shared PDP "filter/sort" widget. That
+  was wrong — the widget on the PDPs is the owners modal above. The storefront's
+  product FILTERS & SORT lives on the collection/PLP pages (mapped in Phase 0),
+  and the two PLPs differ: timepieces filter by Watch Movement + Dial Size,
+  accessories by Product Type + Size (both share Price ↑/↓ sort). Closed the
+  matching gap by adding `selectDialSize()` + `getDialSizeOptionCount()` to
+  `AllTimepiecesPage` and `selectSize()` + `getSizeOptionCount()` to
+  `AllAccessoriesPage` (exact-label match so overlapping accessory sizes like
+  "20mm" vs "20-18mm" don't collide). Fixed the mislabelling in
+  `PdpOwnersModalComponent` and `POM-MAPPING-PLAN.md`.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
+  Added `STAT-038`; `TASK-PDP-002` now In Progress (1A done; 1B–1E next).

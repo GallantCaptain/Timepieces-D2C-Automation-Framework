@@ -88,6 +88,21 @@ behavior into a common `SharedTimepiecePdp` base to cut duplication across the s
 family templates (defer until ≥3 families are mapped and the shape is confirmed
 stable).
 
+**Shared PDP owners modal:** every timepiece PDP carries a "See all {Family}
+owners" social-proof modal with an internal **filter-by-variant + search-owners**.
+Because it is identical across timepiece PDPs, it is mapped **once** as
+`PdpOwnersModalComponent` (Component Object, like `HeaderComponent`/
+`FooterComponent`) in chunk 1A and referenced by every family template — not
+duplicated per family.
+
+> Correction (2026-07-15): this owners modal is **not** the storefront's
+> FILTERS & SORT. The product **FILTERS & SORT drawer lives on the collection/PLP
+> pages** (`/collections/timepieces`, `/accessories/all`) — already mapped in
+> Phase 0 (`AllTimepiecesPage` / `AllAccessoriesPage`) — and the two PLPs differ:
+> timepieces filter by **Watch Movement** + **Dial Size**, accessories by
+> **Product Type** + **Size**; both share the Price ↑/↓ sort. There is no
+> product filter/sort on the PDPs themselves.
+
 ## Phase 2 — Accessory PDP families (29 files, 21 variants)
 
 Different template: compatibility carousels (which watches/straps a clasp fits),
@@ -150,7 +165,7 @@ then the 6 pages against them.
 | Phase | Scope | Files | Status |
 | --- | --- | --- | --- |
 | 0 | Astonia pilot + 2 PLPs + Contact + House | 9 (+Auriqua fix) | ✅ Done 2026-07-15 |
-| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ Next, in chunks 1A–1E |
+| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ In progress — 1A Monarch ✅ (2026-07-15) + shared `PdpOwnersModalComponent`; 1B–1E pending |
 | 2 | Accessory PDP families (cases/clasps/straps) | 29 | ⬜ |
 | 3 | Content & account-adjacent (legal/orders/other/F&P) | 14 | ⬜ |
 | 4 | Timepieces World microsite | 8 | ⬜ |

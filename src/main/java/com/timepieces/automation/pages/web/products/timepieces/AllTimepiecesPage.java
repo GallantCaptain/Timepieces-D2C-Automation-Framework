@@ -93,6 +93,9 @@ public class AllTimepiecesPage extends StoreFrontBasePage<AllTimepiecesPage> {
             .cssSelector("button[data-testid='collection-filter-section-watch-movement-toggle']");
     private final By movementFilterOptions = By.cssSelector("label[data-testid='collection-filter-watch-movement']");
     private final By sizeFilterToggle = By.cssSelector("button[data-testid='collection-filter-section-size-toggle']");
+    // Dial-size options (39.5mm / 40mm / 42mm). Option testid follows the
+    // confirmed <prefix>-filter-<section> convention (verify on next PLP scrape).
+    private final By dialSizeOptions = By.cssSelector("label[data-testid='collection-filter-size']");
     private final By filterApplyButton = By.cssSelector("button[data-testid='collection-filter-apply-desktop']");
 
     // --- Upcoming-drop banner cards ---
@@ -106,6 +109,8 @@ public class AllTimepiecesPage extends StoreFrontBasePage<AllTimepiecesPage> {
             .xpath("//label[@data-testid='collection-filter-sort-option'][contains(normalize-space(),'%s')]");
     private final By movementOptionByLabelTemplate = By
             .xpath("//label[@data-testid='collection-filter-watch-movement'][contains(normalize-space(),'%s')]");
+    private final By dialSizeOptionByLabelTemplate = By
+            .xpath("//label[@data-testid='collection-filter-size'][contains(normalize-space(),'%s')]");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -246,6 +251,20 @@ public class AllTimepiecesPage extends StoreFrontBasePage<AllTimepiecesPage> {
     public AllTimepiecesPage expandSizeFilter() {
         log.info("Expanding the dial-size filter section.");
         clickElement(sizeFilterToggle);
+        return this;
+    }
+
+    /**
+     * B.13 Expands the dial-size filter section, then ticks a dial-size option
+     * (e.g. "39.5mm", "40mm", "42mm").
+     *
+     * @param dialSize the dial-size label to select.
+     * @return this page for method chaining.
+     */
+    public AllTimepiecesPage selectDialSize(String dialSize) {
+        log.info("Filtering by dial size: '{}'.", dialSize);
+        clickElement(sizeFilterToggle);
+        clickElement(formatLocator(dialSizeOptionByLabelTemplate, dialSize));
         return this;
     }
 
@@ -400,5 +419,15 @@ public class AllTimepiecesPage extends StoreFrontBasePage<AllTimepiecesPage> {
      */
     public int getMovementOptionCount() {
         return driver.findElements(movementFilterOptions).size();
+    }
+
+    /**
+     * V.14 Counts the dial-size filter options available (call after
+     * {@link #expandSizeFilter()}). Observed: 39.5mm / 40mm / 42mm.
+     *
+     * @return the number of dial-size filter options.
+     */
+    public int getDialSizeOptionCount() {
+        return driver.findElements(dialSizeOptions).size();
     }
 }

@@ -18,7 +18,12 @@ import lombok.extern.log4j.Log4j2;
  * top navigation bar. FLUENT INTERFACE: All methods that remain on this page
  * return {@code this} (MonarchRoseGold) to allow method chaining in step
  * definitions.
- * 
+ *
+ * <p>
+ * SCRAPE NOTE (2026-07-15): the live page exposes the same 3D canvas viewer and
+ * lume toggle as its sibling; the "AR" viewer and side/top nav described above
+ * were not present. Confirmed behavior lives in {@link SharedTemplate_Monarch}.
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of MonarchRoseGold"
@@ -29,6 +34,12 @@ import lombok.extern.log4j.Log4j2;
 public class MonarchRoseGold extends SharedTemplate_Monarch<MonarchRoseGold> {
 
     // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    private static final String PAGE_PATH = "/products/monarch-rose-gold";
+    private static final String PAGE_TITLE = "Monarch Watch, Monarch Rose Gold - Timepieces Watches";
+
+    // ==========================================
     // Constructor
     // ==========================================
     public MonarchRoseGold(WebDriver driver) {
@@ -36,8 +47,22 @@ public class MonarchRoseGold extends SharedTemplate_Monarch<MonarchRoseGold> {
     }
 
     // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
+
+    // ==========================================
     // LOCATORS
     // ==========================================
+    // Inherited from SharedTemplate_Monarch — no variant-specific overrides.
 
     // ==========================================
     // PRIVATE HELPERS
@@ -50,5 +75,4 @@ public class MonarchRoseGold extends SharedTemplate_Monarch<MonarchRoseGold> {
     // ==========================================
     // VERIFICATION METHODS
     // ==========================================
-
 }

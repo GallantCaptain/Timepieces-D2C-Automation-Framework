@@ -89,6 +89,10 @@ public class AllAccessoriesPage extends StoreFrontBasePage<AllAccessoriesPage> {
             .cssSelector("button[data-testid='accessories-filter-section-product-type-toggle']");
     private final By productTypeFilterOptions = By.cssSelector("label[data-testid='accessories-filter-product-type']");
     private final By sizeFilterToggle = By.cssSelector("button[data-testid='accessories-filter-section-size-toggle']");
+    // Size options (18mm / 20mm / 18.5-22mm / 20-18mm / 22-20mm). Option testid
+    // follows the confirmed <prefix>-filter-<section> convention (verify on next
+    // PLP scrape).
+    private final By sizeOptions = By.cssSelector("label[data-testid='accessories-filter-size']");
     private final By filterApplyButton = By.cssSelector("button[data-testid='accessories-filter-apply-desktop']");
 
     // --- Dynamic templates ---
@@ -98,6 +102,8 @@ public class AllAccessoriesPage extends StoreFrontBasePage<AllAccessoriesPage> {
             .xpath("//label[@data-testid='accessories-filter-sort-option'][contains(normalize-space(),'%s')]");
     private final By productTypeOptionByLabelTemplate = By
             .xpath("//label[@data-testid='accessories-filter-product-type'][contains(normalize-space(),'%s')]");
+    private final By sizeOptionByLabelTemplate = By
+            .xpath("//label[@data-testid='accessories-filter-size'][normalize-space()='%s']");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -195,6 +201,21 @@ public class AllAccessoriesPage extends StoreFrontBasePage<AllAccessoriesPage> {
     public AllAccessoriesPage expandSizeFilter() {
         log.info("Expanding the size filter section.");
         clickElement(sizeFilterToggle);
+        return this;
+    }
+
+    /**
+     * B.12 Expands the size filter section, then ticks a size option
+     * (e.g. "18mm", "20mm", "18.5-22mm"). Uses an exact-label match so
+     * overlapping numeric sizes (e.g. "20mm" vs "20-18mm") don't collide.
+     *
+     * @param size the size label to select.
+     * @return this page for method chaining.
+     */
+    public AllAccessoriesPage selectSize(String size) {
+        log.info("Filtering by size: '{}'.", size);
+        clickElement(sizeFilterToggle);
+        clickElement(formatLocator(sizeOptionByLabelTemplate, size));
         return this;
     }
 
@@ -363,5 +384,16 @@ public class AllAccessoriesPage extends StoreFrontBasePage<AllAccessoriesPage> {
      */
     public int getProductTypeOptionCount() {
         return driver.findElements(productTypeFilterOptions).size();
+    }
+
+    /**
+     * V.12 Counts the size filter options available (call after
+     * {@link #expandSizeFilter()}). Observed: 18mm / 20mm / 18.5-22mm / 20-18mm /
+     * 22-20mm.
+     *
+     * @return the number of size filter options.
+     */
+    public int getSizeOptionCount() {
+        return driver.findElements(sizeOptions).size();
     }
 }

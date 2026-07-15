@@ -6,6 +6,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import com.timepieces.automation.pages.StoreFrontBasePage;
+import com.timepieces.automation.pages.components.PdpOwnersModalComponent;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -41,11 +42,15 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public abstract class SharedTemplate_Astonia<SELF extends SharedTemplate_Astonia<SELF>> extends StoreFrontBasePage<SELF> {
 
+    /** Shared owners filter/search modal, identical across all timepiece PDPs. */
+    public final PdpOwnersModalComponent ownersModal;
+
     // ==========================================
     // Constructor
     // ==========================================
     public SharedTemplate_Astonia(WebDriver driver) {
         super(driver);
+        this.ownersModal = new PdpOwnersModalComponent(driver);
     }
 
     // ==========================================
@@ -200,7 +205,8 @@ public abstract class SharedTemplate_Astonia<SELF extends SharedTemplate_Astonia
     }
 
     /**
-     * B.7 Clicks the "See all Astonia owners" button.
+     * B.7 Clicks the "See all Astonia owners" button (stays on the PDP; for the
+     * filterable/searchable modal use {@link #openOwnersModal()}).
      *
      * @return this page instance for method chaining.
      */
@@ -208,6 +214,17 @@ public abstract class SharedTemplate_Astonia<SELF extends SharedTemplate_Astonia
         log.info("Clicking 'See all Astonia owners'.");
         clickElement(seeAllOwnersButton);
         return self();
+    }
+
+    /**
+     * B.7b Opens the shared "See all Astonia owners" filter/search modal and
+     * returns the {@link PdpOwnersModalComponent} for chaining.
+     *
+     * @return the opened owners modal component.
+     */
+    public PdpOwnersModalComponent openOwnersModal() {
+        log.info("Opening the owners modal from the Astonia PDP.");
+        return ownersModal.open();
     }
 
     /**
