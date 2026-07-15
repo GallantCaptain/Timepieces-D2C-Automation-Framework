@@ -79,7 +79,7 @@ sibling nav). Lowest risk, so do them first. One chunk per family.
 | 1A | **Monarch** | `SharedTemplate_Monarch` + `MonarchRoseGold`, `MonarchSilverBlack` (3) | loom ✔, 3D ✔ |
 | 1B | **Arvion** | `SharedTemplate_Arvion` + `ArvionBurgundyGold`, `ArvionEspressoSilver`, `ArvionNavySilver` (4) | loom ✔, 3D ✔ |
 | 1C | **Astonia Sports** | `SharedTemplate_AstoniaSports` + `AstoniaSportsCircuitBlue`, `AstoniaSportsPhantomBlack`, `AstoniaSportsPodiumGreen` (4) | loom ✔, 3D ✔ |
-| 1D | **Auriqua** | `SharedTemplate_Auriqua` + `AuriquaNoirRose`, `AuriquaOceanBlue`, `AuriquaRacingGreen` (4) | **no loom**, 3D ✔ |
+| 1D | **Auriqua** | `SharedTemplate_Auriqua` + `AuriquaNoirRose`, `AuriquaOceanBlue`, `AuriquaRacingGreen` (4) | loom ✔, 3D ✔ (product owner confirmed Auriqua HAS loom; only Manifesta lacks it) |
 | 1E | **Manifesta** | `SharedTemplate_Manifesta` + `ManifestaBlackOnyx`, `ManifestaBlueAventurine`, `ManifestaMotherOfPearl` (4) | **no loom / no autoplay video**, 3D ✔ — the exception family |
 
 `Astonia_Unnammed` and `Manifesta_Unnammed` are unlaunched placeholders — skipped
@@ -165,7 +165,7 @@ then the 6 pages against them.
 | Phase | Scope | Files | Status |
 | --- | --- | --- | --- |
 | 0 | Astonia pilot + 2 PLPs + Contact + House | 9 (+Auriqua fix) | ✅ Done 2026-07-15 |
-| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ In progress — 1A Monarch ✅ + shared `PdpOwnersModalComponent`, 1B Arvion ✅, 1C Astonia Sports ✅ (all 2026-07-15); 1D Auriqua / 1E Manifesta pending |
+| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ In progress — 1A Monarch ✅ + shared `PdpOwnersModalComponent`, 1B Arvion ✅, 1C Astonia Sports ✅, 1D Auriqua ✅ (lume but NO 3D) (all 2026-07-15); 1E Manifesta pending |
 | 2 | Accessory PDP families (cases/clasps/straps) | 29 | ⬜ |
 | 3 | Content & account-adjacent (legal/orders/other/F&P) | 14 | ⬜ |
 | 4 | Timepieces World microsite | 8 | ⬜ |

@@ -470,3 +470,24 @@ This changelog is append-only. New entries must be added chronologically and mus
   comments.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
   Added `STAT-040`. Phase 1: 1A/1B/1C done; 1D Auriqua + 1E Manifesta remain.
+
+### PDP mapping Phase 1 chunk 1D — Auriqua (lume, NO 3D)
+
+- Implemented `SharedTemplate_Auriqua` + `AuriquaNoirRose`/`AuriquaOceanBlue`/
+  `AuriquaRacingGreen` from the 2026-07-15 Antigravity scrape
+  (`docs/scrape-artifacts/phase1/auriqua-*.md`).
+- KEY DELTA: Auriqua has the lume toggle but **NO 3D viewer** — the scrape
+  confirmed the "Open 3D View" button and canvas are absent on all three variants
+  (correcting the old class prose that implied every non-Trophy-Gold product has
+  3D). The template therefore omits the 3D locators/methods and `has3DViewer()`
+  returns false (kept for interface parity with the 3D-capable families).
+- Otherwise the known shape: h1 title (nested price), div.product-price span,
+  enabled "Register Interest" CTA (176/176/157 allocated), spec accordion, 3
+  sibling cards, "See all Auriqua owners" modal (reuses `PdpOwnersModalComponent`),
+  Book Consultation, FAQ, 4 background videos. Prices: noir-rose 75k, ocean-blue
+  75k, racing-green 85k.
+- Titles stored as the distinguishing variant-name substring (the site's title
+  word order flips: "Auriqua Noir Rose, Auriqua Watch …" vs "Auriqua Watch,
+  Auriqua Ocean Blue …"). AuriquaOceanBlue keeps the Phase-0 CRTP self-type fix.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
+  Added `STAT-041`. Only chunk 1E (Manifesta, no loom) remains in Phase 1.
