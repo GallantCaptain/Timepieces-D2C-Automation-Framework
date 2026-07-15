@@ -18,11 +18,16 @@ import lombok.extern.log4j.Log4j2;
  * viewer canvas and is used to view the product models in better detail in 3D.
  * All product except Astonia Trophy Gold has the 3D viewer toggle. There is
  * also a planned AR functionality 'tbd' sometime around the end of the year.
- * 
+ *
+ * <p>
+ * SCRAPE NOTE (2026-07-15): the CTA is "Register Interest" (enabled, even at
+ * 100/100 allocated). Confirmed behavior lives in
+ * {@link SharedTemplate_AstoniaSports}.
+ *
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this}
  * (AstoniaSportsCircuitBlue) to allow method chaining in step definitions.
- * 
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of AstoniaSportsCircuitBlue"
@@ -33,6 +38,14 @@ import lombok.extern.log4j.Log4j2;
 public class AstoniaSportsCircuitBlue extends SharedTemplate_AstoniaSports<AstoniaSportsCircuitBlue> {
 
     // ==========================================
+    // PAGE CONSTANTS
+    // ==========================================
+    private static final String PAGE_PATH = "/products/astonia-sports-circuit-blue";
+    // Distinguishing prefix (contains-match); full observed title:
+    // "Astonia Sports Circuit Blue , Astonia Sports Watch - Timepieces"
+    private static final String PAGE_TITLE = "Astonia Sports Circuit Blue";
+
+    // ==========================================
     // Constructor
     // ==========================================
     public AstoniaSportsCircuitBlue(WebDriver driver) {
@@ -40,8 +53,22 @@ public class AstoniaSportsCircuitBlue extends SharedTemplate_AstoniaSports<Aston
     }
 
     // ==========================================
+    // PAGE METADATA (drives the inherited fluent open())
+    // ==========================================
+    @Override
+    protected String getPagePath() {
+        return PAGE_PATH;
+    }
+
+    @Override
+    protected String getPageTitle() {
+        return PAGE_TITLE;
+    }
+
+    // ==========================================
     // LOCATORS
     // ==========================================
+    // Inherited from SharedTemplate_AstoniaSports — no variant-specific overrides.
 
     // ==========================================
     // PRIVATE HELPERS

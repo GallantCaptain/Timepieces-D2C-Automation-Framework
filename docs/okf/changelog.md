@@ -452,3 +452,21 @@ This changelog is append-only. New entries must be added chronologically and mus
   Added `STAT-039`.
 - Flagged `TASK-PDP-004`: three families (Astonia/Monarch/Arvion) now share ~95%
   identical templates — the `SharedTimepiecePdp` base-class refactor is due.
+
+### PDP mapping Phase 1 chunk 1C — Astonia Sports
+
+- Implemented `SharedTemplate_AstoniaSports` + `AstoniaSportsCircuitBlue`/
+  `AstoniaSportsPhantomBlack`/`AstoniaSportsPodiumGreen` from the 2026-07-15
+  Antigravity scrape (`docs/scrape-artifacts/phase1/astonia-sports-*.md`). Same
+  shape as Monarch/Arvion: h1 title (nested price), div.product-price span,
+  enabled "Register Interest" CTA (100/100 allocated), lume toggle, 3D canvas
+  (`canvas[aria-label='Astonia Sports']`), 3 sibling cards, Case/Strap/Dial/
+  Movement spec accordion, "See all Astonia Sports owners" modal (reuses
+  `PdpOwnersModalComponent`), Book Consultation, FAQ, 4 background videos.
+- Prices: circuit-blue 71k, phantom-black 67k, podium-green 79k. Titles stored as
+  the distinguishing variant-name prefix (contains-match) because the scrape
+  reported inconsistent title spacing across the three pages
+  ("Watch - Timepieces" vs "Watch -Timepieces"); full observed titles kept in code
+  comments.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
+  Added `STAT-040`. Phase 1: 1A/1B/1C done; 1D Auriqua + 1E Manifesta remain.
