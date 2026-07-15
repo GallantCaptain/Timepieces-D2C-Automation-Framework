@@ -434,3 +434,21 @@ This changelog is append-only. New entries must be added chronologically and mus
   `PdpOwnersModalComponent` and `POM-MAPPING-PLAN.md`.
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
   Added `STAT-038`; `TASK-PDP-002` now In Progress (1A done; 1B–1E next).
+
+### PDP mapping Phase 1 chunk 1B — Arvion
+
+- Implemented `SharedTemplate_Arvion` + `ArvionBurgundyGold`/`ArvionEspressoSilver`/
+  `ArvionNavySilver` from the 2026-07-15 Antigravity scrape
+  (`docs/scrape-artifacts/phase1/arvion-*.md`). Arvion is identical in shape to
+  Monarch: `h1` title with nested price, `div.product-price span`, enabled
+  "Register Interest" CTA (fully allocated 184/180/153 PCS), lume toggle, 3D canvas
+  viewer (`canvas[aria-label='Arvion']`), 3 sibling cards, Case/Strap/Dial/Movement
+  spec accordion, "See all Arvion owners" modal (reuses `PdpOwnersModalComponent`),
+  Book Consultation link, FAQ, 4 background videos. No band-color/unmute/nav.
+- Variant paths/titles/prices: arvion-burgundy-gold ₹59,000, arvion-espresso-silver
+  ₹55,000, arvion-navy-silver ₹57,000 (titles carry a literal " ," per the site's
+  title template).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (112 main + 28 test).
+  Added `STAT-039`.
+- Flagged `TASK-PDP-004`: three families (Astonia/Monarch/Arvion) now share ~95%
+  identical templates — the `SharedTimepiecePdp` base-class refactor is due.

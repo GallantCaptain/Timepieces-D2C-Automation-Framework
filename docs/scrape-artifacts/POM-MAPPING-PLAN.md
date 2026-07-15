@@ -165,7 +165,7 @@ then the 6 pages against them.
 | Phase | Scope | Files | Status |
 | --- | --- | --- | --- |
 | 0 | Astonia pilot + 2 PLPs + Contact + House | 9 (+Auriqua fix) | ✅ Done 2026-07-15 |
-| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ In progress — 1A Monarch ✅ (2026-07-15) + shared `PdpOwnersModalComponent`; 1B–1E pending |
+| 1 | Timepiece PDP families (Monarch/Arvion/Astonia Sports/Auriqua/Manifesta) | 19 | ⏳ In progress — 1A Monarch ✅ + shared `PdpOwnersModalComponent`, 1B Arvion ✅ (both 2026-07-15); 1C–1E pending |
 | 2 | Accessory PDP families (cases/clasps/straps) | 29 | ⬜ |
 | 3 | Content & account-adjacent (legal/orders/other/F&P) | 14 | ⬜ |
 | 4 | Timepieces World microsite | 8 | ⬜ |
