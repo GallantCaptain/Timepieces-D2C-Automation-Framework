@@ -565,3 +565,25 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (114 main + 28 test).
   Added `STAT-044`; `TASK-PDP-005` → Completed. Also wrote the Phase-2 accessories
   discovery brief (`docs/scrape-artifacts/phase2/BRIEF-2-accessories-discovery.md`).
+
+### Phase 2 accessory mapping started — SharedAccessoryPdp base + 2A/2C
+
+- Built `SharedAccessoryPdp` (accessory analogue of `SharedTimepiecePdp`) from the
+  discovery scrape: `h1` title, text-anchored price/compat (`ROLLOUT-GAP · WEAK`,
+  no stable selector), **enabled "Add to cart"** (accessories are purchasable —
+  unblocks the cart/checkout BDD steps), wishlist, gallery, color/size card-button
+  switcher (each navigates to a distinct PDP), Description/Technical accordions,
+  Return & Guarantee side drawers (aria triggers, close 'X' + backdrop close), and
+  the bottom recommended-models carousel (`div.relative.group` →
+  `a[href*='/accessories/…']`).
+- Chunk 2A: `SharedTemplate_WatchCase` + `PremiumWatchCaseBlack`
+  (`/accessories/watch-case/premium-watch-case`).
+- Chunk 2C: `SharedTemplate_SingleDeploymentClasp` + `Black`/`Gold`/`Steel` (all
+  20mm) + the Rose Gold split into `SingleDeploymentClaspRoseGold20mm`/`22mm`
+  (with `selectSize20mm()`/`selectSize22mm()` sibling-nav; old single
+  `SingleDeploymentClaspRoseGold` removed). Per TASK-PDP-003 the color AND size
+  card-buttons navigate to distinct URLs, so each is its own class. The 20mm/22mm
+  pages share one `<title>` (only the URL distinguishes them). Non-Rose-Gold clasp
+  titles are inferred from the verified "Single Deployment Clasp, <Color>" pattern.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS (116 main + 28 test).
+  Added `STAT-045`.
