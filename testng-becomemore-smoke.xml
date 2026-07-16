@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Opt-in suite for the Become More onboarding UI smoke (TDD). NOT part of the
+  default testng.xml (it needs a real browser and reaches the live storefront).
+  The final "Submit Profile" is NEVER clicked (real profile).
+  Run: mvnw -o test "-Dsurefire.suite=testng-becomemore-smoke.xml" "-Denv=production"
+-->
+<suite name="BecomeMoreSmokeSuite" verbose="1">
+    <test name="BecomeMoreSmoke">
+        <classes>
+            <class name="com.timepieces.automation.tdd.ui.BecomeMoreSmokeTest"/>
+        </classes>
+    </test>
+</suite>

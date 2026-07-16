@@ -1039,3 +1039,42 @@ This changelog is append-only. New entries must be added chronologically and mus
   `STAT-058`. Remaining threads: 7A /becomemore scrape (brief ready) and the
   authenticated pass (logged-in sidebar children + executing the @AuthGated
   orders scenarios).
+
+### Phase 7 chunk 7A — /becomemore onboarding: mapped, test-cased, Zephyr''d, wired
+
+- Antigravity walked the full journey (authenticated session available, but the
+  flow turned out to be PUBLIC — no login gate; it is a pre-profile funnel).
+  Shape: intro ("Become More" / "Begin your Profile" / "Takes less than 60
+  seconds") → method dialog (LinkedIn import / Start Manually / Close +
+  privacy/terms links) → 8 sections driven by the URL query param
+  `?section=name|location|about|building|watchjourney|interest|timepieceshouse|photo`
+  with "Step 0X of 07" indicators (the photo step has none). Antigravity
+  correctly STOPPED before the final "Submit Profile" (real profile data).
+- NEW `Onboarding_BecomeMore` (per the swap-at-sunset decision — the legacy
+  `OnboardingPage` is untouched): section-key constants + `openSection()`
+  deep-linking; `fillPersonalInfo()` (name textarea, salutation/persona via
+  Selenium `Select`, DOB; Next `button[type=submit]` DISABLED until all four
+  validate); city + use-location; bio/goals textareas with voice, AI "Refine
+  my bio/story" and "See examples" helpers; `selectChip()` — single-select
+  watch-journey chips AUTO-ADVANCE on click, multi-select interest chips gate
+  Next (selected = border-black or dark-bg encoding, both handled by
+  `isChipSelected()`); Timepieces-House optional step ("Need inspiration?" →
+  "Curated inspirations", "I''ll do this later" skip); photo step (avatar
+  upload via hidden file input → `attachProfilePhoto()`, consent checkbox
+  GATES "Submit Profile"). `clickSubmitProfile()` carries a REAL-profile
+  warning mirroring ContactPage/waitlist conventions.
+- ZERO page-specific data-testids on the whole flow (only the shared header) —
+  another rollout gap for the testid backlog.
+- BDD: `01_authentication_identity/BecomeMore_Onboarding.feature`
+  (@Regression @BecomeMore, registered in RegressionRunner) — intro+dialog;
+  step-1 validation gate; an 8-row section deep-link outline; watch-journey
+  chip auto-advance; interests multi-select gate; house inspiration + skip;
+  the consent gate (assert-enable ONLY — submit is never clicked).
+- TDD: `BecomeMoreSmokeTest` (4 smokes) + opt-in `testng-becomemore-smoke.xml`.
+- Zephyr: pushed 11/11 clean via `scripts/add_becomemore_tcs.py` →
+  **QA-T142–QA-T152** (7 BDD + 4 TDD).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; Cucumber dry-run over
+  `@BecomeMore` → 14 scenarios, 0 failures, ZERO undefined. Added `STAT-059`.
+- Remaining thread: the AUTHENTICATED pass — the logged-in sidebar
+  user-container children (DEBT-008 second half) and executing the @AuthGated
+  orders scenarios in the authenticated Antigravity/browser session.
