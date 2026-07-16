@@ -584,6 +584,13 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
      * Apple Pay for supported countries - UAE, US/Canada, UK, Europ (maybe?)
      */
 
+    // Unsupported-country block (2026-07-16 Razorpay capture): selecting an
+    // unsupported country (e.g. KP, CU) and clicking Proceed to Payment halts
+    // with a validation alert — "Country/Region in the shipping address isn't
+    // supported" (and the billing twin).
+    private final By unsupportedCountryAlert = By.xpath(
+            "//*[contains(normalize-space(),\"Country/Region in the shipping address isn't supported\") or contains(normalize-space(),\"Country/Region in the billing address isn't supported\")]"); // ROLLOUT-GAP: text-anchor
+
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
@@ -591,6 +598,54 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
     // ==========================================
     // BUSINESS LIBRARY
     // ==========================================
+    /**
+     * Fills the full Delivery Information form (international /checkout flow) in
+     * one call — name, contact, and address. The state control renders as a
+     * dropdown for some countries and a free-text input for others, so both are
+     * handled. Does NOT submit — pair with {@link #clickProceedToPayment()}.
+     *
+     * @param firstName first name.
+     * @param lastName  last name.
+     * @param phone     phone number (country code preset by the region).
+     * @param email     email address.
+     * @param country   the country VALUE in the country dropdown (e.g. "US").
+     * @param state     state/province.
+     * @param street    street address.
+     * @param city      city.
+     * @param pincode   pin/zip code.
+     * @return this CheckoutPage for method chaining.
+     */
+    public CheckoutPage fillDeliveryInformation(String firstName, String lastName, String phone, String email,
+            String country, String state, String street, String city, String pincode) {
+        log.info("Filling the checkout Delivery Information form.");
+        sendKeys(shippingFirstNameField, firstName);
+        sendKeys(shippingLastNameField, lastName);
+        sendKeys(shippingPhoneField, phone);
+        sendKeys(shippingEmailField, email);
+        new org.openqa.selenium.support.ui.Select(getElement(shippingCountryDropdown)).selectByValue(country);
+        if (!driver.findElements(shippingStateDropdown).isEmpty()) {
+            new org.openqa.selenium.support.ui.Select(getElement(shippingStateDropdown)).selectByVisibleText(state);
+        } else {
+            sendKeys(shippingStateField, state);
+        }
+        sendKeys(shippingAddressField, street);
+        sendKeys(shippingCityField, city);
+        sendKeys(shippingPincodeField, pincode);
+        return this;
+    }
+
+    /**
+     * Clicks the desktop "Proceed to Payment" button — with a VALID international
+     * address this launches the Razorpay modal in its "Payment Options" mode;
+     * with an unsupported country it halts with the unsupported-country alert.
+     *
+     * @return this CheckoutPage for method chaining.
+     */
+    public CheckoutPage clickProceedToPayment() {
+        log.info("Clicking Proceed to Payment.");
+        clickElement(proceedToPaymentButtonDesktop);
+        return this;
+    }
 
     // ==========================================
     // VERIFICATION METHODS
@@ -615,5 +670,17 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
         } catch (Exception e) {
             return isPlaceOrderButtonDisabled();
         }
+    }
+
+    /**
+     * Verifies the unsupported-country validation alert rendered — purchases
+     * from unsupported countries (e.g. KP, CU, Afghanistan) must be BLOCKED at
+     * Proceed to Payment with "Country/Region in the shipping address isn't
+     * supported" (2026-07-16 Razorpay capture).
+     *
+     * @return true if the unsupported-country alert is displayed.
+     */
+    public boolean isUnsupportedCountryAlertDisplayed() {
+        return !driver.findElements(unsupportedCountryAlert).isEmpty();
     }
 }

@@ -19,21 +19,21 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * AccountOrdersSteps — glue for the AUTH-GATED account orders feature
- * (Account_Orders_Management.feature, tagged {@code @AuthGated} and deliberately
- * NOT {@code @Regression}), driving {@link AccountPage}, {@link OrderHistoryPage}
- * and {@link OrderDetailsPage}.
+ * (Account_Orders_Management.feature, tagged {@code @AuthGated} and
+ * deliberately NOT {@code @Regression}), driving {@link AccountPage},
+ * {@link OrderHistoryPage} and {@link OrderDetailsPage}.
  *
  * <p>
- * Production login serves a Cloudflare Turnstile that WebDriver cannot solve, so
- * these scenarios only execute in a session where login was completed by a human
- * (or a pre-authenticated browser profile is reused). The steps are fully wired
- * to the POMs; the authentication precondition fails fast with a clear message
- * when the session is unauthenticated instead of timing out downstream.
- *
+ * Production login serves a Cloudflare Turnstile that WebDriver cannot solve,
+ * so these scenarios only execute in a session where login was completed by a
+ * human (or a pre-authenticated browser profile is reused). The steps are fully
+ * wired to the POMs; the authentication precondition fails fast with a clear
+ * message when the session is unauthenticated instead of timing out downstream.
+ * 
  * @version 1.0
  * @author Avinash Rath
-* @Description "Description of AccountOrdersSteps"
-* @since 2026-07-16
+ * @Description "Description of AccountOrdersSteps"
+ * @since 2026-07-16
  */
 
 @Log4j2
@@ -67,7 +67,8 @@ public class AccountOrdersSteps {
             driver.get(baseUrl + "/404");
             new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
 
-            com.timepieces.automation.tdd.api.AuthenticationEngine authEngine = new com.timepieces.automation.tdd.api.AuthenticationEngine(testContext);
+            com.timepieces.automation.tdd.api.AuthenticationEngine authEngine = new com.timepieces.automation.tdd.api.AuthenticationEngine(
+                    testContext);
             authEngine.loginViaBackendApi("9000000001"); // Use the pilot phone number
             String token = (String) testContext.getContextData("AUTH_TOKEN");
 

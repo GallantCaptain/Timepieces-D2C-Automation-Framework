@@ -116,7 +116,7 @@ public class AuthenticationEngine {
         try {
             Response verifyResponse = requestBuilder.get()
                 .header("Authorization", "Bearer " + token)
-                .post(baseUrl + "/api/auth/verify-session");
+                .get(baseUrl + "/api/auth/verify-session");
             log.info("Session verification status: {}", verifyResponse.getStatusCode());
         } catch (Exception e) {
             log.warn("Session verification endpoint call failed: {}", e.getMessage());

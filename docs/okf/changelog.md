@@ -1173,3 +1173,46 @@ This changelog is append-only. New entries must be added chronologically and mus
     payments only via Razorpay test cards, ₹1, test customers.
 - With this, EVERY page/component scaffold in the framework is implemented
   (Manifesta drop card remains the single deliberate deferral, TASK-PDP-006).
+
+### TASK-PDP-010 closed — Razorpay capture applied, payment glue wired, intl rules test-cased
+
+- Antigravity''s iframe capture (razorpay-domestic.md / razorpay-international.md)
+  delivered Razorpay''s REAL testids — `RazorpayModalComponent` rewritten around
+  them (checkout-v2-container, order-amount(+fallback), gstin/order-instructions
+  buttons, identity chips [domestic `overview-contact-cta` vs intl
+  `contact-sidebar-widget`], nav-back/more-options/checkout-close,
+  address-block/delivery-*/proceed-to-pay, saved-address items + edit +
+  continue-selected, the nav-sidebar method rail [upi/card/emi/netbanking/
+  wallet/recommended] with inline-offer badges, offer-container/offer-cards/
+  view-all, upi-qr-container, save-card-checkbox, exit-dialog
+  confirm-positive/negative). Razorpay quirks preserved verbatim: the
+  misspelled `merchnatLogoImage` testid and the HYPHENATED `data-test-id` on
+  `country-code-selector` + `add-card-cta`; the card form uses `card.*`
+  name-attribute inputs (no testids).
+- Behavioral corrections folded in: domestic step 1 is REVIEW ORDER (contact
+  details are a POPUP off the identity chip, not a first step); the X opens an
+  EXIT-CONFIRMATION dialog — `closeModal()` now does X → "Yes, exit", and
+  `stayInCheckout()` covers the negative path. Only the guest magic-link OTP
+  block remains VERIFY-tier (the captured session had a recognized identity).
+- Wiring: `CartDrawerComponent.performSlideToPay()` (Actions drag across the
+  full track width); `CheckoutPage.fillDeliveryInformation()` +
+  `clickProceedToPayment()` + the unsupported-country alert (verified with
+  KP/CU: "Country/Region in the shipping address isn''t supported");
+  `CartCheckoutSteps` slide/modal-init/contact-surface/no-hard-redirect steps
+  implemented; `PaymentSteps` wired end-to-end for the SANCTIONED test-card
+  decline scenarios (delivery-fill → Cards → add-new-card entry → submit →
+  decline-message + order-not-placed assertions) — the CDP-level token/PAN
+  checks and the order-confirmation page stay honestly pending.
+- NEW `05_payment_integration/International_Payment_Rules.feature`
+  (@IntlPayments, registered in RegressionRunner; Background reuses the
+  accessory add-to-cart seeding): /checkout routing, unsupported-country
+  block, cards+ApplePay-only modal (asserts the ABSENCE of the domestic
+  rails too) — glue in NEW `IntlPaymentSteps` (region switch via the footer
+  country selector). 4 MANUAL Zephyr cases for the no-oracle rules: the 1.5×
+  multiplier (needs the live fx rate), EUR/AED currency-by-region, the guest
+  magic-link OTP flow (real SMS), and the modal close semantics.
+- Zephyr: 7/7 clean via `scripts/add_razorpay_tcs.py` → **QA-T153–QA-T159**.
+- Verified: clean compile; Cucumber dry-run over `@IntlPayments` → 3
+  scenarios, 0 failures, ZERO undefined. Added `STAT-062`; TASK-PDP-010
+  completed. (Owner also tagged 8 public features `@ProdReady` so the
+  production nightly sweeps them.)

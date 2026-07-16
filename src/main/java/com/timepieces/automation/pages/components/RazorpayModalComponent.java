@@ -30,40 +30,48 @@ import lombok.extern.log4j.Log4j2;
  * handled by Razorpay.
  *
  * <p>
- * BEHAVIOR SPEC (product owner, 2026-07-16 + checkout screenshots):
+ * BEHAVIOR SPEC (product owner + live iframe capture, 2026-07-16):
  * <ul>
  * <li><b>Precondition:</b> the modal only opens when the cart holds AT LEAST 1
  * item.</li>
- * <li><b>DOMESTIC (India, INR):</b> cart drawer "Slide to Pay" → the Razorpay
- * MAGIC CHECKOUT modal opens with the step rail Contact → Address → Payment.
- * Logged-in / saved customers proceed straight to payment. GUESTS enter
- * mobile+email on the Contact step, which triggers the Razorpay MAGIC-LINK
- * OTP prompt ("We can help fill your address" / "Enter OTP sent to +91…", 4
- * boxes, Skip OTP, Resend); completing it surfaces the addresses saved
- * against the magic-link identity (Home/Office cards, Standard FREE
- * shipping). Domestic payment methods: UPI (incl. QR), Cards, EMI,
- * Netbanking, Wallet + offers + recommended saved card.</li>
- * <li><b>INTERNATIONAL:</b> "Slide to Pay" instead routes to the Timepieces
- * {@code /checkout} Delivery Information page; "Proceed to Payment" there
- * opens this modal in its compact "Payment Options" mode with ONLY two
- * method families: CREDIT CARD (saved cards / add a new card) and APPLE
- * PAY.</li>
+ * <li><b>DOMESTIC (India, INR):</b> cart "Slide to Pay" → the modal opens on
+ * the <b>Review Order</b> step (selected address block + delivery options +
+ * Continue {@code proceed-to-pay}) → <b>Payment Options</b> with the full
+ * method rail (Recommended / UPI / Cards / EMI / Netbanking / Wallet + UPI QR
+ * + offers). Contact details live in a POPUP opened from the "Using as
+ * +91…" identity chip; the address switcher is opened from the address
+ * block. Guests without a recognized identity get the Razorpay MAGIC-LINK
+ * OTP prompt first (4 boxes, Skip/Resend — those locators remain VERIFY-tier;
+ * the live capture ran with a recognized identity).</li>
+ * <li><b>INTERNATIONAL:</b> "Slide to Pay" routes to the Timepieces
+ * {@code /checkout} Delivery Information page; "Proceed to Payment" opens
+ * this modal in a streamlined "Payment Options" mode whose rail holds ONLY
+ * Recommended + Cards (UPI/EMI/Netbanking/Wallet are absent — verified);
+ * the Cards pane offers Saved Cards, <b>Apple Pay</b> and "Add a new card"
+ * (card form inputs carry {@code name="card.*"} attributes, no testids).</li>
+ * <li><b>CLOSE SEMANTICS (verified):</b> esc/cancel do not close it; the X
+ * ({@code checkout-close}) opens an EXIT-CONFIRMATION dialog — "Yes, exit"
+ * ({@code confirm-positive}) closes the modal, "Continue" ({@code
+ * confirm-negative}) stays in checkout.</li>
  * <li><b>PRICING:</b> international prices are 1.5× the domestic price for ALL
  * products; currencies: EUR (European countries), AED (UAE), USD (all other
- * supported countries). Unsupported countries (e.g. Afghanistan) must NOT
- * allow purchases.</li>
- * <li><b>IFRAME:</b> the checkout renders inside the Razorpay iframe
- * ({@code razorpay-checkout-frame} within {@code div.razorpay-container}) —
+ * supported countries). Unsupported countries are blocked on the /checkout
+ * form ("Country/Region in the shipping address isn't supported").</li>
+ * <li><b>IFRAME:</b> the checkout renders inside the CROSS-ORIGIN Razorpay
+ * iframe ({@code iframe.razorpay-checkout-frame} within
+ * {@code div.razorpay-container}, plus a {@code div.razorpay-backdrop}) —
  * call {@link #switchToCheckoutFrame()} before interacting with modal
  * internals and {@link #switchBackToStorefront()} after.</li>
  * </ul>
  *
  * <p>
- * LOCATOR TIER — VERIFY: the modal DOM is Razorpay-owned (their data-testids
- * exist but were captured from screenshots, not a live DOM dump), so the inner
- * locators below are best-effort text/type anchors tagged {@code // VERIFY}.
- * TASK-PDP-010 tracks the one-time live capture (open the modal with 1 cart
- * item, dump the iframe DOM) to swap these for Razorpay's real testids.
+ * LOCATOR SOURCE: Razorpay's REAL {@code data-testid}s captured live on
+ * 2026-07-16 ({@code docs/scrape-artifacts/razorpay/}). Razorpay quirks kept
+ * verbatim: the merchant logo testid is misspelled ({@code merchnatLogoImage})
+ * and two controls use hyphenated {@code data-test-id}
+ * ({@code country-code-selector}, {@code add-card-cta}). Only the magic-link
+ * OTP block remains {@code VERIFY}-tier (not reachable in the captured
+ * session).
  *
  * FLUENT INTERFACE:
  * All methods that remain on this page return {@code this}
@@ -89,57 +97,96 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     // LOCATORS
     // ==========================================
     // --- Top document (storefront context — do NOT switch frames for these) ---
-    // The Razorpay overlay container injected into the storefront DOM.
-    private final By razorpayContainer = By.cssSelector("div.razorpay-container"); // VERIFY: Razorpay-owned
-    // The checkout iframe that hosts the whole modal UI.
-    private final By checkoutIframe = By.cssSelector("iframe[class*='razorpay-checkout-frame'], div.razorpay-container iframe"); // VERIFY: Razorpay-owned
+    // The Razorpay overlay container + backdrop injected into the storefront DOM.
+    private final By razorpayContainer = By.cssSelector("div.razorpay-container");
+    private final By razorpayBackdrop = By.cssSelector("div.razorpay-backdrop");
+    // The cross-origin checkout iframe hosting the whole modal UI.
+    private final By checkoutIframe = By.cssSelector("iframe.razorpay-checkout-frame");
 
-    // --- Inside the checkout iframe: shared chrome ---
-    // The Contact → Address → Payment step rail entries.
-    private final By stepTabTemplate = By.xpath("//*[normalize-space()='%s'][self::button or self::a or self::span or self::div]"); // VERIFY: text-anchor
-    // The modal close (X). NOTE: esc and any cancel affordance do NOT close it.
-    private final By closeButton = By.xpath("//button[@aria-label='Close' or normalize-space()='×' or normalize-space()='✕']"); // VERIFY: aria/text
-    // The back arrow (appears from the Address step onward).
-    private final By backButton = By.xpath("//button[@aria-label='Back']"); // VERIFY: aria
-    // The left brand panel rows.
-    private final By orderSummaryRow = By.xpath("//*[contains(normalize-space(),'Order summary')]"); // VERIFY: text-anchor
-    private final By couponsRow = By.xpath("//*[contains(normalize-space(),'Coupons and offers')]"); // VERIFY: text-anchor
-    private final By usingAsChip = By.xpath("//*[contains(normalize-space(),'Using as +91')]"); // VERIFY: text-anchor
-    private final By securedByRazorpay = By.xpath("//*[contains(normalize-space(),'Secured by')]"); // VERIFY: text-anchor
-    // The primary Continue CTA (shared across Contact/OTP/Address steps).
-    private final By continueButton = By.xpath("//button[normalize-space()='Continue']"); // VERIFY: text-anchor
+    // --- Inside the iframe: root + left brand panel ---
+    private final By checkoutRoot = By.cssSelector("div[data-testid='checkout-v2-container']");
+    // Razorpay's own misspelled testid — kept verbatim.
+    private final By merchantLogo = By.cssSelector("img[data-testid='merchnatLogoImage']");
+    private final By merchantName = By.cssSelector("div[data-testid='merchantName']");
+    private final By orderSummaryButton = By.cssSelector("button[data-testid='order-summary-widget-multiple']");
+    // The live amount (rolling digits) + its plain-text fallback.
+    private final By orderAmount = By.cssSelector("div[data-testid='order-amount']");
+    private final By orderAmountFallback = By.cssSelector("div[data-testid='order-amount-fallback']");
+    private final By gstinButton = By.cssSelector("button[data-testid='gstin-button']");
+    private final By orderInstructionsButton = By.cssSelector("button[data-testid='order-instructions-button']");
+    private final By offersSubtext = By.cssSelector("span[data-testid='summary-offer-coupon-subtext']");
+    private final By offersChevronButton = By.cssSelector("button[data-testid='summary-chevron-button']");
+    // The identity chip ("Using as +91 …") — domestic; the intl variant differs.
+    private final By identityChip = By.cssSelector("button[data-testid='overview-contact-cta']");
+    private final By identityChipIntl = By.cssSelector("button[data-testid='contact-sidebar-widget']");
+    private final By securedByRazorpay = By.cssSelector("div[data-testid='secured-by-razorpay']");
 
-    // --- Contact step (domestic guests) ---
-    private final By contactHeading = By.xpath("//*[normalize-space()='Contact details']"); // VERIFY: text-anchor
-    private final By mobileInput = By.cssSelector("input[type='tel']"); // VERIFY: semantic
-    private final By emailInput = By.cssSelector("input[type='email']"); // VERIFY: semantic
-    private final By offersCheckbox = By.cssSelector("input[type='checkbox']"); // VERIFY: semantic
+    // --- Step header chrome ---
+    private final By stepTitle = By.cssSelector("span[data-testid='title']");
+    private final By backButton = By.cssSelector("button[data-testid='nav-back']");
+    private final By moreOptionsButton = By.cssSelector("button[data-testid='checkout-more-options']");
+    private final By closeButton = By.cssSelector("button[data-testid='checkout-close']");
 
-    // --- Magic-link OTP prompt ---
+    // --- Exit-confirmation dialog (the X never closes directly) ---
+    private final By exitDialogTitle = By.xpath("//h3[contains(normalize-space(),'Are you sure you want to exit?')]"); // text-anchor (no testid)
+    private final By exitConfirmButton = By.cssSelector("button[data-testid='confirm-positive']");
+    private final By exitStayButton = By.cssSelector("button[data-testid='confirm-negative']");
+
+    // --- Review Order step (domestic step 1) ---
+    private final By addressBlock = By.cssSelector("div[data-testid='address-block']");
+    private final By deliveryCard = By.cssSelector("div[data-testid='delivery-card']");
+    private final By deliveryOptionsList = By.cssSelector("div[data-testid='delivery-options-list']");
+    private final By deliveryOptionItems = By.cssSelector("div[data-testid='delivery-options-listitem']");
+    private final By proceedToPayButton = By.cssSelector("button[data-testid='proceed-to-pay']");
+
+    // --- Address switcher ---
+    private final By savedAddressItems = By.cssSelector("div[data-testid='saved-address-listitem']");
+    private final By addNewAddressButton = By.cssSelector("button[name='add_new_address_cta']"); // name attr (no testid)
+    private final By editAddressButton = By.cssSelector("button[data-testid='edit-address-btn']");
+    private final By billingSameAsShipping = By.cssSelector("input#billing-same-as-shipping");
+    private final By continueSelectedAddress = By.cssSelector("button[data-testid='continue-selected-address']");
+
+    // --- Contact-details popup (identity chip) ---
+    private final By contactPopupTitle = By.xpath("//h3[normalize-space()='Contact details']"); // text-anchor (no testid)
+    // Razorpay uses the hyphenated data-test-id attribute here — kept verbatim.
+    private final By countryCodeSelector = By.cssSelector("button[data-test-id='country-code-selector']");
+    private final By contactNumberInput = By.cssSelector("input[data-testid='contactNumber']");
+    private final By contactEmailInput = By.cssSelector("input[data-testid='email']");
+    private final By contactContinueButton = By.cssSelector("button[validateform='true']"); // attribute (no testid)
+
+    // --- Magic-link OTP prompt (guest identity; NOT reached in the live
+    // capture — still VERIFY-tier from the checkout screenshots) ---
     private final By otpPromptHeading = By.xpath("//*[contains(normalize-space(),'Enter OTP sent to')]"); // VERIFY: text-anchor
-    private final By addressesFoundBanner = By.xpath("//*[contains(normalize-space(),'addresses found')]"); // VERIFY: text-anchor
-    // The 4 single-digit OTP boxes.
     private final By otpDigitInputs = By.xpath("//*[contains(normalize-space(),'Enter OTP sent to')]/following::input[@type='tel' or @type='text' or @type='number'][position()<=4]"); // VERIFY: structural
     private final By skipOtpButton = By.xpath("//*[normalize-space()='Skip OTP'][self::button or self::span or self::div]"); // VERIFY: text-anchor
     private final By resendOtpButton = By.xpath("//*[contains(normalize-space(),'Resend OTP')]"); // VERIFY: text-anchor
 
-    // --- Address step (magic-link saved addresses) ---
-    // Dynamic: a saved-address card by its label (e.g. "Home", "Office").
-    private final By addressCardTemplate = By.xpath("//*[normalize-space()='%s']/ancestor::*[contains(@class,'card') or (self::div and .//input) or self::label][1]"); // VERIFY: structural
-    private final By addressCardLabels = By.xpath("//*[normalize-space()='Home' or normalize-space()='Office']"); // VERIFY: text-anchor
-    private final By standardShippingRow = By.xpath("//*[contains(normalize-space(),'Standard')]"); // VERIFY: text-anchor
+    // --- Payment Options: the method rail ---
+    private final By methodsRail = By.cssSelector("div[data-testid='nav-sidebar']");
+    private final By railRecommended = By.cssSelector("div[data-testid='recommended']");
+    private final By railUpi = By.cssSelector("div[data-testid='upi']");
+    private final By railCards = By.cssSelector("div[data-testid='card']");
+    private final By railEmi = By.cssSelector("div[data-testid='emi']");
+    private final By railNetbanking = By.cssSelector("div[data-testid='netbanking']");
+    private final By railWallet = By.cssSelector("div[data-testid='wallet']");
+    private final By inlineOfferBadges = By.cssSelector("div[data-testid='inline-offer-text']");
 
-    // --- Payment step (domestic full method rail) ---
-    // Dynamic: a payment-method rail entry by label (UPI / Cards / EMI / Netbanking / Wallet).
-    private final By paymentMethodTemplate = By.xpath("//*[normalize-space()='%s'][self::button or self::div or self::span or self::a]"); // VERIFY: text-anchor
-    private final By upiQrBlock = By.xpath("//*[contains(normalize-space(),'UPI QR') or contains(normalize-space(),'Show QR')]"); // VERIFY: text-anchor
-    private final By availableOffers = By.xpath("//*[contains(normalize-space(),'Available Offers')]"); // VERIFY: text-anchor
+    // --- Payment Options: right-pane blocks ---
+    private final By offersContainer = By.cssSelector("div[data-testid='offer-container']");
+    private final By offerCards = By.cssSelector("div[data-testid^='offer-card-offer_']");
+    private final By viewAllOffersButton = By.cssSelector("button[data-testid='view-all-offers']");
+    private final By upiQrContainer = By.cssSelector("div[data-testid='upi-qr-container']");
 
-    // --- "Payment Options" mode (INTERNATIONAL: cards + Apple Pay ONLY) ---
-    private final By paymentOptionsTitle = By.xpath("//*[normalize-space()='Payment Options']"); // VERIFY: text-anchor
-    private final By savedCardsSection = By.xpath("//*[normalize-space()='Saved Cards']"); // VERIFY: text-anchor
-    private final By applePayRow = By.xpath("//*[contains(normalize-space(),'Apple Pay')]"); // VERIFY: text-anchor
-    private final By addNewCardRow = By.xpath("//*[contains(normalize-space(),'Add a new card')]"); // VERIFY: text-anchor
+    // --- International Cards pane: Apple Pay + add-a-new-card ---
+    private final By applePayButton = By.xpath("//button[contains(normalize-space(),'Apple Pay')]"); // text-anchor (no testid)
+    private final By addNewCardButton = By.xpath("//button[contains(normalize-space(),'Add a new card')]"); // text-anchor (no testid)
+    private final By cardNumberInput = By.cssSelector("input[name='card.number']"); // name attr (no testid)
+    private final By cardExpiryInput = By.cssSelector("input[name='card.expiry']"); // name attr (no testid)
+    private final By cardCvvInput = By.cssSelector("input[name='card.cvv']"); // name attr (no testid)
+    private final By cardNameInput = By.cssSelector("input[name='card.name']"); // name attr (no testid)
+    private final By saveCardCheckbox = By.cssSelector("input[data-testid='save-card-checkbox']");
+    // Razorpay's hyphenated data-test-id again — kept verbatim.
+    private final By addCardContinueButton = By.cssSelector("button[data-test-id='add-card-cta']");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -162,8 +209,8 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
-     * B.2 Switches the driver INTO the Razorpay checkout iframe. Every
-     * modal-internal method below assumes this has been called.
+     * B.2 Switches the driver INTO the (cross-origin) Razorpay checkout iframe.
+     * Every modal-internal method below assumes this has been called.
      *
      * @return this component instance for method chaining.
      */
@@ -185,56 +232,99 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
-     * B.4 Closes the modal via its X control (esc and cancel do NOT close it).
-     * Assumes the frame context; restores the storefront context afterwards.
+     * B.4 Closes the modal COMPLETELY: clicks the X ({@code checkout-close}),
+     * confirms "Yes, exit" in the exit dialog, then restores the storefront
+     * context. (esc/cancel never close it; the X alone only opens the dialog.)
      *
      * @return this component instance for method chaining.
      */
     public RazorpayModalComponent closeModal() {
-        log.info("Closing the Razorpay modal via its X control.");
+        log.info("Closing the Razorpay modal (X → exit confirmation → Yes, exit).");
         clickElement(closeButton);
+        clickElement(exitConfirmButton);
         switchBackToStorefront();
         return this;
     }
 
     /**
-     * B.5 Fills the guest Contact step (mobile + email). The offers checkbox is
-     * left in its default state.
+     * B.5 Dismisses the exit-confirmation dialog and STAYS in checkout
+     * ("Continue shopping" / negative option).
      *
-     * @param mobile the 10-digit mobile number (the +91 prefix is preset).
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent stayInCheckout() {
+        log.info("Dismissing the exit dialog — staying in checkout.");
+        clickElement(exitStayButton);
+        return this;
+    }
+
+    /**
+     * B.6 Clicks the X only (opens the exit-confirmation dialog without
+     * confirming).
+     *
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent clickClose() {
+        log.info("Clicking the Razorpay X (opens the exit confirmation).");
+        clickElement(closeButton);
+        return this;
+    }
+
+    /**
+     * B.7 Continues from the Review Order step to Payment Options
+     * ({@code proceed-to-pay}).
+     *
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent clickReviewOrderContinue() {
+        log.info("Continuing from Review Order to Payment Options.");
+        clickElement(proceedToPayButton);
+        return this;
+    }
+
+    /**
+     * B.8 Opens the address switcher by clicking the selected-address block.
+     *
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent openAddressSwitcher() {
+        log.info("Opening the Razorpay address switcher.");
+        clickElement(addressBlock);
+        return this;
+    }
+
+    /**
+     * B.9 Confirms the currently selected saved address
+     * ({@code continue-selected-address}) and returns to Review Order.
+     *
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent continueWithSelectedAddress() {
+        log.info("Continuing with the selected saved address.");
+        clickElement(continueSelectedAddress);
+        return this;
+    }
+
+    /**
+     * B.10 Opens the contact-details popup from the "Using as +91…" identity
+     * chip and fills mobile + email.
+     *
+     * @param mobile the mobile number (country code preset via its selector).
      * @param email  the email address.
      * @return this component instance for method chaining.
      */
-    public RazorpayModalComponent enterContactDetails(String mobile, String email) {
-        log.info("Filling the Razorpay Contact step.");
-        sendKeys(mobileInput, mobile);
-        sendKeys(emailInput, email);
+    public RazorpayModalComponent updateContactDetails(String mobile, String email) {
+        log.info("Updating contact details via the identity chip popup.");
+        clickElement(identityChip);
+        sendKeys(contactNumberInput, mobile);
+        sendKeys(contactEmailInput, email);
+        clickElement(contactContinueButton);
         return this;
     }
 
     /**
-     * B.6 Toggles the "Send me offers and order updates" checkbox.
-     *
-     * @return this component instance for method chaining.
-     */
-    public RazorpayModalComponent toggleOffersCheckbox() {
-        clickElement(offersCheckbox);
-        return this;
-    }
-
-    /**
-     * B.7 Clicks the primary Continue CTA (Contact / OTP / Address steps).
-     *
-     * @return this component instance for method chaining.
-     */
-    public RazorpayModalComponent clickContinue() {
-        log.info("Clicking Continue in the Razorpay modal.");
-        clickElement(continueButton);
-        return this;
-    }
-
-    /**
-     * B.8 Enters the 4-digit magic-link OTP (one digit per box).
+     * B.11 Enters the 4-digit magic-link OTP (one digit per box; guest identity
+     * path — VERIFY-tier locators).
      *
      * @param otp the 4-digit OTP.
      * @return this component instance for method chaining.
@@ -249,8 +339,8 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
-     * B.9 Skips the magic-link OTP (guest continues without the saved-address
-     * fill).
+     * B.12 Skips the magic-link OTP (guest continues without the saved-address
+     * fill; VERIFY-tier locator).
      *
      * @return this component instance for method chaining.
      */
@@ -261,83 +351,215 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
-     * B.10 Selects a magic-link saved-address card by its label (e.g. "Home",
-     * "Office").
-     *
-     * @param label the address card label.
-     * @return this component instance for method chaining.
-     */
-    public RazorpayModalComponent selectAddressCard(String label) {
-        log.info("Selecting the Razorpay saved-address card: [{}]", label);
-        clickElement(formatLocator(addressCardTemplate, label));
-        return this;
-    }
-
-    /**
-     * B.11 Opens a domestic payment-method rail entry by label (UPI / Cards /
-     * EMI / Netbanking / Wallet).
+     * B.13 Selects a payment-method rail entry.
      * <p>
      * PAYMENT SAFETY: no method in this component ever completes a payment.
      * Verification payments are made ONLY with Razorpay test cards, for ₹1, for
      * test customers — see the class-level warning.
      *
-     * @param methodLabel the payment-method rail label.
+     * @param method one of: Recommended, UPI, Cards, EMI, Netbanking, Wallet.
      * @return this component instance for method chaining.
      */
-    public RazorpayModalComponent selectPaymentMethod(String methodLabel) {
-        log.info("Selecting the Razorpay payment method: [{}]", methodLabel);
-        clickElement(formatLocator(paymentMethodTemplate, methodLabel));
+    public RazorpayModalComponent selectPaymentMethod(String method) {
+        log.info("Selecting the Razorpay payment rail entry: [{}]", method);
+        clickElement(railFor(method));
         return this;
     }
 
     /**
-     * B.12 Returns the order-summary line text from the left brand panel (e.g.
-     * "Order summary • 2 items").
+     * B.14 Opens the "Add a new card" form (international Cards pane). Card
+     * fields are filled via the {@code card.*} name-attribute inputs; the form
+     * is submitted with {@code add-card-cta} — NEVER call that against a real
+     * card (Razorpay test cards only).
      *
-     * @return the trimmed order-summary text.
+     * @return this component instance for method chaining.
      */
-    public String getOrderSummaryText() {
-        return getText(orderSummaryRow);
+    public RazorpayModalComponent openAddNewCardForm() {
+        log.info("Opening the 'Add a new card' form.");
+        clickElement(addNewCardButton);
+        return this;
+    }
+
+    /**
+     * B.15 Fills the add-a-new-card form (Razorpay TEST cards only — see the
+     * class-level payment-safety warning). Does not submit.
+     *
+     * @param number the card number (Razorpay test card).
+     * @param expiry the MM/YY expiry.
+     * @param cvv    the CVV.
+     * @param name   the cardholder name.
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent fillNewCardForm(String number, String expiry, String cvv, String name) {
+        log.info("Filling the add-a-new-card form (test card).");
+        sendKeys(cardNumberInput, number);
+        sendKeys(cardExpiryInput, expiry);
+        sendKeys(cardCvvInput, cvv);
+        sendKeys(cardNameInput, name);
+        return this;
+    }
+
+    /**
+     * B.15b Submits the add-a-new-card form via the {@code add-card-cta}.
+     * <p>
+     * WARNING: this ATTEMPTS the payment/tokenization. Only ever call it with
+     * Razorpay TEST cards for the sanctioned decline/₹1 verification scenarios —
+     * see the class-level payment-safety warning.
+     *
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent submitNewCardForm() {
+        log.warn("Submitting the Razorpay card form — TEST cards only (sanctioned verification).");
+        clickElement(addCardContinueButton);
+        return this;
+    }
+
+    /**
+     * B.15c Verifies a message text renders anywhere inside the checkout iframe
+     * (e.g. a decline reason like "Insufficient Funds"). Frame context required.
+     *
+     * @param message the message text (or a distinctive fragment).
+     * @return true if the message is displayed.
+     */
+    public boolean isMessageDisplayed(String message) {
+        By text = By.xpath(String.format("//*[contains(normalize-space(),'%s')]", message));
+        return !driver.findElements(text).isEmpty();
+    }
+
+    /**
+     * B.16 Returns the order amount (prefers the plain-text fallback node; the
+     * primary node renders rolling digit animations).
+     *
+     * @return the trimmed order-amount text (e.g. "₹11,000").
+     */
+    public String getOrderAmountText() {
+        if (!driver.findElements(orderAmountFallback).isEmpty()) {
+            return getText(orderAmountFallback);
+        }
+        return getText(orderAmount);
+    }
+
+    /**
+     * B.17 Returns the offers subtext from the left panel (e.g. "7 offers
+     * available").
+     *
+     * @return the trimmed offers subtext.
+     */
+    public String getOffersSubtext() {
+        return getText(offersSubtext);
+    }
+
+    /**
+     * B.18 Returns the current step title (e.g. "Review Order", "Payment
+     * Options").
+     *
+     * @return the trimmed step title.
+     */
+    public String getStepTitle() {
+        return getText(stepTitle);
     }
 
     // ==========================================
     // VERIFICATION METHODS
     // ==========================================
     /**
-     * V.1 Reports whether the Razorpay modal is open (container + iframe present
-     * in the storefront DOM). Call from the DEFAULT content.
+     * V.1 Reports whether the Razorpay modal is open (container + backdrop +
+     * iframe present in the storefront DOM). Call from the DEFAULT content.
      *
      * @return true if the modal overlay is present.
      */
     public boolean isModalOpen() {
         return !driver.findElements(razorpayContainer).isEmpty()
-                && !driver.findElements(checkoutIframe).isEmpty();
+                && !driver.findElements(checkoutIframe).isEmpty()
+                && !driver.findElements(razorpayBackdrop).isEmpty();
     }
 
     /**
-     * V.2 Verifies a step-rail entry ("Contact" / "Address" / "Payment") is
-     * displayed (frame context).
+     * V.2 Verifies the checkout root + merchant branding rendered inside the
+     * iframe (Timepieces logo/name + Secured by Razorpay).
      *
-     * @param stepLabel the step label.
-     * @return true if the step tab is present.
+     * @return true if the branded checkout shell is displayed.
      */
-    public boolean isStepDisplayed(String stepLabel) {
-        return !driver.findElements(formatLocator(stepTabTemplate, stepLabel)).isEmpty();
+    public boolean isCheckoutShellDisplayed() {
+        return !driver.findElements(checkoutRoot).isEmpty()
+                && !driver.findElements(merchantName).isEmpty()
+                && !driver.findElements(merchantLogo).isEmpty()
+                && !driver.findElements(securedByRazorpay).isEmpty();
     }
 
     /**
-     * V.3 Verifies the guest Contact step is displayed (heading + mobile + email).
+     * V.3 Verifies the domestic left panel extras (order summary + GST + order
+     * instructions + offers row).
      *
-     * @return true if the Contact step is displayed.
+     * @return true if the domestic brand-panel rows are present.
      */
-    public boolean isContactStepDisplayed() {
-        return !driver.findElements(contactHeading).isEmpty()
-                && !driver.findElements(mobileInput).isEmpty()
-                && !driver.findElements(emailInput).isEmpty();
+    public boolean isDomesticBrandPanelDisplayed() {
+        return !driver.findElements(orderSummaryButton).isEmpty()
+                && !driver.findElements(gstinButton).isEmpty()
+                && !driver.findElements(orderInstructionsButton).isEmpty()
+                && !driver.findElements(offersChevronButton).isEmpty();
     }
 
     /**
-     * V.4 Verifies the magic-link OTP prompt is displayed (with Skip + Resend).
+     * V.4 Verifies the Review Order step is displayed (address block + delivery
+     * options + Continue).
+     *
+     * @return true if the Review Order step is displayed.
+     */
+    public boolean isReviewOrderDisplayed() {
+        return !driver.findElements(addressBlock).isEmpty()
+                && !driver.findElements(deliveryCard).isEmpty()
+                && !driver.findElements(deliveryOptionsList).isEmpty()
+                && !driver.findElements(proceedToPayButton).isEmpty();
+    }
+
+    /**
+     * V.5 Counts the delivery options offered on Review Order.
+     *
+     * @return the number of delivery option rows.
+     */
+    public int getDeliveryOptionCount() {
+        return driver.findElements(deliveryOptionItems).size();
+    }
+
+    /**
+     * V.6 Counts the saved addresses in the address switcher.
+     *
+     * @return the number of saved-address items.
+     */
+    public int getSavedAddressCount() {
+        return driver.findElements(savedAddressItems).size();
+    }
+
+    /**
+     * V.7 Verifies the address switcher chrome (add-new + edit + billing-same
+     * checkbox) is present.
+     *
+     * @return true if the switcher controls are present.
+     */
+    public boolean isAddressSwitcherDisplayed() {
+        return !driver.findElements(savedAddressItems).isEmpty()
+                && !driver.findElements(addNewAddressButton).isEmpty()
+                && !driver.findElements(editAddressButton).isEmpty()
+                && !driver.findElements(billingSameAsShipping).isEmpty();
+    }
+
+    /**
+     * V.8 Verifies the contact-details popup is displayed (title + country code
+     * + number + email).
+     *
+     * @return true if the contact popup is displayed.
+     */
+    public boolean isContactPopupDisplayed() {
+        return !driver.findElements(contactPopupTitle).isEmpty()
+                && !driver.findElements(countryCodeSelector).isEmpty()
+                && !driver.findElements(contactNumberInput).isEmpty()
+                && !driver.findElements(contactEmailInput).isEmpty();
+    }
+
+    /**
+     * V.9 Verifies the guest magic-link OTP prompt is displayed (VERIFY-tier
+     * locators — see the class Javadoc).
      *
      * @return true if the OTP prompt is displayed.
      */
@@ -348,115 +570,157 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
-     * V.5 Verifies the magic-link "N addresses found" banner rendered.
+     * V.10 Verifies a payment rail entry is offered.
      *
-     * @return true if the addresses-found banner is present.
+     * @param method one of: Recommended, UPI, Cards, EMI, Netbanking, Wallet.
+     * @return true if the rail entry is present.
      */
-    public boolean isAddressesFoundBannerDisplayed() {
-        return !driver.findElements(addressesFoundBanner).isEmpty();
+    public boolean isPaymentMethodOffered(String method) {
+        return !driver.findElements(railFor(method)).isEmpty();
     }
 
     /**
-     * V.6 Counts the saved-address card labels (Home/Office) on the Address step.
-     *
-     * @return the number of labelled address cards.
-     */
-    public int getAddressCardCount() {
-        return driver.findElements(addressCardLabels).size();
-    }
-
-    /**
-     * V.7 Verifies the Standard (FREE) shipping row is present on the Address
-     * step.
-     *
-     * @return true if the standard-shipping row is present.
-     */
-    public boolean isStandardShippingDisplayed() {
-        return !driver.findElements(standardShippingRow).isEmpty();
-    }
-
-    /**
-     * V.8 Verifies a domestic payment method is offered on the Payment rail.
-     *
-     * @param methodLabel the rail label (UPI / Cards / EMI / Netbanking / Wallet).
-     * @return true if the method is offered.
-     */
-    public boolean isPaymentMethodOffered(String methodLabel) {
-        return !driver.findElements(formatLocator(paymentMethodTemplate, methodLabel)).isEmpty();
-    }
-
-    /**
-     * V.9 Verifies the domestic Payment step shows the full method rail
-     * (UPI + Cards + EMI + Netbanking + Wallet) plus the UPI QR block.
+     * V.11 Verifies the DOMESTIC Payment Options rail is complete
+     * (Recommended + UPI + Cards + EMI + Netbanking + Wallet + the UPI QR
+     * block).
      *
      * @return true if the full domestic rail is offered.
      */
     public boolean isDomesticPaymentRailComplete() {
-        return isPaymentMethodOffered("UPI")
+        return !driver.findElements(methodsRail).isEmpty()
+                && isPaymentMethodOffered("Recommended")
+                && isPaymentMethodOffered("UPI")
                 && isPaymentMethodOffered("Cards")
                 && isPaymentMethodOffered("EMI")
                 && isPaymentMethodOffered("Netbanking")
                 && isPaymentMethodOffered("Wallet")
-                && !driver.findElements(upiQrBlock).isEmpty();
+                && !driver.findElements(upiQrContainer).isEmpty();
     }
 
     /**
-     * V.10 Verifies the INTERNATIONAL "Payment Options" mode: Saved Cards +
-     * Apple Pay + Add-a-new-card are offered, and NONE of the domestic-only
-     * families (UPI / EMI / Netbanking / Wallet) appear. This is the
-     * two-method-family rule for international purchases.
+     * V.12 Verifies the INTERNATIONAL "Payment Options" mode: the rail holds
+     * Recommended + Cards ONLY (UPI/EMI/Netbanking/Wallet absent — the
+     * two-method-family rule), with Apple Pay + Add-a-new-card in the Cards
+     * pane and the streamlined identity widget.
      *
-     * @return true if only the card + Apple Pay families are offered.
+     * @return true if the international mode renders correctly.
      */
     public boolean isInternationalPaymentOptionsMode() {
-        boolean intlSurface = !driver.findElements(paymentOptionsTitle).isEmpty()
-                && !driver.findElements(savedCardsSection).isEmpty()
-                && !driver.findElements(applePayRow).isEmpty()
-                && !driver.findElements(addNewCardRow).isEmpty();
-        boolean noDomesticOnly = driver.findElements(formatLocator(paymentMethodTemplate, "UPI")).isEmpty()
-                && driver.findElements(formatLocator(paymentMethodTemplate, "EMI")).isEmpty()
-                && driver.findElements(formatLocator(paymentMethodTemplate, "Netbanking")).isEmpty()
-                && driver.findElements(formatLocator(paymentMethodTemplate, "Wallet")).isEmpty();
-        return intlSurface && noDomesticOnly;
+        boolean railLimited = !driver.findElements(methodsRail).isEmpty()
+                && isPaymentMethodOffered("Recommended")
+                && isPaymentMethodOffered("Cards")
+                && driver.findElements(railUpi).isEmpty()
+                && driver.findElements(railEmi).isEmpty()
+                && driver.findElements(railNetbanking).isEmpty()
+                && driver.findElements(railWallet).isEmpty();
+        boolean cardsPane = !driver.findElements(applePayButton).isEmpty()
+                && !driver.findElements(addNewCardButton).isEmpty();
+        return railLimited && cardsPane;
     }
 
     /**
-     * V.11 Verifies the offers block is present on the domestic Payment step.
+     * V.13 Verifies the offers panel is present (container + at least one offer
+     * card + view-all).
      *
-     * @return true if "Available Offers" is present.
+     * @return true if offers render.
      */
     public boolean areOffersDisplayed() {
-        return !driver.findElements(availableOffers).isEmpty();
+        return !driver.findElements(offersContainer).isEmpty()
+                && !driver.findElements(offerCards).isEmpty()
+                && !driver.findElements(viewAllOffersButton).isEmpty();
     }
 
     /**
-     * V.12 Verifies the left panel chrome (order summary + coupons + Secured by
-     * Razorpay).
+     * V.14 Counts the inline offer badges on the method rail.
      *
-     * @return true if the brand-panel rows are present.
+     * @return the number of inline offer badges.
      */
-    public boolean isBrandPanelDisplayed() {
-        return !driver.findElements(orderSummaryRow).isEmpty()
-                && !driver.findElements(couponsRow).isEmpty()
-                && !driver.findElements(securedByRazorpay).isEmpty();
+    public int getInlineOfferBadgeCount() {
+        return driver.findElements(inlineOfferBadges).size();
     }
 
     /**
-     * V.13 Verifies the "Using as +91…" identity chip is shown (the shopper is
-     * recognized by the magic-link identity).
+     * V.15 Verifies the identity chip is shown ("Using as +91…" — domestic or
+     * the international sidebar variant).
      *
-     * @return true if the identity chip is present.
+     * @return true if an identity chip is present.
      */
     public boolean isIdentityChipDisplayed() {
-        return !driver.findElements(usingAsChip).isEmpty();
+        return !driver.findElements(identityChip).isEmpty()
+                || !driver.findElements(identityChipIntl).isEmpty();
     }
 
     /**
-     * V.14 Reports whether the back arrow is available (Address step onward).
+     * V.16 Verifies the exit-confirmation dialog is displayed (after clicking
+     * the X).
+     *
+     * @return true if the exit dialog is displayed.
+     */
+    public boolean isExitDialogDisplayed() {
+        return !driver.findElements(exitDialogTitle).isEmpty()
+                && !driver.findElements(exitConfirmButton).isEmpty()
+                && !driver.findElements(exitStayButton).isEmpty();
+    }
+
+    /**
+     * V.17 Verifies the add-a-new-card form rendered (all four card.* inputs +
+     * save-card checkbox + the add-card CTA).
+     *
+     * @return true if the new-card form is displayed.
+     */
+    public boolean isNewCardFormDisplayed() {
+        return !driver.findElements(cardNumberInput).isEmpty()
+                && !driver.findElements(cardExpiryInput).isEmpty()
+                && !driver.findElements(cardCvvInput).isEmpty()
+                && !driver.findElements(cardNameInput).isEmpty()
+                && !driver.findElements(saveCardCheckbox).isEmpty()
+                && !driver.findElements(addCardContinueButton).isEmpty();
+    }
+
+    /**
+     * V.18 Reports whether the back control is available in the step header.
      *
      * @return true if the back control is present.
      */
     public boolean isBackAvailable() {
         return !driver.findElements(backButton).isEmpty();
+    }
+
+    /**
+     * V.19 Reports whether the more-options (three dots) control is present.
+     *
+     * @return true if the more-options control is present.
+     */
+    public boolean isMoreOptionsAvailable() {
+        return !driver.findElements(moreOptionsButton).isEmpty();
+    }
+
+    // ==========================================
+    // PRIVATE HELPERS (rail lookup)
+    // ==========================================
+    /**
+     * P.1 Maps a rail label to its Razorpay testid locator.
+     *
+     * @param method the rail label.
+     * @return the rail entry locator.
+     */
+    private By railFor(String method) {
+        switch (method.toLowerCase()) {
+            case "recommended":
+                return railRecommended;
+            case "upi":
+                return railUpi;
+            case "cards":
+            case "card":
+                return railCards;
+            case "emi":
+                return railEmi;
+            case "netbanking":
+                return railNetbanking;
+            case "wallet":
+                return railWallet;
+            default:
+                throw new IllegalArgumentException("Unknown Razorpay payment rail: " + method);
+        }
     }
 }

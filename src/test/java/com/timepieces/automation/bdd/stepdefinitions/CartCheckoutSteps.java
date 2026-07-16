@@ -85,29 +85,48 @@ public class CartCheckoutSteps {
     @When("the user slides the transactional checkout slide trigger element")
     public void the_user_slides_the_transactional_checkout_slide_trigger_element() {
         log.info("STEP: actuate the slide-to-checkout trigger.");
-        // TODO: perform the slide/drag gesture on the checkout slide trigger.
-        throw new PendingException("Implement slide-to-checkout trigger gesture.");
+        org.openqa.selenium.WebDriver driver = com.timepieces.automation.base.DriverFactory.getDriver();
+        testContext.setContextData("URL_BEFORE_SLIDE", driver.getCurrentUrl());
+        new com.timepieces.automation.pages.components.CartDrawerComponent(driver).performSlideToPay();
     }
 
     @Then("the Razorpay secure payment modal interface should initialize successfully within the active viewing")
     public void the_razorpay_secure_payment_modal_should_initialize() {
         log.info("STEP: assert the Razorpay modal initializes in-viewport.");
-        // TODO: assert the Razorpay iframe/modal is present in the active viewport.
-        throw new PendingException("Implement Razorpay modal initialization assertion (CheckoutPage / Razorpay modal).");
+        org.openqa.selenium.WebDriver driver = com.timepieces.automation.base.DriverFactory.getDriver();
+        com.timepieces.automation.pages.components.RazorpayModalComponent razorpay =
+                new com.timepieces.automation.pages.components.RazorpayModalComponent(driver);
+        razorpay.waitForModalOpen();
+        org.assertj.core.api.Assertions.assertThat(razorpay.isModalOpen())
+                .as("The Razorpay modal (container + backdrop + iframe) should initialize in-viewport").isTrue();
     }
 
     @And("the customer contact information form should become visible")
     public void the_customer_contact_information_form_should_become_visible() {
-        log.info("STEP: assert the contact information form is visible.");
-        // TODO: assert the contact/delivery information form renders.
-        throw new PendingException("Implement contact-information form visibility assertion.");
+        log.info("STEP: assert the contact/identity surface renders inside the Razorpay iframe.");
+        org.openqa.selenium.WebDriver driver = com.timepieces.automation.base.DriverFactory.getDriver();
+        com.timepieces.automation.pages.components.RazorpayModalComponent razorpay =
+                new com.timepieces.automation.pages.components.RazorpayModalComponent(driver);
+        razorpay.switchToCheckoutFrame();
+        // A recognized identity opens on Review Order (identity chip present); a
+        // fresh guest gets the contact-details surface — either satisfies the step.
+        boolean contactSurface = razorpay.isCheckoutShellDisplayed()
+                && (razorpay.isReviewOrderDisplayed()
+                        || razorpay.isContactPopupDisplayed()
+                        || razorpay.isIdentityChipDisplayed());
+        razorpay.switchBackToStorefront();
+        org.assertj.core.api.Assertions.assertThat(contactSurface)
+                .as("The Razorpay contact/identity surface should be visible").isTrue();
     }
 
     @And("the system should not perform a hard URL redirect")
     public void the_system_should_not_perform_a_hard_url_redirect() {
         log.info("STEP: assert no hard URL redirect occurred (modal stays in-page).");
-        // TODO: capture the URL before actuation and assert it is unchanged here.
-        throw new PendingException("Implement no-hard-redirect assertion (compare pre/post URL).");
+        org.openqa.selenium.WebDriver driver = com.timepieces.automation.base.DriverFactory.getDriver();
+        String before = String.valueOf(testContext.getContextData("URL_BEFORE_SLIDE"));
+        org.assertj.core.api.Assertions.assertThat(driver.getCurrentUrl())
+                .as("Domestic Slide-to-Pay must open the modal IN-PAGE (no hard redirect)")
+                .isEqualTo(before);
     }
 
     // ==========================================

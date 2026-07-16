@@ -198,6 +198,29 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
         return this;
     }
 
+    /**
+     * Performs the "Slide to Pay" gesture: click-and-hold the handle, drag it
+     * across the full track width, release. DOMESTIC (INR) regions get the
+     * Razorpay modal in-viewport; INTERNATIONAL regions are routed to the
+     * Timepieces /checkout page instead (2026-07-16 behavior spec). Requires ≥1
+     * cart item.
+     *
+     * @return this CartDrawerComponent for method chaining.
+     */
+    public CartDrawerComponent performSlideToPay() {
+        log.info("Performing the Slide-to-Pay drag gesture.");
+        org.openqa.selenium.WebElement track = getElement(slideToPayTrack);
+        org.openqa.selenium.WebElement handle = getElement(cartButtonHandle_In_SlideToPayTrack);
+        int distance = track.getSize().getWidth() - handle.getSize().getWidth();
+        new org.openqa.selenium.interactions.Actions(driver)
+                .clickAndHold(handle)
+                .moveByOffset(distance, 0)
+                .release()
+                .perform();
+        log.info("Slide-to-Pay gesture completed (dragged {}px).", distance);
+        return this;
+    }
+
     // ==========================================
     // VERIFICATION METHODS
     // ==========================================
