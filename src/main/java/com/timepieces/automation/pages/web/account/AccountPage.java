@@ -73,6 +73,28 @@ public class AccountPage extends HeaderOnlyBasePage<AccountPage> {
      */
     private final By accountPageProfileImage = By.xpath("//div[contains(@class,'rounded-full')]//img");
 
+    // --- Profile summary (2026-07-16 scrape; no data-testids on the body) ---
+    // The profile name heading.
+    private final By profileNameHeading = By.cssSelector("h1.text-white.text-xl.font-semibold"); // ROLLOUT-GAP: utility-class
+    // The designation/profession line under the name.
+    private final By designationText = By.cssSelector("p.text-gray-400.text-sm.mt-1"); // ROLLOUT-GAP: utility-class
+    // The LinkedIn profile link inside the name heading.
+    private final By linkedInLink = By.cssSelector("h1 a[href*='linkedin.com']"); // ROLLOUT-GAP: href-anchor
+    // The "Export Profile" button.
+    private final By exportProfileButton = By.xpath("//button[contains(normalize-space(),'Export Profile')]"); // ROLLOUT-GAP: text-anchor
+    // The direct "Edit profile" link (→ /account/profile).
+    private final By editProfileLink = By.cssSelector("a[href='/account/profile']"); // ROLLOUT-GAP: href-anchor
+
+    // --- Account navigation (2026-07-16 scrape) ---
+    // The "Owned timepieces" nav link (→ /account/owned-watches).
+    private final By ownedTimepiecesLink = By.cssSelector("a[href='/account/owned-watches']"); // ROLLOUT-GAP: href-anchor
+    // The "Orders" nav link (→ /account/orders).
+    private final By ordersLink = By.cssSelector("a[href='/account/orders']"); // ROLLOUT-GAP: href-anchor
+    // The "Wishlist" nav link (→ the same guest /wishlist page).
+    private final By wishlistLink = By.cssSelector("a[href='/wishlist']"); // ROLLOUT-GAP: href-anchor
+    // The "Logout" button (red label row).
+    private final By logoutButton = By.xpath("//button[.//span[normalize-space()='Logout'] or normalize-space()='Logout']"); // ROLLOUT-GAP: text-anchor
+
     // ==========================================
     // PRIVATE HELPERS
     // ==========================================
@@ -117,6 +139,92 @@ public class AccountPage extends HeaderOnlyBasePage<AccountPage> {
         clickElement(incompleteProfileMessage);
         log.info("Navigated to Profile page.");
         return new ProfilePage(driver);
+    }
+
+    /**
+     * B.3 Clicks the direct "Edit profile" link (→ {@code /account/profile}) —
+     * present regardless of profile-completion state, unlike the banner.
+     *
+     * @return a new {@link ProfilePage} representing the edit-profile destination.
+     */
+    public ProfilePage clickEditProfileLink() {
+        log.info("Clicking the 'Edit profile' link.");
+        clickElement(editProfileLink);
+        return new ProfilePage(driver);
+    }
+
+    /**
+     * B.4 Clicks the "Orders" nav link (→ {@code /account/orders}).
+     *
+     * @return this page instance for method chaining.
+     */
+    public AccountPage clickOrders() {
+        log.info("Navigating to Order History via the account nav.");
+        clickElement(ordersLink);
+        return this;
+    }
+
+    /**
+     * B.5 Clicks the "Owned timepieces" nav link (→ {@code /account/owned-watches}).
+     *
+     * @return this page instance for method chaining.
+     */
+    public AccountPage clickOwnedTimepieces() {
+        log.info("Navigating to Owned Timepieces via the account nav.");
+        clickElement(ownedTimepiecesLink);
+        return this;
+    }
+
+    /**
+     * B.6 Clicks the "Wishlist" nav link (→ the shared guest {@code /wishlist}
+     * page).
+     *
+     * @return this page instance for method chaining.
+     */
+    public AccountPage clickWishlist() {
+        log.info("Navigating to the Wishlist via the account nav.");
+        clickElement(wishlistLink);
+        return this;
+    }
+
+    /**
+     * B.7 Clicks the "Export Profile" button.
+     *
+     * @return this page instance for method chaining.
+     */
+    public AccountPage clickExportProfile() {
+        log.info("Clicking 'Export Profile'.");
+        clickElement(exportProfileButton);
+        return this;
+    }
+
+    /**
+     * B.8 Clicks the "Logout" button, ending the session.
+     *
+     * @return this page instance for method chaining.
+     */
+    public AccountPage clickLogout() {
+        log.info("Logging out via the account page.");
+        clickElement(logoutButton);
+        return this;
+    }
+
+    /**
+     * B.9 Returns the profile name heading text.
+     *
+     * @return the trimmed profile name.
+     */
+    public String getProfileName() {
+        return getText(profileNameHeading);
+    }
+
+    /**
+     * B.10 Returns the designation/profession line text.
+     *
+     * @return the trimmed designation text.
+     */
+    public String getDesignation() {
+        return getText(designationText);
     }
 
     // ==========================================
@@ -175,5 +283,58 @@ public class AccountPage extends HeaderOnlyBasePage<AccountPage> {
             log.warn("Uploaded profile image is not displayed.");
         }
         return uploaded;
+    }
+
+    /**
+     * V.4 Verifies all four account nav entries are present (Orders, Owned
+     * timepieces, Wishlist, Logout).
+     *
+     * @return true if every nav entry is present.
+     */
+    public boolean isAccountNavComplete() {
+        boolean complete = !driver.findElements(ordersLink).isEmpty()
+                && !driver.findElements(ownedTimepiecesLink).isEmpty()
+                && !driver.findElements(wishlistLink).isEmpty()
+                && !driver.findElements(logoutButton).isEmpty();
+        if (!complete) {
+            log.warn("One or more account nav entries are missing.");
+        }
+        return complete;
+    }
+
+    /**
+     * V.5 Verifies the "Logout" button is displayed.
+     *
+     * @return true if the logout button is displayed.
+     */
+    public boolean isLogoutDisplayed() {
+        return isDisplayed(logoutButton);
+    }
+
+    /**
+     * V.6 Verifies the profile name heading is displayed.
+     *
+     * @return true if the profile name is displayed.
+     */
+    public boolean isProfileNameDisplayed() {
+        return isDisplayed(profileNameHeading);
+    }
+
+    /**
+     * V.7 Reports whether the profile name links out to LinkedIn.
+     *
+     * @return true if a LinkedIn link is present in the name heading.
+     */
+    public boolean hasLinkedInLink() {
+        return !driver.findElements(linkedInLink).isEmpty();
+    }
+
+    /**
+     * V.8 Verifies the "Export Profile" button is displayed.
+     *
+     * @return true if the export button is displayed.
+     */
+    public boolean isExportProfileDisplayed() {
+        return isDisplayed(exportProfileButton);
     }
 }

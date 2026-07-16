@@ -774,3 +774,45 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-052`.
   Phase 3 remaining: ONLY 3B-auth (Orders + Account nav — authenticated
   Antigravity session).
+
+### Phase 3 chunk 3B-auth — Orders + Account nav (authenticated) — PHASE 3 COMPLETE
+
+- Antigravity mapped the 3 auth-gated pages in a single authenticated session
+  (human-solved Cloudflare + SMS-OTP for the pilot number; personal data
+  redacted in the artifacts as briefed).
+- `OrderHistoryPage` (`/account/orders`): FULLY `data-testid`-instrumented —
+  `orders-page`, `account-page-title`, `account-breadcrumbs`, `orders-error`,
+  `orders-empty` ("This space awaits your first Timepieces." + `orders-empty-cta`
+  → `/collections/timepieces`), `orders-list`, `order-card` (carrying a
+  `data-order-number="Timepieces<No>"` attribute — used by `openOrder()`/
+  `hasOrder()`/`getOrderStatus()`), `order-card-link`
+  (→ `/account/orders/Timepieces<No>`), `order-card-status`, `order-card-title`.
+  Only the date/internal-id/icon inner texts are ROLLOUT-GAPs. Document title is
+  the generic storefront title (not unique).
+- `OrderDetailsPage` (`/account/orders/Timepieces<No>`, path-agnostic via
+  `openOrder(orderNumber)`): FULLY testid'd — back link, title, variant, status
+  (+label), price toggle/item-price/total/View-Breakup, internal order id,
+  payment status, shipping + billing address blocks (inner texts are personal
+  data; POM asserts display only), and a DELIVERED-only "Get Invoice" button.
+  The old "Contact Support is currently bugged" Javadoc claim is DISPROVED: the
+  "Help" button opens a Support Request sheet, itself fully testid'd with
+  separate desktop/mobile variants (backdrop, sheet, close, subject toggle,
+  note textarea, hidden file input [`attachSupportFile()` via sendKeys], submit
+  [starts disabled — `isSupportSubmitEnabled()`]); the POM picks the variant
+  via the inherited `isMobileViewport()`.
+- `AccountPage` (`/account`): navigation finished — NO testids on its body (all
+  ROLLOUT-GAP, unlike the orders pages): Orders (`a[href='/account/orders']`),
+  Owned timepieces (`a[href='/account/owned-watches']`), Wishlist
+  (`a[href='/wishlist']` — the SAME guest wishlist page), direct "Edit profile"
+  link (vs the existing incomplete-banner route), "Export Profile", Logout
+  (text-anchor xpath; the scrape's `:has-text()` suggestions are
+  Playwright-only and were converted), profile name/designation/LinkedIn.
+  `isAccountNavComplete()` asserts all four nav entries at once.
+- NEW discovery: `/account/owned-watches` (Owned Timepieces) exists in the nav
+  but has NO page-object scaffold in the repo — logged as a follow-up mapping
+  candidate rather than silently inventing a class.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS.
+- **PHASE 3 COMPLETE → THE POM MAPPING PLAN IS DONE.** Phases 0/1/2/3 all
+  mapped; the only exclusion is the user-owned Razorpay COM. Added `STAT-053`.
+  Next: Phase-3 BDD + TDD test cases → Zephyr → wire step definitions
+  (matching the accessories flow).
