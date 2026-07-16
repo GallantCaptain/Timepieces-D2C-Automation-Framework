@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Opt-in suite for the Phase-3 content/wishlist/track-order UI smoke (TDD). NOT
+  part of the default testng.xml (it needs a real browser and reaches the live
+  storefront). The auth-gated orders/account pages are NOT smoked here.
+  Run: mvnw -o test "-Dsurefire.suite=testng-phase3-smoke.xml" "-Denv=production"
+-->
+<suite name="Phase3ContentSmokeSuite" verbose="1">
+    <test name="Phase3ContentSmoke">
+        <classes>
+            <class name="com.timepieces.automation.tdd.ui.Phase3ContentSmokeTest"/>
+        </classes>
+    </test>
+</suite>

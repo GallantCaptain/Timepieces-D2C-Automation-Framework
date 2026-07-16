@@ -117,6 +117,11 @@ public class WishlistPage extends StoreFrontBasePage<WishlistPage> {
     private final By cardByNameTemplate = By.xpath("//div[contains(@class,'rounded-xl')][.//h3[normalize-space()='%s']]"); // ROLLOUT-GAP: text-anchor
     // Dynamic: the remove button inside the card of a named product.
     private final By removeByNameTemplate = By.xpath("//div[contains(@class,'rounded-xl')][.//h3[normalize-space()='%s']]//button[@title='Remove from wishlist']"); // ROLLOUT-GAP: text-anchor
+    // Dynamic: a wishlist card by its product HANDLE (via its PDP link href) —
+    // more robust than the display title for slug-driven steps.
+    private final By cardByHandleTemplate = By.xpath("//div[contains(@class,'rounded-xl')][.//a[contains(@href,'%s')]]"); // ROLLOUT-GAP: href-anchor
+    // Dynamic: the remove button inside the card whose link matches a handle.
+    private final By removeByHandleTemplate = By.xpath("//div[contains(@class,'rounded-xl')][.//a[contains(@href,'%s')]]//button[@title='Remove from wishlist']"); // ROLLOUT-GAP: href-anchor
 
     // ==========================================
     // PRIVATE HELPERS
@@ -181,6 +186,28 @@ public class WishlistPage extends StoreFrontBasePage<WishlistPage> {
         log.info("Removing wishlist item: [{}]", productName);
         clickElement(formatLocator(removeByNameTemplate, productName));
         return this;
+    }
+
+    /**
+     * B.5b Removes a single item by its product HANDLE (matched against the
+     * card's PDP link href) — robust for slug-driven step definitions.
+     *
+     * @param handle the product handle (e.g. "manifesta-black-onyx").
+     * @return this page instance for method chaining.
+     */
+    public WishlistPage removeItemByHandle(String handle) {
+        log.info("Removing wishlist item linked to handle: [{}]", handle);
+        clickElement(formatLocator(removeByHandleTemplate, handle));
+        return this;
+    }
+
+    /**
+     * B.5c Returns the empty-state heading text ("Your Wishlist is Empty").
+     *
+     * @return the trimmed empty-state text.
+     */
+    public String getEmptyStateText() {
+        return getText(emptyHeading);
     }
 
     /**
@@ -254,6 +281,17 @@ public class WishlistPage extends StoreFrontBasePage<WishlistPage> {
      */
     public boolean hasItem(String productName) {
         return !driver.findElements(formatLocator(cardByNameTemplate, productName)).isEmpty();
+    }
+
+    /**
+     * V.5b Verifies a wishlist card linked to the given product HANDLE is present
+     * (matched against the card's PDP link href).
+     *
+     * @param handle the product handle (e.g. "manifesta-black-onyx").
+     * @return true if a matching card is present.
+     */
+    public boolean hasItemByHandle(String handle) {
+        return !driver.findElements(formatLocator(cardByHandleTemplate, handle)).isEmpty();
     }
 
     /**

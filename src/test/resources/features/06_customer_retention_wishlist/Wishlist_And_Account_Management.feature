@@ -18,7 +18,7 @@ Feature: Wishlist and Account Profile Management
     And the wishlist displays the product "manifesta-black-onyx"
     When the user clicks the remove button for "manifesta-black-onyx" on the wishlist page
     Then the product "manifesta-black-onyx" is deleted from the wishlist
-    And the wishlist page displays "Your wishlist is currently empty"
+    And the wishlist page displays "Your Wishlist is Empty"
 
   Scenario: Verify guest wishlist items sync to account on login
     Given the user bypasses the staging password gate

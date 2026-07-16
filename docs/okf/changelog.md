@@ -816,3 +816,56 @@ This changelog is append-only. New entries must be added chronologically and mus
   mapped; the only exclusion is the user-owned Razorpay COM. Added `STAT-053`.
   Next: Phase-3 BDD + TDD test cases → Zephyr → wire step definitions
   (matching the accessories flow).
+
+### Phase-3 test cases (BDD + TDD) + Zephyr + step-definition wiring
+
+- Authored the Phase-3 test cases and wired the glue in the same pass (the
+  mapping was already verified page-by-page, so the map → test cases → wire
+  pipeline collapsed into one step).
+- BDD features (4 public, registered in `RegressionRunner`; 1 auth-gated,
+  deliberately NOT registered):
+  - `07_content_brand_pages/Legal_Policy_Pages.feature` — outline over all 5
+    policies (title/heading/prose/back+view-all nav; Shipping's h2 heading and
+    Refund's "Refund & Exchange Policy" handled) + support-email check.
+  - `07_content_brand_pages/Brand_Content_Pages.feature` — Wall (canvas +
+    music-toggle state flip), Share Your Moment (guest gate modal open/message/
+    close), Sitemap (sections, /products/ + /accessories/ links, ≥40 links),
+    Updates (all 5 filters + filtered cards).
+  - `07_content_brand_pages/Friends_And_Partners.feature` — landing (3 tabs,
+    cards, video badge), profile hero/tagline/video/watch-links (kush-maini),
+    See-More drawer (vivek-oberoi), back-nav.
+  - `06_customer_retention_wishlist/Guest_Order_Tracking.feature` — entry form +
+    disabled submit, unknown-id error, `?orderId` deep-link auto-submit,
+    contact support.
+  - `06_customer_retention_wishlist/Account_Orders_Management.feature` —
+    tagged `@AuthGated @Orders` (NOT `@Regression`): Cloudflare-gated login
+    means CI cannot execute it; the feature header documents this. Scenarios:
+    account nav, order history cards, order details record, support sheet.
+- TDD: `Phase3ContentSmokeTest` (6 smokes: policy template, sitemap index,
+  updates filters, F&P directory, guest wishlist empty state, track-order
+  unknown-id error) + opt-in `testng-phase3-smoke.xml`.
+- Zephyr: pushed 24/24 clean via `scripts/add_phase3_tcs.py` (ZEPHYR_TOKEN from
+  env) → **QA-T88–QA-T111** (18 BDD incl. 4 auth-gated + 6 TDD plain).
+- Glue wiring:
+  - NEW `ContentPagesSteps` — policies (slug→page switch), Wall, Share gate,
+    Sitemap, Updates; owns the SHARED generic step
+    `the {string} heading is displayed` (page-agnostic h1 assertion).
+  - NEW `FriendsPartnersSteps`, `TrackOrderSteps`.
+  - NEW `AccountOrdersSteps` — fully wired to the auth POMs; the authentication
+    precondition fails fast with a clear Cloudflare message when the session is
+    unauthenticated.
+  - `WishlistSteps` guest flows IMPLEMENTED (was all PendingException): guest
+    session reset clears the `timepieces_wishlist` localStorage key; PDP heart via
+    the NEW `GenericTimepiecePdp` (timepiece analogue of `GenericAccessoryPdp`);
+    item presence/removal asserted BY HANDLE via the card's PDP link
+    (`WishlistPage.hasItemByHandle`/`removeItemByHandle` added); the
+    displays-product precondition self-seeds via the PDP heart when absent.
+    Login-sync steps remain `PendingException` (Cloudflare).
+  - `CheckoutFormSteps` shared `clicks the {string} button` now handles
+    "Wishlist"; the old feature's empty-state text corrected to the real DOM
+    ("Your Wishlist is Empty").
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; Cucumber dry-run over
+  `@ContentPages or @FriendsPartners or @TrackOrder or @Wishlist` → 24
+  scenarios, 0 failures, ZERO undefined steps. Added `STAT-054`.
+- Follow-ups: `/account/owned-watches` unscaffolded (from STAT-053); auth-gated
+  scenarios need a pre-authenticated session to execute.

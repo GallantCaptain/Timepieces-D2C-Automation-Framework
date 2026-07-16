@@ -65,7 +65,13 @@ public class CheckoutFormSteps {
     public void clicks_the_button(String buttonLabel) {
         testContext.setContextData("LAST_CLICKED_BUTTON", buttonLabel);
         log.info("STEP: click the [{}] button.", buttonLabel);
-        // TODO: resolve and click the labelled button on the active page.
+        if ("Wishlist".equalsIgnoreCase(buttonLabel)) {
+            // The wishlist heart on the active PDP (shared across timepieces).
+            new com.timepieces.automation.pages.web.products.timepieces.GenericTimepiecePdp(
+                    com.timepieces.automation.base.DriverFactory.getDriver()).clickWishlist();
+            return;
+        }
+        // TODO: resolve and click other labelled buttons on the active page.
         throw new PendingException("Implement labelled button click for: " + buttonLabel);
     }
 

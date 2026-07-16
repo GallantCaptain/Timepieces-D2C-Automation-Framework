@@ -26,7 +26,13 @@ import lombok.extern.log4j.Log4j2;
                 "src/test/resources/features/04_checkout_secure_funnel/Cart_Addition_And_Domestic_Checkout.feature",
                 "src/test/resources/features/04_checkout_secure_funnel/Checkout_Form_Validation.feature",
                 "src/test/resources/features/05_payment_integration/Payment_Integration_Validation.feature",
-                "src/test/resources/features/06_customer_retention_wishlist/Wishlist_And_Account_Management.feature"
+                "src/test/resources/features/06_customer_retention_wishlist/Wishlist_And_Account_Management.feature",
+                "src/test/resources/features/06_customer_retention_wishlist/Guest_Order_Tracking.feature",
+                "src/test/resources/features/07_content_brand_pages/Legal_Policy_Pages.feature",
+                "src/test/resources/features/07_content_brand_pages/Brand_Content_Pages.feature",
+                "src/test/resources/features/07_content_brand_pages/Friends_And_Partners.feature"
+                // Account_Orders_Management.feature is @AuthGated (NOT @Regression) —
+                // deliberately unregistered: production login is Cloudflare-gated.
 }, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
                 /*
                  * Disjointness with Smoke is enforced on the SmokeRunner side (tags =
