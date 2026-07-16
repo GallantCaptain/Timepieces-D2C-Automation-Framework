@@ -735,3 +735,42 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-051`. Phase
   3 next (and last): 3B Orders + Wishlist — AUTH-GATED, needs the authenticated
   Antigravity session (human-solved Cloudflare + OTP relay).
+
+### Phase 3 chunk 3B-guest — Wishlist + Track Order (no login needed)
+
+- Antigravity mapped both guest-accessible account-adjacent pages in a normal
+  logged-out session (the 3B split paid off — no Cloudflare/OTP ceremony).
+- `WishlistPage` (`/wishlist` — CONFIRMED; the scaffold Javadoc said
+  `/account/wishlist`): guest wishlist state persists in `localStorage` under
+  `timepieces_wishlist` (JSON array of product objects). Exposed as the public
+  constant `WishlistPage.WISHLIST_STORAGE_KEY` so `WishlistSteps` can SEED the
+  wishlist via JavascriptExecutor instead of clicking PDP hearts. The page has
+  REAL `data-testid`s — `account-page-title` (h1), `account-breadcrumbs`,
+  `nav-sidebar-wishlist` (sidebar entry) — evidence of a shared account-section
+  template (good sign for 3B-auth). Empty state: `h2` "Your Wishlist is Empty" +
+  "Continue Shopping" (→ `/collections/timepieces`). Populated: item-count line
+  ("2 items") with `isItemCountInSync()` asserting it matches the rendered card
+  count; "Clear All" (instant, NO confirm dialog); cards
+  (`div.bg-[#141414].rounded-xl`) with instant per-card remove
+  (`button[title='Remove from wishlist']`), PDP link, category label, `h3`
+  title, variant line, price, "Sold Out" overlay. Guest cards have NO
+  add-to-cart / move-to-cart — purchase goes through the PDP.
+- `TrackOrdersPage` (`/track-order`): the page has BOTH header and footer (the
+  Javadoc's "header only" was wrong; the `StoreFrontBasePage` base was already
+  correct). `?orderId=<id>` auto-fills and auto-submits on mount
+  (`openWithOrderId()`). The scaffold's 2026-07-03 locators were STALE — the
+  `data-testid`s `order-details-card`/`order-number`/`order-date` and the
+  "Contact Support" `button` do NOT exist in the live DOM. Replaced with the
+  real structure: entry form (h1 "Track your order",
+  `input[placeholder='Enter order Id']`, submit disabled while empty, reads
+  "Tracking..." while loading); error "Order not found. Please check your order
+  ID and try again."; result view (`h1` "Order #<id>", "Placed on <date> •
+  <time>", "Timepieces in this order" with a dropdown selector for multi-item
+  orders and "SN : <serial>" per item, a vertical status stepper [Order
+  confirmed → In Assembly → In Testing → Ready for pickup/Shipped → Out for
+  delivery → Delivered; terminal alt: Order cancelled], a shipped-only Tracking
+  section [carrier, "AWB: <n>", target=_blank Track-Shipment link], and a
+  Contact-support `a[href='/contact']` — an anchor, not a button).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-052`.
+  Phase 3 remaining: ONLY 3B-auth (Orders + Account nav — authenticated
+  Antigravity session).
