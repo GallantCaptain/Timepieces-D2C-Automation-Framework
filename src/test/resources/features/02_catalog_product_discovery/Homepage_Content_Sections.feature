@@ -1,4 +1,4 @@
-@Regression @HomepageContent
+@Regression @HomepageContent @ProdReady
 Feature: Homepage Content Sections and Overlays
   As a customer
   I want the content-rich homepage sections, stories and overlays to render correctly

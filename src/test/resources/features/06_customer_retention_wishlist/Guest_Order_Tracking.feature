@@ -1,4 +1,4 @@
-@Regression @TrackOrder
+@Regression @TrackOrder @ProdReady
 Feature: Guest Order Tracking
   As a guest customer
   I want to track my order by its order id without logging in

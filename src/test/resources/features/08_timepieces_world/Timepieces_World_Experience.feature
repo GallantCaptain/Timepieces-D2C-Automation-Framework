@@ -1,4 +1,4 @@
-@Regression @TimepiecesWorld
+@Regression @TimepiecesWorld @ProdReady
 Feature: Timepieces World Experience
   As a customer
   I want to journey through the Timepieces World scroll-canvas experience

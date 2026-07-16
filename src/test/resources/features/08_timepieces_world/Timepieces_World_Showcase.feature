@@ -1,4 +1,4 @@
-@Regression @TimepiecesWorld
+@Regression @TimepiecesWorld @ProdReady
 Feature: Timepieces World Product Showcases
   As a customer
   I want to explore a timepiece family's Timepieces World showcase

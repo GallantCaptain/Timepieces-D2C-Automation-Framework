@@ -1,4 +1,4 @@
-@Regression @ContentPages
+@Regression @ContentPages @ProdReady
 Feature: Brand Content Pages
   As a customer
   I want to browse the Timepieces brand content pages (Wall, Share Your Moment, Sitemap, Updates)

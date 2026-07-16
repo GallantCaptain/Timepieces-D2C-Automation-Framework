@@ -22,6 +22,19 @@
         </classes>
     </test>
 
+    <!-- TDD UI smokes (2026-07-16, handover mandate): ALL tests run in the
+         default suite so local, docker and the staging PR/nightly CI cover them.
+         The per-suite testng-*-smoke.xml files remain for isolated runs. -->
+    <test name="UI Smoke Executions (TDD)">
+        <classes>
+            <class name="com.timepieces.automation.tdd.ui.AccessoryPdpSmokeTest" />
+            <class name="com.timepieces.automation.tdd.ui.Phase3ContentSmokeTest" />
+            <class name="com.timepieces.automation.tdd.ui.TimepiecesWorldSmokeTest" />
+            <class name="com.timepieces.automation.tdd.ui.HomepageContentSmokeTest" />
+            <class name="com.timepieces.automation.tdd.ui.BecomeMoreSmokeTest" />
+        </classes>
+    </test>
+
     <test name="API Executions">
         <classes>
             <class name="com.timepieces.automation.tdd.api.SearchApiTest" />

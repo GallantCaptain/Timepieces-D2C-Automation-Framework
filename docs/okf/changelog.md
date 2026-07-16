@@ -1098,3 +1098,45 @@ This changelog is append-only. New entries must be added chronologically and mus
   accounts. Until then: display/gate-level assertions + manual pilot runs.
 - Next: the user is running the 6B auth-sidebar scrape (authenticated
   Antigravity session) — artifact `auth-sidebar.md` expected back.
+
+### Phase 6 chunk 6B — authenticated sidebar (DEBT-008 CLOSED) + handover coverage mandate
+
+- Antigravity''s authenticated scrape (`auth-sidebar.md`) mapped the last gap:
+  the logged-in sidebar profile container (`nav-sidebar-account-link`, a real
+  testid) and its children — avatar wrapper (`div.w-13.h-13`), display name
+  (`span.font-timepieces-semibold`), designation (`span.font-timepieces-regular`),
+  chevron. `SidebarMenuComponent` gains `getLoggedInUserName()`,
+  `getLoggedInUserDesignation()`, `isProfileContainerComplete()`, and the
+  state-diff checks `isSidebarInGuestState()` (Sign-In + become-member +
+  Track-Orders, no container) / `isSidebarInAuthenticatedState()` (container +
+  `nav-sidebar-orders`, no Sign-In/Track-Orders). Scrape also confirmed: the
+  authenticated header account-toggle hard-navigates to `/account` (guest gets
+  redirected to `/account/login`), and NO wishlist counter exists in the
+  sidebar or header. **DEBT-008 fully resolved — no unmapped page objects
+  remain** (Razorpay COM user-owned; Manifesta drop card deferred, TASK-PDP-006).
+- HANDOVER COVERAGE MANDATE (product owner, 2026-07-16): the CI Cloudflare
+  blocker is GEO-CAUSED — GitHub Actions runners sit outside India, which is
+  what triggers the challenge; local & Docker runs (India) are never challenged
+  and must always work. Post-handover, CI red/green is the company''s concern —
+  the requirement is that EVERY test is covered in local, Docker, and CI (PR +
+  cron), red allowed. Wired:
+  - `RegressionRunner` tags → `"@Regression or @AuthGated"` (the account-orders
+    feature the owner registered now actually executes; its precondition first
+    attempts an API-backed session-cookie injection via
+    `AuthenticationEngine.loginViaBackendApi(9000000001)` → `timepieces_session`
+    cookie [owner/Agy change], then fails fast with the Cloudflare message).
+  - Default `testng.xml` now carries a "UI Smoke Executions (TDD)" block with
+    all 5 smoke classes (Accessory/Phase3/TimepiecesWorld/Homepage/BecomeMore) —
+    local `mvn test`, the Docker entrypoint, and the staging PR + nightly cron
+    (staging-tests.yml, no tag override) all run the default suite, so all
+    three environments cover everything.
+  - The 8 new feature files tagged `@ProdReady` → the production nightly
+    (production-tests.yml → testng-production.xml → ProductionRunner, which
+    sweeps the features dir with the `@ProdReady` filter) covers them too. The
+    auth-gated feature is deliberately NOT `@ProdReady` (login flow).
+  - `AccountPage.open()` load signal switched to the logout button (owner/Agy
+    change — steadier than the profile-image container across complete/
+    incomplete profile states).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; FULL RegressionRunner
+  dry-run (no tag override) → **99 scenarios, 0 failures, ZERO undefined**.
+  Added `STAT-060`; DEBT-008 marked resolved.

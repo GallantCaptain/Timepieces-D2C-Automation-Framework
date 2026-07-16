@@ -123,8 +123,8 @@ public class AccountPage extends HeaderOnlyBasePage<AccountPage> {
             BrowserUtils.navigateTo(driver, accountUrl, 15);
         }
 
-        waitForVisibility(profileImageContainer);
-        log.info("Account page loaded and profile image container confirmed visible.");
+        waitForVisibility(logoutButton);
+        log.info("Account page loaded and logout button confirmed visible.");
         return this;
     }
 

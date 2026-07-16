@@ -1,4 +1,4 @@
-@Regression @BecomeMore
+@Regression @BecomeMore @ProdReady
 Feature: Become More Onboarding Journey
   As a prospective Timepieces owner
   I want to build my profile through the guided Become More journey

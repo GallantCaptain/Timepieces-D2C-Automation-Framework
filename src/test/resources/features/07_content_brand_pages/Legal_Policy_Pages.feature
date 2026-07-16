@@ -1,4 +1,4 @@
-@Regression @ContentPages @Policies
+@Regression @ContentPages @Policies @ProdReady
 Feature: Legal and Policy Pages
   As a customer
   I want to read the Timepieces legal and policy pages

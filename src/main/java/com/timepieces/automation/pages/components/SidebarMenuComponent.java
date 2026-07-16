@@ -215,11 +215,22 @@ public class SidebarMenuComponent extends BasePage<SidebarMenuComponent> {
         private final By incompleteProfileMessageLabel_In_ProfileContainer = By
                         .xpath("//span[contains(normalize-space(),'Profile not complete')]");
 
-        /*
-         * The User Name and Designation, if filled, is in a text function within 2
-         * different Span Classes. If required for verification, we can extract the
-         * texts. Very low priority UI validation tests.
-         */
+        // --- Logged-in container CHILDREN (2026-07-16 auth scrape; closes DEBT-008) ---
+        // The avatar wrapper inside the profile container.
+        private final By avatarWrapper_In_ProfileContainer = By
+                        .cssSelector("a[data-testid='nav-sidebar-account-link'] div.w-13.h-13"); // ROLLOUT-GAP: structural
+
+        // The user's display name span.
+        private final By userName_In_ProfileContainer = By
+                        .cssSelector("a[data-testid='nav-sidebar-account-link'] span.font-timepieces-semibold"); // ROLLOUT-GAP: utility-class
+
+        // The user's designation/persona span (e.g. "Professional").
+        private final By userDesignation_In_ProfileContainer = By
+                        .cssSelector("a[data-testid='nav-sidebar-account-link'] span.font-timepieces-regular"); // ROLLOUT-GAP: utility-class
+
+        // The chevron-right affordance on the profile container.
+        private final By chevron_In_ProfileContainer = By
+                        .cssSelector("a[data-testid='nav-sidebar-account-link'] svg"); // ROLLOUT-GAP: structural
 
         // Contact Link:
         private final By contactLink = By.cssSelector("button[data-testid='nav-sidebar-contact']");
@@ -519,5 +530,69 @@ public class SidebarMenuComponent extends BasePage<SidebarMenuComponent> {
                 int count = driver.findElements(menuListItems).size();
                 log.info("Sidebar menu item count: {}", count);
                 return count;
+        }
+
+        /**
+         * V.9 Returns the logged-in user's display name from the profile container
+         * (2026-07-16 auth scrape — closes DEBT-008's container children).
+         *
+         * @return the trimmed display name.
+         */
+        public String getLoggedInUserName() {
+                return getText(userName_In_ProfileContainer);
+        }
+
+        /**
+         * V.10 Returns the logged-in user's designation/persona label
+         * (e.g. "Professional").
+         *
+         * @return the trimmed designation text.
+         */
+        public String getLoggedInUserDesignation() {
+                return getText(userDesignation_In_ProfileContainer);
+        }
+
+        /**
+         * V.11 Verifies the profile container renders its full child set: avatar
+         * wrapper, display name, designation and the chevron affordance.
+         *
+         * @return true if every profile-container child is present.
+         */
+        public boolean isProfileContainerComplete() {
+                boolean complete = !driver.findElements(avatarWrapper_In_ProfileContainer).isEmpty()
+                                && !driver.findElements(userName_In_ProfileContainer).isEmpty()
+                                && !driver.findElements(userDesignation_In_ProfileContainer).isEmpty()
+                                && !driver.findElements(chevron_In_ProfileContainer).isEmpty();
+                log.info("Sidebar profile-container children complete check: {}", complete);
+                return complete;
+        }
+
+        /**
+         * V.12 Verifies the sidebar renders the GUEST state: Sign In + the
+         * become-member prompt + Track Orders present, and no profile container.
+         *
+         * @return true if the sidebar is in its guest state.
+         */
+        public boolean isSidebarInGuestState() {
+                boolean guest = !driver.findElements(signInButton).isEmpty()
+                                && !driver.findElements(trackOrdersLink).isEmpty()
+                                && driver.findElements(loggedInUserProfileContainer).isEmpty();
+                log.info("Sidebar guest-state check: {}", guest);
+                return guest;
+        }
+
+        /**
+         * V.13 Verifies the sidebar renders the AUTHENTICATED state: the profile
+         * container + the Orders link present, and no Sign In / Track Orders.
+         *
+         * @return true if the sidebar is in its authenticated state.
+         */
+        public boolean isSidebarInAuthenticatedState() {
+                boolean authed = !driver.findElements(loggedInUserProfileContainer).isEmpty()
+                                && !driver.findElements(orderPageLink).isEmpty()
+                                && driver.findElements(signInButton).isEmpty()
+                                && driver.findElements(trackOrdersLink).isEmpty();
+                log.info("Sidebar authenticated-state check: {}", authed);
+                return authed;
         }
 }

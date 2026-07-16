@@ -59,6 +59,32 @@ public class AccountOrdersSteps {
     public void the_user_is_authenticated_on_the_account_page() {
         log.info("STEP: land on /account with an authenticated session.");
         try {
+            // Attempt to inject session cookie using API bypass
+            String baseUrl = com.timepieces.automation.utils.ConfigReader.get("base.url");
+            if (baseUrl == null || baseUrl.isEmpty()) {
+                baseUrl = "https://staging.timepieces-d2c.example";
+            }
+            driver.get(baseUrl + "/404");
+            new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
+
+            com.timepieces.automation.tdd.api.AuthenticationEngine authEngine = new com.timepieces.automation.tdd.api.AuthenticationEngine(testContext);
+            authEngine.loginViaBackendApi("9000000001"); // Use the pilot phone number
+            String token = (String) testContext.getContextData("AUTH_TOKEN");
+
+            if (token != null && !token.isEmpty()) {
+                log.info("Injecting JWT token into cookie jar for @AuthGated scenario.");
+                org.openqa.selenium.Cookie authCookie = new org.openqa.selenium.Cookie.Builder("timepieces_session", token)
+                        .domain("staging.timepieces-d2c.example")
+                        .path("/")
+                        .isSecure(true)
+                        .build();
+                driver.manage().addCookie(authCookie);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to inject API session cookie, attempting fallback: {}", e.getMessage());
+        }
+
+        try {
             accountPage = new AccountPage(driver).open();
         } catch (Exception e) {
             fail("Reaching /account requires an AUTHENTICATED session — production login is behind a "

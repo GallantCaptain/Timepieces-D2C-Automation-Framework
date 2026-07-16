@@ -1,4 +1,4 @@
-@Regression @FriendsPartners
+@Regression @FriendsPartners @ProdReady
 Feature: Friends and Partners
   As a customer
   I want to browse the Friends & Partners directory and the partner profiles

@@ -34,9 +34,8 @@ import lombok.extern.log4j.Log4j2;
                 "src/test/resources/features/07_content_brand_pages/Brand_Content_Pages.feature",
                 "src/test/resources/features/07_content_brand_pages/Friends_And_Partners.feature",
                 "src/test/resources/features/08_timepieces_world/Timepieces_World_Experience.feature",
-                "src/test/resources/features/08_timepieces_world/Timepieces_World_Showcase.feature"
-                // Account_Orders_Management.feature is @AuthGated (NOT @Regression) —
-                // deliberately unregistered: production login is Cloudflare-gated.
+                "src/test/resources/features/08_timepieces_world/Timepieces_World_Showcase.feature",
+                "src/test/resources/features/06_customer_retention_wishlist/Account_Orders_Management.feature"
 }, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
                 /*
                  * Disjointness with Smoke is enforced on the SmokeRunner side (tags =
@@ -45,8 +44,15 @@ import lombok.extern.log4j.Log4j2;
                  * plain "@Regression" adding "and not @Smoke" here too would exclude
                  * dual-tagged scenarios from BOTH runners, so they would run nowhere.
                  * Exactly one runner must carry the overlap.
+                 *
+                 * "@AuthGated" is ALSO owned here (2026-07-16, handover mandate: every test
+                 * runs in local/docker/CI regardless of red/green): the account-orders
+                 * scenarios attempt an API-backed session-cookie injection first and fail
+                 * fast with a clear Cloudflare message when unauthenticated. NOTE: the CI
+                 * Cloudflare blocker is GEO-CAUSED (GitHub Actions runners sit outside
+                 * India) — local & docker runs from India are NOT challenged.
                  */
-                tags = "@Regression", plugin = {
+                tags = "@Regression or @AuthGated", plugin = {
                                 "pretty",
                                 "html:target/cucumber-reports/regression-report.html",
                                 "json:target/cucumber-reports/RegressionCucumberTestReport.json",
