@@ -1140,3 +1140,36 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; FULL RegressionRunner
   dry-run (no tag override) → **99 scenarios, 0 failures, ZERO undefined**.
   Added `STAT-060`; DEBT-008 marked resolved.
+
+### RazorpayModalComponent completed (behavior spec from the product owner)
+
+- The last user-owned scaffold is now implemented, from the owner''s behavior
+  spec + 7 live checkout screenshots (2026-07-16). The modal DOM is
+  Razorpay-owned, so the inner locators are best-effort text/type anchors
+  tagged `VERIFY` — TASK-PDP-010 tracks the one-time live iframe capture to
+  swap in Razorpay''s real data-testids.
+- BEHAVIOR SPEC recorded in the component Javadoc:
+  - Opens ONLY with ≥1 cart item.
+  - DOMESTIC (INR): cart "Slide to Pay" → Razorpay MAGIC CHECKOUT
+    (Contact → Address → Payment). Guests enter mobile+email → magic-link OTP
+    prompt ("Enter OTP sent to +91…", 4 boxes, Skip/Resend) → saved addresses
+    (Home/Office, Standard FREE) surface from the magic-link identity.
+    Domestic rail: UPI (incl. QR) / Cards / EMI / Netbanking / Wallet +
+    offers + recommended saved card.
+  - INTERNATIONAL: "Slide to Pay" routes to the Timepieces /checkout Delivery
+    Information page instead; "Proceed to Payment" opens the modal in compact
+    "Payment Options" mode with ONLY two method families — credit cards
+    (saved/add-new) and Apple Pay (`isInternationalPaymentOptionsMode()`
+    asserts both the presence of those AND the absence of UPI/EMI/Netbanking/
+    Wallet).
+  - PRICING: international = 1.5× domestic on ALL products; currency by region
+    (EUR Europe, AED UAE, USD rest); unsupported countries (e.g. Afghanistan)
+    must NOT allow purchases.
+  - The modal renders in the Razorpay IFRAME — the component is frame-aware
+    (`waitForModalOpen()` [default content] / `switchToCheckoutFrame()` /
+    `switchBackToStorefront()` / `closeModal()` via X — esc/cancel do NOT
+    close it, per the original Javadoc).
+  - PAYMENT SAFETY: no component method completes a payment; verification
+    payments only via Razorpay test cards, ₹1, test customers.
+- With this, EVERY page/component scaffold in the framework is implemented
+  (Manifesta drop card remains the single deliberate deferral, TASK-PDP-006).
