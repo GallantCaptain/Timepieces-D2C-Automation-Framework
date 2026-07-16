@@ -45,6 +45,20 @@ import lombok.extern.log4j.Log4j2;
 public class AstoniaDropCardComponent extends BasePage<AstoniaDropCardComponent> {
 
     // ==========================================
+    // Page Constants
+    // ==========================================
+    /*
+     * TRIGGER LOGIC (verified by the 2026-07-16 homepage scrape): the popup
+     * mounts ~15s after homepage load if it has not been dismissed AND has been
+     * shown fewer than 2 times. That state lives in sessionStorage — tests can
+     * SUPPRESS the popup (or reset it) via JavascriptExecutor using these keys.
+     */
+    // sessionStorage key marking the popup as visited/dismissed ("1").
+    public static final String POPUP_VISITED_KEY = "astonia_popup_visited";
+    // sessionStorage key counting how many times the popup has displayed.
+    public static final String POPUP_SHOW_COUNT_KEY = "astonia_popup_show_count";
+
+    // ==========================================
     // Constructor
     // ==========================================
     public AstoniaDropCardComponent(WebDriver driver) {
@@ -54,6 +68,8 @@ public class AstoniaDropCardComponent extends BasePage<AstoniaDropCardComponent>
     // ==========================================
     // LOCATORS
     // ==========================================
+    // The fixed popup wrapper (confirmed 2026-07-16: data-testid='astonia-popup').
+    private final By astoniaPopupWrapper = By.cssSelector("div[data-testid='astonia-popup']");
     // Selector for any Astonia product drop link card on the catalog:
     private final By astoniaDropCard = By.cssSelector("div[data-testid='astonia-popup-card']");
     // The Card Label Message
@@ -183,6 +199,35 @@ public class AstoniaDropCardComponent extends BasePage<AstoniaDropCardComponent>
         boolean displayed = becomesVisibleWithin(timeoutSeconds);
         log.info("Astonia card visible within {}s check: {}", timeoutSeconds, displayed);
         return displayed;
+    }
+
+    /**
+     * V.3 Reports whether the fixed popup wrapper ({@code astonia-popup}) is
+     * mounted in the layout — the popup only mounts ~15s after homepage load and
+     * only while the sessionStorage state allows it (see the class constants).
+     *
+     * @return true if the popup wrapper is present in the DOM.
+     */
+    public boolean isPopupMounted() {
+        return !driver.findElements(astoniaPopupWrapper).isEmpty();
+    }
+
+    /**
+     * V.4 Returns the drop card's title text (e.g. "Astonia").
+     *
+     * @return the trimmed card title.
+     */
+    public String getDropCardTitle() {
+        return getText(dropCardName);
+    }
+
+    /**
+     * V.5 Returns the drop card's message line (the paragraph under the title).
+     *
+     * @return the trimmed card message.
+     */
+    public String getDropCardMessage() {
+        return getText(dropCardText);
     }
 
 }

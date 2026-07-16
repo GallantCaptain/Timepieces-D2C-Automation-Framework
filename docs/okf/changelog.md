@@ -960,3 +960,53 @@ This changelog is append-only. New entries must be added chronologically and mus
   onboarding flow is being replaced by a NEW guided 7–8-step journey at
   `www.timepieces-d2c.example/becomemore`; `account/OnboardingPage` will be reworked
   against it once live → TASK-PDP-008 (P2, chunk 7A).
+
+### Phase 6 chunk 6A — content-rich Homepage completed; Phase 7 approach decided
+
+- Antigravity swept the homepage (2 artifacts: homepage-sections,
+  homepage-modals). The homepage body is HEAVILY `data-testid`-instrumented
+  (30+ real ids) — the opposite of Timepieces World.
+- `HomePage` completed (closes the `TODO(locators)` half of DEBT-008):
+  - Hero extras: desktop/mobile background videos.
+  - "Two Stories, One Philosophy": Astonia release card (→
+    `/new-release/astonia`, arrow CTA) + Manifesta release card with its
+    LOCKED badge ("SEP, 2026") — `isManifestaStoryLocked()` /
+    `getManifestaLockedText()`.
+  - Brand-story parallax (desktop/mobile variants) + quote getter.
+  - Friends & Partners section: title, View-all (→ `/friends-and-partners`),
+    `home-partner-card`s (name/watch-family/dial-style inner structure),
+    FORWARD-ONLY carousel next (no prev exists);
+    `allPartnerCardsLinkToProfiles()`.
+  - "Last Release" slider: title + subtitle ("February 2026. Fully
+    allocated."), View-all (→ `/collections/timepieces`), cards → PDPs,
+    forward-only next; `allLastReleaseCardsLinkToPdps()`.
+  - "Crafted With Intent" scroll-sequence (desktop/mobile canvas variants) +
+    "FEATURED IN" USP marquee.
+- NEW `StoriesModalComponent` (`pages/components/`): the header-triggered
+  stories viewer (`role=dialog`, `aria-modal`). Per-story progress segments;
+  AUTO-ADVANCE verified — the active fill animates its inline `width:X%` and
+  the modal AUTO-CLOSES after the final story; pause/play via aria-label flip;
+  close button; left/right tap-hotspots ("Previous story"/"Next story");
+  `getActiveFillStyle()` lets tests assert progression between two reads.
+- `AstoniaDropCardComponent` upgraded: popup wrapper (`astonia-popup`)
+  confirmed; VERIFIED trigger logic (~15s mount on `/`, max 2 displays) with
+  the sessionStorage state exposed as public constants
+  (`astonia_popup_visited`, `astonia_popup_show_count`) so step definitions can
+  SUPPRESS the popup (kills a whole class of homepage flake); added
+  title/message getters + `isPopupMounted()`.
+- `FooterComponent` country-selector completed: dropdown listbox
+  (`country-selector-dropdown`), search input, options carrying
+  `data-country-code` + `aria-selected`; `searchCountry()` /
+  `selectCountryByCode()` / `isCountryDropdownOpen()` /
+  `getCountryOptionCount()`.
+- PHASE 7 DECISION (product owner): build a NEW `Onboarding_BecomeMore.java`
+  for the guided 7–8-step `/becomemore` journey and map it directly; the old
+  `account/OnboardingPage` stays untouched until the old flow is sunset, then
+  gets replaced with the BecomeMore locators/data. TASK-PDP-008 updated; brief
+  written at `docs/scrape-artifacts/phase7/BRIEF-7A-becomemore.md` (asks
+  Antigravity to walk every step, capture progression/validation, and confirm
+  whether the flow is auth-gated).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-057`.
+  Remaining DEBT-008 half: the logged-in sidebar user-container children (needs
+  an authenticated pass). Next: Phase-6 test cases (homepage BDD+TDD) → Zephyr
+  → wire, matching the established flow.

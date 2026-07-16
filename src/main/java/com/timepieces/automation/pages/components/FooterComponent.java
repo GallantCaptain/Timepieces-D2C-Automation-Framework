@@ -281,6 +281,22 @@ public class FooterComponent extends BasePage<FooterComponent> {
         private final By countrySelectorToggle_Footer_Desktop = By
                         .cssSelector("div[data-testid='footer-desktop'] button[data-testid='country-selector-toggle']");
 
+        // Country Selector Dropdown Panel (listbox; 2026-07-16 homepage scrape)
+        private final By countrySelectorDropdown = By
+                        .cssSelector("div[data-testid='country-selector-dropdown']");
+
+        // Country Search Input inside the dropdown ("Search country...")
+        private final By countrySelectorSearch = By
+                        .cssSelector("input[data-testid='country-selector-search']");
+
+        // All country options in the dropdown (each carries data-country-code + aria-selected)
+        private final By countrySelectorOptions = By
+                        .cssSelector("button[data-testid='country-selector-option']");
+
+        // Dynamic: a country option by its ISO code (e.g. "US", "IN")
+        private final By countryOptionByCodeTemplate = By.xpath(
+                        "//button[@data-testid='country-selector-option'][@data-country-code='%s']");
+
         // Footer Legal Links (Mobile Viewport):
         private final By footerLegalLinks_Footer_Mobile = By
                         .cssSelector("div[data-testid='footer-mobile'] a[data-testid='footer-legal']");
@@ -325,6 +341,51 @@ public class FooterComponent extends BasePage<FooterComponent> {
                         clickElement(countrySelectorToggle_Footer_Desktop);
                 }
                 return this;
+        }
+
+        /**
+         * B.1b Types into the country search box inside the open dropdown
+         * ("Search country...").
+         *
+         * @param query the country name (or fragment) to search.
+         * @return this FooterComponent for method chaining.
+         */
+        public FooterComponent searchCountry(String query) {
+                log.info("Searching the country selector for: [{}]", query);
+                sendKeys(countrySelectorSearch, query);
+                return this;
+        }
+
+        /**
+         * B.1c Selects a country option by its ISO code (e.g. "US", "IN") inside
+         * the open dropdown.
+         *
+         * @param isoCode the option's data-country-code value.
+         * @return this FooterComponent for method chaining.
+         */
+        public FooterComponent selectCountryByCode(String isoCode) {
+                log.info("Selecting country option: [{}]", isoCode);
+                clickElement(formatLocator(countryOptionByCodeTemplate, isoCode));
+                return this;
+        }
+
+        /**
+         * B.1d Reports whether the country dropdown (listbox) is open.
+         *
+         * @return true if the dropdown panel is present.
+         */
+        public boolean isCountryDropdownOpen() {
+                return !driver.findElements(countrySelectorDropdown).isEmpty();
+        }
+
+        /**
+         * B.1e Counts the country options currently listed (shrinks as the search
+         * filters).
+         *
+         * @return the number of listed country options.
+         */
+        public int getCountryOptionCount() {
+                return driver.findElements(countrySelectorOptions).size();
         }
 
         /**

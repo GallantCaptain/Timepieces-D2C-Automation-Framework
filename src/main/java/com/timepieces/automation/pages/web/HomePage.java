@@ -59,15 +59,53 @@ public class HomePage extends BasePage<HomePage> {
     // Hero "Discover" CTA — navigates to the current Astonia drop page.
     private final By redirectButton_To_AstoniaDropPage = By.cssSelector("button[data-testid='home-hero-discover-cta']");
 
-    // TODO(locators): the remaining homepage sections (featured collections, drop
-    // strip,
-    // brand story, footer CTA, etc.) still need their real data-testid selectors
-    // added here.
-    // The 'varNameN' placeholder stubs were removed because duplicate field names /
-    // "value"
-    // selectors broke compilation. Add one `private final By <descriptiveName> =
-    // By.cssSelector(...)`
-    // per section, with a real data-testid, as the storefront markup is confirmed.
+    // --- Hero extras (2026-07-16 scrape; all real testids) ---
+    // The hero background showreel videos (desktop/mobile variants).
+    private final By heroVideoDesktop = By.cssSelector("video[data-testid='home-hero-video-desktop']");
+    private final By heroVideoMobile = By.cssSelector("video[data-testid='home-hero-video-mobile']");
+
+    // --- "Two Stories, One Philosophy" section (release preview cards) ---
+    private final By twoStoriesSection = By.cssSelector("div[data-testid='home-two-stories']");
+    private final By twoStoriesTitle = By.cssSelector("p[data-testid='home-two-stories-title']");
+    // The Astonia release card (→ /new-release/astonia) + its arrow CTA.
+    private final By astoniaStoryCard = By.cssSelector("a[data-testid='home-discover-astonia']");
+    private final By astoniaStoryCta = By.cssSelector("button[data-testid='home-discover-astonia-cta']");
+    // The Manifesta release card (→ /new-release/manifesta) + its LOCKED badge ("SEP, 2026").
+    private final By manifestaStoryCard = By.cssSelector("a[data-testid='home-discover-manifesta']");
+    private final By manifestaLockedBadge = By.cssSelector("div[data-testid='home-discover-manifesta-locked']");
+
+    // --- Brand story / parallax quote section (desktop + mobile variants) ---
+    private final By parallaxDesktop = By.cssSelector("section[data-testid='home-parallax-desktop']");
+    private final By parallaxMobile = By.cssSelector("section[data-testid='home-parallax-mobile']");
+    // The main brand quote inside the viewport-appropriate parallax wrap.
+    private final By brandQuote = By.cssSelector(
+            "section[data-testid='home-parallax-desktop'] h2, section[data-testid='home-parallax-mobile'] h2"); // ROLLOUT-GAP: structural
+
+    // --- Friends & Partners section ---
+    private final By friendsPartnersSection = By.cssSelector("section[data-testid='home-friends-partners']");
+    private final By friendsPartnersTitle = By.cssSelector("h2[data-testid='home-friends-partners-title']");
+    private final By friendsPartnersViewAll = By.cssSelector("a[data-testid='home-friends-partners-view-all']");
+    private final By partnerCards = By.cssSelector("a[data-testid='home-partner-card']");
+    // Scroll-next arrow (no prev control exists — the carousel scrolls forward only).
+    private final By friendsPartnersNext = By.cssSelector("button[data-testid='home-friends-partners-carousel-next']");
+
+    // --- "Last Release" product slider ---
+    private final By productSliderSection = By.cssSelector("section[data-testid='home-product-slider']");
+    private final By productSliderTitle = By.cssSelector("h2[data-testid='home-product-slider-title']");
+    private final By productSliderSubtitle = By.cssSelector("p[data-testid='home-product-slider-subtitle']");
+    private final By productSliderViewAll = By.cssSelector("a[data-testid='home-product-slider-view-all']");
+    private final By productSliderCards = By.cssSelector("a[data-testid='home-product-slider-card']");
+    private final By productSliderNext = By.cssSelector("button[data-testid='home-product-slider-carousel-next']");
+
+    // --- "Crafted With Intent" scroll-sequence section (desktop + mobile) ---
+    private final By imageSequenceDesktop = By.cssSelector("section[data-testid='home-image-sequence-desktop']");
+    private final By imageSequenceMobile = By.cssSelector("section[data-testid='home-image-sequence-mobile']");
+    private final By imageSequenceCanvas = By.cssSelector(
+            "section[data-testid='home-image-sequence-desktop'] canvas, section[data-testid='home-image-sequence-mobile'] canvas"); // ROLLOUT-GAP: structural
+
+    // --- "FEATURED IN" USP marquee ---
+    private final By uspSection = By.cssSelector("section[data-testid='home-usp']");
+    private final By uspMarquee = By.cssSelector("div[data-testid='home-usp-marquee']");
 
     // ==========================================
     // PRIVATE HELPERS
@@ -116,6 +154,94 @@ public class HomePage extends BasePage<HomePage> {
         return new AstoniaDropPage(driver);
     }
 
+    /**
+     * B.4 Clicks the "Two Stories" Astonia release card (→ the Astonia drop page).
+     *
+     * @return a new AstoniaDropPage for the destination view.
+     */
+    public AstoniaDropPage clickAstoniaStoryCard() {
+        log.info("Clicking the Two-Stories Astonia release card.");
+        clickElement(astoniaStoryCard);
+        return new AstoniaDropPage(driver);
+    }
+
+    /**
+     * B.5 Clicks the "Two Stories" Manifesta release card (→ the Manifesta drop
+     * page; the card carries a LOCKED badge until the drop opens).
+     *
+     * @return this HomePage for method chaining.
+     */
+    public HomePage clickManifestaStoryCard() {
+        log.info("Clicking the Two-Stories Manifesta release card.");
+        clickElement(manifestaStoryCard);
+        return this;
+    }
+
+    /**
+     * B.6 Returns the Manifesta card's LOCKED badge text (e.g. "SEP, 2026").
+     *
+     * @return the trimmed locked-badge text.
+     */
+    public String getManifestaLockedText() {
+        return getText(manifestaLockedBadge);
+    }
+
+    /**
+     * B.7 Returns the brand-story quote text from the viewport-appropriate
+     * parallax section.
+     *
+     * @return the trimmed brand quote.
+     */
+    public String getBrandQuoteText() {
+        return getText(brandQuote);
+    }
+
+    /**
+     * B.8 Clicks the Friends & Partners "View all" CTA (→ /friends-and-partners).
+     *
+     * @return this HomePage for method chaining.
+     */
+    public HomePage clickFriendsPartnersViewAll() {
+        log.info("Clicking the Friends & Partners 'View all' CTA.");
+        clickElement(friendsPartnersViewAll);
+        return this;
+    }
+
+    /**
+     * B.9 Advances the Friends & Partners carousel (forward-only — no prev
+     * control exists).
+     *
+     * @return this HomePage for method chaining.
+     */
+    public HomePage advanceFriendsPartnersCarousel() {
+        log.info("Advancing the Friends & Partners carousel.");
+        clickElement(friendsPartnersNext);
+        return this;
+    }
+
+    /**
+     * B.10 Clicks the "Last Release" slider's "View all" CTA
+     * (→ /collections/timepieces).
+     *
+     * @return this HomePage for method chaining.
+     */
+    public HomePage clickLastReleaseViewAll() {
+        log.info("Clicking the Last Release 'View all' CTA.");
+        clickElement(productSliderViewAll);
+        return this;
+    }
+
+    /**
+     * B.11 Advances the "Last Release" product slider (forward-only).
+     *
+     * @return this HomePage for method chaining.
+     */
+    public HomePage advanceLastReleaseSlider() {
+        log.info("Advancing the Last Release product slider.");
+        clickElement(productSliderNext);
+        return this;
+    }
+
     // ==========================================
     // VERIFICATION METHODS
     // ==========================================
@@ -157,6 +283,159 @@ public class HomePage extends BasePage<HomePage> {
         boolean displayed = isDisplayed(heroSection);
         log.info("Homepage hero overlay displayed check: {}", displayed);
         return displayed;
+    }
+
+    /**
+     * V.4 Verifies the hero background showreel video (viewport-appropriate
+     * variant) is present.
+     *
+     * @return true if the hero video is present.
+     */
+    public boolean isHeroVideoPresent() {
+        By variant = isMobileViewport() ? heroVideoMobile : heroVideoDesktop;
+        return !driver.findElements(variant).isEmpty();
+    }
+
+    /**
+     * V.5 Verifies the "Two Stories, One Philosophy" section is displayed with
+     * both release cards.
+     *
+     * @return true if the section, title and both cards are displayed.
+     */
+    public boolean isTwoStoriesSectionDisplayed() {
+        return isDisplayed(twoStoriesSection)
+                && isDisplayed(twoStoriesTitle)
+                && !driver.findElements(astoniaStoryCard).isEmpty()
+                && !driver.findElements(manifestaStoryCard).isEmpty();
+    }
+
+    /**
+     * V.6 Verifies the Astonia story card carries its arrow CTA.
+     *
+     * @return true if the Astonia arrow CTA is present.
+     */
+    public boolean isAstoniaStoryCtaPresent() {
+        return !driver.findElements(astoniaStoryCta).isEmpty();
+    }
+
+    /**
+     * V.7 Reports whether the Manifesta story card is LOCKED (pre-drop badge
+     * displayed).
+     *
+     * @return true if the locked badge is present.
+     */
+    public boolean isManifestaStoryLocked() {
+        return !driver.findElements(manifestaLockedBadge).isEmpty();
+    }
+
+    /**
+     * V.8 Verifies the brand-story parallax section is present
+     * (viewport-appropriate variant).
+     *
+     * @return true if the parallax section is present.
+     */
+    public boolean isBrandStoryDisplayed() {
+        By variant = isMobileViewport() ? parallaxMobile : parallaxDesktop;
+        return !driver.findElements(variant).isEmpty();
+    }
+
+    /**
+     * V.9 Verifies the Friends & Partners section is displayed (title + View all
+     * + forward arrow).
+     *
+     * @return true if the section chrome is displayed.
+     */
+    public boolean isFriendsPartnersSectionDisplayed() {
+        return isDisplayed(friendsPartnersSection)
+                && isDisplayed(friendsPartnersTitle)
+                && !driver.findElements(friendsPartnersViewAll).isEmpty()
+                && !driver.findElements(friendsPartnersNext).isEmpty();
+    }
+
+    /**
+     * V.10 Counts the partner cards in the Friends & Partners carousel.
+     *
+     * @return the number of partner cards.
+     */
+    public int getPartnerCardCount() {
+        return driver.findElements(partnerCards).size();
+    }
+
+    /**
+     * V.11 Verifies every partner card links to a partner profile
+     * ({@code /friends-and-partners/<handle>}), and at least one exists.
+     *
+     * @return true if all partner cards link to profiles.
+     */
+    public boolean allPartnerCardsLinkToProfiles() {
+        var cards = driver.findElements(partnerCards);
+        if (cards.isEmpty()) {
+            return false;
+        }
+        return cards.stream()
+                .map(e -> e.getAttribute("href"))
+                .allMatch(h -> h != null && h.contains("/friends-and-partners/"));
+    }
+
+    /**
+     * V.12 Verifies the "Last Release" slider section is displayed (title +
+     * subtitle + View all + forward arrow).
+     *
+     * @return true if the slider chrome is displayed.
+     */
+    public boolean isLastReleaseSliderDisplayed() {
+        return isDisplayed(productSliderSection)
+                && isDisplayed(productSliderTitle)
+                && !driver.findElements(productSliderSubtitle).isEmpty()
+                && !driver.findElements(productSliderViewAll).isEmpty()
+                && !driver.findElements(productSliderNext).isEmpty();
+    }
+
+    /**
+     * V.13 Counts the product cards in the "Last Release" slider.
+     *
+     * @return the number of product cards.
+     */
+    public int getLastReleaseCardCount() {
+        return driver.findElements(productSliderCards).size();
+    }
+
+    /**
+     * V.14 Verifies every "Last Release" card links to a timepiece PDP
+     * ({@code /products/<handle>}), and at least one exists.
+     *
+     * @return true if all slider cards link to PDPs.
+     */
+    public boolean allLastReleaseCardsLinkToPdps() {
+        var cards = driver.findElements(productSliderCards);
+        if (cards.isEmpty()) {
+            return false;
+        }
+        return cards.stream()
+                .map(e -> e.getAttribute("href"))
+                .allMatch(h -> h != null && h.contains("/products/"));
+    }
+
+    /**
+     * V.15 Verifies the "Crafted With Intent" scroll-sequence section is present
+     * (viewport-appropriate variant) with its frame canvas.
+     *
+     * @return true if the sequence section + canvas are present.
+     */
+    public boolean isCraftedWithIntentDisplayed() {
+        By variant = isMobileViewport() ? imageSequenceMobile : imageSequenceDesktop;
+        return !driver.findElements(variant).isEmpty()
+                && !driver.findElements(imageSequenceCanvas).isEmpty();
+    }
+
+    /**
+     * V.16 Verifies the "FEATURED IN" USP marquee is present.
+     *
+     * @return true if the USP section + marquee track are present.
+     */
+    public boolean isUspMarqueeDisplayed() {
+        return !driver.findElements(uspSection).isEmpty()
+                && !driver.findElements(uspMarquee).isEmpty();
     }
 
 }

@@ -33,7 +33,7 @@ Last reviewed: 2026-07-15
 | TASK-PDP-003 | P2 | When implementing Phase 2C, decide/confirm the Single-Deployment Clasp Rose Gold 20mm/22mm model: default is two separate URL-backed classes with a `selectSize22mm()` sibling-nav method; fall back to one size-parameterized class only if the capsule toggle proves client-side (same URL). | Phase 2C scrape findings | Completed (2026-07-15 discovery scrape: size AND color card-buttons NAVIGATE to distinct PDP URLs → two classes `SingleDeploymentClaspRoseGold20mm`/`22mm`). |
 | TASK-PDP-006 | P3 | Map `ManifestaDropCardComponent` once the Manifesta drop card ships on the site (product owner: expected ~SEPTEMBER 2026 — nothing exists to scrape today, so the class is a DELIBERATE scaffold). Behavior/locators will mirror `AstoniaDropCardComponent` (timed ~15s appearance, dismiss-once → ~1min reappear, permanent second dismissal / drop-page-visit dismissal; expected testids `manifesta-popup-card/-title/-close`). Also archive `AstoniaDropCardComponent` when its drop ends (drop cards are temporary by design). | Site feature ships (~Sep 2026) | Open (deferred until the card exists) |
 | TASK-PDP-007 | P1 | Map the content-rich HOMEPAGE (Phase 6): `HomePage` still carries `TODO(locators)` gaps (DEBT-008 — remaining homepage sections; logged-in user container child elements) and its many modals/carousels (stories modal, drop cards, hero/section carousels) are unmapped. Run a dedicated Antigravity chunk (6A) with per-section capture; also closes the related `SidebarMenuComponent` gaps. | Antigravity scrape (chunk 6A) | Open |
-| TASK-PDP-008 | P2 | Rework `account/OnboardingPage` against the NEW onboarding flow at `www.timepieces-d2c.example/becomemore` — a guided 7–8-step journey replacing the current onboarding. Map each step (content, inputs, progression/validation, back/skip) once the new flow is live; confirm whether it is auth-gated (post-login) during the scrape. | New /becomemore flow live; Antigravity scrape (chunk 7A) | Open |
+| TASK-PDP-008 | P2 | Build a NEW `Onboarding_BecomeMore.java` page object for the guided 7–8-step journey at `www.timepieces-d2c.example/becomemore` and map it directly (DECISION 2026-07-16: the existing `account/OnboardingPage` stays untouched until the OLD flow is sunset, then gets replaced with the BecomeMore locators/data). Map each step (content, inputs, progression/validation, back/skip); confirm whether it is auth-gated (post-login) during the scrape. Brief: `phase7/BRIEF-7A-becomemore.md`. | Antigravity scrape (chunk 7A) | Open |
 
 
 ## Backlog Self-Audit
@@ -42,3 +42,4 @@ Last reviewed: 2026-07-15
 - Every task has status: yes.
 - Every task has dependency information: yes.
 - Duplicate tasks checked: none found in this initial OKF snapshot.
+
