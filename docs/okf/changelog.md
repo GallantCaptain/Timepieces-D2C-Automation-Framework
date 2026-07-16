@@ -924,3 +924,39 @@ This changelog is append-only. New entries must be added chronologically and mus
   With Phase 5 reduced to the deferred Manifesta drop card (TASK-PDP-006), the
   POM mapping plan has NO actionable mapping left. Next: Phase-4 test cases
   (BDD + TDD) → Zephyr → wire step definitions, matching the Phase-3 flow.
+
+### Phase-4 (Timepieces World) test cases + Zephyr + wiring; plan extended with Phases 6–7
+
+- Completed the map → test cases → wire pipeline for the Timepieces World
+  microsite (same flow as Phase 3).
+- BDD (both registered in `RegressionRunner`, tag `@TimepiecesWorld`):
+  - `08_timepieces_world/Timepieces_World_Experience.feature` — welcome gate starts
+    the canvas (+ 7-segment progress rail); nudging the canvas reaches a family
+    scene (DISCOVER CTA); DISCOVER opens a showcase; the sidebar lists all 5
+    family destinations (+ backdrop close); the header logo leaves for
+    www.timepieces-d2c.example from the experience page.
+  - `08_timepieces_world/Timepieces_World_Showcase.feature` — scenario outline over
+    all 5 families (title pattern / logo / tagline / waitlist form); the
+    waitlist submit is DISABLED until the form validates (never submitted — it
+    raises a REAL signup); calibre specs + material learn-more + footer links;
+    Back-to-scene; the logo returns to the experience from a showcase.
+- TDD: `TimepiecesWorldSmokeTest` (6 smokes: gate/canvas/rail, nudge-to-scene,
+  showcase template, waitlist gate, sidebar links, dual-nav logo) + opt-in
+  `testng-timepieces-world-smoke.xml`.
+- Zephyr: pushed 16/16 clean via `scripts/add_rw_tcs.py` → **QA-T112–QA-T127**
+  (10 BDD + 6 TDD).
+- Glue: NEW `TimepiecesWorldSteps` — a handle→page switch over the 5 showcase
+  classes; the "nudges the canvas" step dispatches `advanceCanvas(3000)` inside
+  a 90s WebDriverWait until the DISCOVER CTA renders (native scroll is disabled
+  on the microsite); cross-origin URL assertions verify the dual-nav logo
+  (experience → www.timepieces-d2c.example; showcase → world.timepieces-d2c.example). Duplicate
+  When/And step-expression pitfall avoided (Cucumber ignores keywords —
+  identical expressions are duplicates).
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; Cucumber dry-run over
+  `@TimepiecesWorld` → 14 scenarios, 0 failures, ZERO undefined. Added `STAT-056`.
+- **PLAN EXTENDED (product owner, 2026-07-16)**: Phase 6 — the content-rich
+  HOMEPAGE is still incomplete (`TODO(locators)` gaps per DEBT-008 + its many
+  modals/carousels) → TASK-PDP-007 (P1, Antigravity chunk 6A). Phase 7 — the
+  onboarding flow is being replaced by a NEW guided 7–8-step journey at
+  `www.timepieces-d2c.example/becomemore`; `account/OnboardingPage` will be reworked
+  against it once live → TASK-PDP-008 (P2, chunk 7A).

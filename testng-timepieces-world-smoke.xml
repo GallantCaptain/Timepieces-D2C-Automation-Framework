@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Opt-in suite for the Timepieces World microsite UI smoke (TDD). NOT part of the
+  default testng.xml (it needs a real browser and reaches the live
+  world.timepieces-d2c.example origin, independent of the configured base.url).
+  Run: mvnw -o test "-Dsurefire.suite=testng-timepieces-world-smoke.xml" "-Denv=production"
+-->
+<suite name="TimepiecesWorldSmokeSuite" verbose="1">
+    <test name="TimepiecesWorldSmoke">
+        <classes>
+            <class name="com.timepieces.automation.tdd.ui.TimepiecesWorldSmokeTest"/>
+        </classes>
+    </test>
+</suite>

@@ -30,7 +30,9 @@ import lombok.extern.log4j.Log4j2;
                 "src/test/resources/features/06_customer_retention_wishlist/Guest_Order_Tracking.feature",
                 "src/test/resources/features/07_content_brand_pages/Legal_Policy_Pages.feature",
                 "src/test/resources/features/07_content_brand_pages/Brand_Content_Pages.feature",
-                "src/test/resources/features/07_content_brand_pages/Friends_And_Partners.feature"
+                "src/test/resources/features/07_content_brand_pages/Friends_And_Partners.feature",
+                "src/test/resources/features/08_timepieces_world/Timepieces_World_Experience.feature",
+                "src/test/resources/features/08_timepieces_world/Timepieces_World_Showcase.feature"
                 // Account_Orders_Management.feature is @AuthGated (NOT @Regression) —
                 // deliberately unregistered: production login is Cloudflare-gated.
 }, glue = { "com.timepieces.automation.bdd.stepdefinitions", "com.timepieces.automation.bdd.hooks" },
