@@ -869,3 +869,58 @@ This changelog is append-only. New entries must be added chronologically and mus
   scenarios, 0 failures, ZERO undefined steps. Added `STAT-054`.
 - Follow-ups: `/account/owned-watches` unscaffolded (from STAT-053); auth-gated
   scenarios need a pre-authenticated session to execute.
+
+### Manifesta drop card — deliberately deferred (product-owner decision)
+
+- `ManifestaDropCardComponent` stays an EMPTY scaffold on purpose: the Manifesta
+  drop card does not exist on the site yet (expected ~SEPTEMBER 2026), so there
+  is nothing to scrape or map today. The class Javadoc now records the deferral
+  and that the eventual behavior/locators will mirror `AstoniaDropCardComponent`
+  (timed appearance, two-stage dismissal, permanent dismissal on drop-page
+  visit; `<family>-popup-*` testid pattern). Tracked as `TASK-PDP-006` (P3,
+  blocked on the site feature). Phase-5 "loose ends" in the mapping plan is
+  therefore reduced to this deferred item — no actionable mapping remains in it.
+
+### Phase 4 chunk 4A — Timepieces World (world.timepieces-d2c.example) — ALL MAPPING PHASES CLOSED
+
+- Antigravity mapped the Timepieces World subdomain (3 artifacts: rw-experience,
+  rw-product-showcase, rw-chrome). ZERO `data-testid`s exist on the entire
+  subdomain — the biggest rollout gap so far; every locator is a fallback
+  tagged `ROLLOUT-GAP`. Antigravity''s `:has-text()` suggestions are
+  Playwright-only and were converted to XPath text-anchors.
+- Showcase pages: UNIFIED SHARED TEMPLATE verdict over all 5 families → built
+  NEW `SharedTemplate_TimepiecesWorldProduct` (CRTP): `getBaseUrl()` overridden to
+  `https://world.timepieces-d2c.example` (distinct origin from config `base.url`); hero
+  family logo (`img[alt=''<FAMILY>'']`) + tagline; "Back to scene"; calibre
+  specs grid (label→value template, e.g. BASE CALIBRE → TMI VK63); "Learn more
+  about <material>" buttons; the WAITLIST signup form (full name / email id /
+  tel / postal / optional Instagram / consent; submit disabled-until-valid;
+  `clickSubmitWaitlist()` carries a REAL-signup warning mirroring ContactPage''s
+  submission warning); footer (Back to top, reservations@ mailto, Instagram,
+  LinkedIn). IMPORTANT: there is NO CTA back to the www storefront — the
+  showcases are strictly pre-launch waitlist pages. The 5 family classes
+  (`TimepiecesWorld_{Arvion,Monarch,Auriqua,Astonia,Manifesta}Page`) thinned to
+  `familyName()` + their unique `PAGE_TITLE`
+  (`<Family> | <Tagline> | Timepieces Watches`).
+- `TimepiecesWorld_ExperiencePage`: 7 scenes (Opening → Arvion → Monarch →
+  Auriqua → Astonia → Manifesta → End). NEW discovery: an "Enter Experience"
+  welcome gate precedes the canvas. Native scrolling is DISABLED (body
+  overflow:hidden, scrollTop stays 0) — `advanceCanvas(deltaY)` dispatches a
+  synthetic JS `WheelEvent` to nudge the canvas; progress is asserted from the
+  right-side rail (active section = tall pill `h-6`, inactive = dots) and the
+  "<Section><NN>%" tooltip. Family scenes expose an h2 heading + DISCOVER CTA
+  (→ `/products/<family>?from=scene&frame=<n>`). The end scene is a STATIC
+  grid (desktop) / list (mobile) — `isMobileViewport()` picks the variant;
+  cards link to the 5 showcases (no prev/next, despite the scaffold saying
+  "carousel").
+- Chrome: `TimepiecesWorld_HeaderComponent` — hamburger
+  (`button[aria-label=''Toggle menu'']`, icon src encodes open/closed:
+  hamburger_expanded/collapased.svg) + the dual-navigation logo VERIFIED
+  (experience page → www.timepieces-d2c.example; showcase page → world.timepieces-d2c.example).
+  `TimepiecesWorld_SidebarMenuComponent` — drawer open/closed via
+  `translate-x-0`/`-translate-x-full`, backdrop click closes, exactly the 5
+  family links.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS. Added `STAT-055`.
+  With Phase 5 reduced to the deferred Manifesta drop card (TASK-PDP-006), the
+  POM mapping plan has NO actionable mapping left. Next: Phase-4 test cases
+  (BDD + TDD) → Zephyr → wire step definitions, matching the Phase-3 flow.

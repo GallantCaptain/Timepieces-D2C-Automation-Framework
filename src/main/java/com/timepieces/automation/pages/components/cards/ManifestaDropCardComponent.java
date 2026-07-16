@@ -35,8 +35,13 @@ import lombok.extern.log4j.Log4j2;
  * Clicking on the card redirects the user to: URL:
  * https://www.timepieces-d2c.example/new-release/manifesta (ManifestaDropPage)
  * 
- * This is yet to be implemented. Will happen around end of July or beginning of
- * August.
+ * DELIBERATELY UNMAPPED SCAFFOLD (product-owner decision, 2026-07-16): the
+ * Manifesta drop card does NOT exist on the site yet — the feature is expected
+ * around SEPTEMBER 2026, so there is nothing to scrape/map today. This class is
+ * intentionally left empty until the card ships. When it does, its behavior and
+ * locator shape will mirror {@link AstoniaDropCardComponent} (timed appearance,
+ * two-stage dismissal, permanent dismissal on drop-page visit; testids expected
+ * to follow the same {@code <family>-popup-card/-title/-close} pattern).
 * @Description "Description of ManifestaDropCardComponent"
 * @since 2026-07-03
 * @version 1.0
