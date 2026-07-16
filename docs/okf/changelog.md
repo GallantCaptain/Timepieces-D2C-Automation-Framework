@@ -1010,3 +1010,32 @@ This changelog is append-only. New entries must be added chronologically and mus
   Remaining DEBT-008 half: the logged-in sidebar user-container children (needs
   an authenticated pass). Next: Phase-6 test cases (homepage BDD+TDD) → Zephyr
   → wire, matching the established flow.
+
+### Phase-6 (Homepage) test cases + Zephyr + wiring
+
+- Completed the map → test cases → wire pipeline for the content-rich homepage.
+- BDD: `02_catalog_product_discovery/Homepage_Content_Sections.feature`
+  (@Regression @HomepageContent, registered in `RegressionRunner`; Background
+  reuses the existing StagingBypassSteps). 10 scenarios: hero showreel + mute
+  chrome; Two-Stories cards (Astonia arrow CTA; Manifesta LOCKED badge
+  "SEP, 2026"); brand quote ("What you wear on your wrist"); homepage Friends &
+  Partners carousel (cards link to profiles); Last-Release slider (cards link
+  to PDPs); Crafted-With-Intent + FEATURED-IN marquee; stories modal
+  (open / ≥1 story / image / pause / next / close); the drop popup MOUNTS
+  within 25s on a fresh session; the drop popup is SUPPRESSED via its
+  sessionStorage state (mark `astonia_popup_visited=1` → reload → no mount in
+  20s — the reusable flake-killer for every homepage-touching suite); the
+  footer country selector opens and search-filters ("United").
+- TDD: `HomepageContentSmokeTest` (4 smokes: full section sweep, stories modal
+  open/pause/close, popup suppression, country-selector filter) + opt-in
+  `testng-homepage-smoke.xml`.
+- Zephyr: pushed 14/14 clean via `scripts/add_homepage_tcs.py` →
+  **QA-T128–QA-T141** (10 BDD + 4 TDD).
+- Glue: NEW `HomepageContentSteps` — lazy page/component fields so any scenario
+  order works; the country-filter step captures the pre-search option count in
+  TestContext and asserts the filtered count is smaller but non-zero.
+- Verified: `mvnw -o clean test-compile` → BUILD SUCCESS; Cucumber dry-run over
+  `@HomepageContent` → 10 scenarios, 0 failures, ZERO undefined. Added
+  `STAT-058`. Remaining threads: 7A /becomemore scrape (brief ready) and the
+  authenticated pass (logged-in sidebar children + executing the @AuthGated
+  orders scenarios).
