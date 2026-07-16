@@ -47,7 +47,7 @@ Reached by clicking an order card. If this account has no orders, say so and ski
 - The **receipt / invoice** control (present only when delivered).
 - The **Contact Support** button (Javadoc flags it as "currently bugged" — note
   its selector + whether clicking it errors / does nothing).
-
+1
 ## Raw inventory (per page)
 - Full `data-testid` inventory.
 - Consolidated list of NO-`data-testid` elements + the fallback selector used

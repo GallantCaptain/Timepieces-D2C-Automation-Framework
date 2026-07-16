@@ -105,13 +105,21 @@ public class UpdatesPage extends StoreFrontBasePage<UpdatesPage> {
     /**
      * B.1 Clicks a content-filter button by its exact label (e.g. "All",
      * "Drops &amp; Releases", "Community").
+     * <p>
+     * The filter row exists more than once in the DOM (responsive variants), and
+     * the FIRST match can be the hidden one — so this clicks the first DISPLAYED
+     * match rather than using the plain click wrapper (2026-07-16 smoke fix).
      *
      * @param filterLabel the exact filter button label.
      * @return this page instance for method chaining.
      */
     public UpdatesPage selectFilter(String filterLabel) {
         log.info("Selecting Updates content filter: [{}]", filterLabel);
-        clickElement(formatLocator(filterButtonTemplate, filterLabel));
+        By locator = formatLocator(filterButtonTemplate, filterLabel);
+        org.openqa.selenium.WebElement visibleFilter = wait.until(d -> d.findElements(locator).stream()
+                .filter(org.openqa.selenium.WebElement::isDisplayed)
+                .findFirst().orElse(null));
+        visibleFilter.click();
         return this;
     }
 
