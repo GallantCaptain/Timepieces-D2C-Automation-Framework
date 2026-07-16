@@ -1078,3 +1078,23 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Remaining thread: the AUTHENTICATED pass — the logged-in sidebar
   user-container children (DEBT-008 second half) and executing the @AuthGated
   orders scenarios in the authenticated Antigravity/browser session.
+
+### /becomemore entry points clarified; test-account gap logged
+
+- PRODUCT CONTEXT (owner, 2026-07-16): the Become More journey opens when a
+  customer clicks "Register Interest" / "Join the waitlist" on the
+  Astonia/Manifesta DROP pages — the onboarding for (usually first-time) users
+  without a completed profile. A SECOND entry is design-planned from the
+  regular timepiece PDPs'' "Register Interest" CTA (form filled + user logged
+  in on registering interest); whether that routing is implemented is
+  UNVERIFIED → logged as TASK-PDP-009 (targeted Antigravity check; if routed,
+  wire the PDP register-interest flows to `Onboarding_BecomeMore`).
+  `Onboarding_BecomeMore`''s Javadoc now records the entry points.
+- ISSUE-014 (High): NO test / ephemeral user accounts exist, so ephemeral
+  authenticated states (first-time onboarding gating, post-submit completion,
+  guest→account wishlist sync, repeatable @AuthGated order flows) cannot be
+  tested deterministically — everything leans on the single real pilot account
+  whose state cannot be reset. Ask: dev-provisioned (ideally resettable) test
+  accounts. Until then: display/gate-level assertions + manual pilot runs.
+- Next: the user is running the 6B auth-sidebar scrape (authenticated
+  Antigravity session) — artifact `auth-sidebar.md` expected back.

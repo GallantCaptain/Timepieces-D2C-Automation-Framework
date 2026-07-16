@@ -16,6 +16,22 @@ import lombok.extern.log4j.Log4j2;
  * decision, 2026-07-16).
  *
  * <p>
+ * ENTRY POINTS (product owner, 2026-07-16): this journey opens when a customer
+ * clicks "Register Interest" / "Join the waitlist" on the Astonia/Manifesta
+ * DROP pages — it is the onboarding for (usually first-time) users who have
+ * not completed their profile. A second entry is DESIGN-PLANNED from the
+ * "Register Interest" CTA on the regular timepiece PDPs (form filled + user
+ * logged in when registering interest) — whether that PDP routing is already
+ * implemented is UNVERIFIED (see TASK-PDP-009). Tests currently enter via the
+ * direct URL / {@link #openSection(String)} deep-links, which work regardless.
+ *
+ * <p>
+ * TESTABILITY LIMIT (ISSUE-014): no test / ephemeral user accounts exist, so
+ * the first-time-user states (profile-incomplete gating, post-submit
+ * completion) cannot be exercised deterministically — display-level and
+ * gate-level assertions only until dev provides test accounts.
+ *
+ * <p>
  * SCRAPE NOTE (2026-07-16): the flow is PUBLIC (reachable logged out — no login
  * gate). Shape: an intro screen ("Become More" + "Begin your Profile" +
  * "Takes less than 60 seconds") opens a method-selector dialog ("How do you
