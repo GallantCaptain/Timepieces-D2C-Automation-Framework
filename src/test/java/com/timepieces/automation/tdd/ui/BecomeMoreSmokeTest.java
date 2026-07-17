@@ -95,6 +95,33 @@ public class BecomeMoreSmokeTest {
     }
 
     @Test(groups = { "diag" })
+    public void diagIsTheDraftLocalOrKeyedByContact() {
+        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_CONTACT);
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        // What does the app keep locally on the contact screen, before we type?
+        log.error("DIAG storage-on-contact >>> {}", js.executeScript(
+                "var ks=Object.keys(localStorage);"
+                        + "return JSON.stringify({keys:ks,"
+                        + "vals:ks.map(function(k){return k+'='+(''+localStorage.getItem(k)).slice(0,120);})});"));
+        // Enter with a UNIQUE identity that no previous run can have used.
+        String unique = String.valueOf(System.currentTimeMillis()).substring(3);
+        page.fillContactDetails(unique, "qa+" + unique + "@example.com");
+        page.clickContactContinue();
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+        log.error("DIAG unique-identity name screen >>> {}", js.executeScript(
+                "var b=document.querySelector(\"button[type='submit'][aria-label='Next']\");"
+                        + "return JSON.stringify({url:location.href,"
+                        + "nextDisabled:b?b.disabled:null,nextCls:b?(''+b.className).slice(0,55):null,"
+                        + "fields:[].map.call(document.querySelectorAll('textarea,select'),function(f){"
+                        + "return (f.placeholder||f.tagName)+'='+JSON.stringify(f.value);})});"));
+        log.error("DIAG unique-identity isNextEnabled()={}", page.isNextEnabled());
+    }
+
+    @Test(groups = { "diag" })
     public void diagNameScreenViaDeepLinkRedirect() {
         // The ORIGINAL entry the old test used: deep-link to ?section=name.
         Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_NAME);
