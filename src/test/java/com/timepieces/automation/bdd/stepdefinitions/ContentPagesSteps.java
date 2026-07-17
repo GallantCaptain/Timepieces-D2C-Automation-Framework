@@ -96,9 +96,41 @@ public class ContentPagesSteps {
     // ==========================================
     @Then("the {string} heading is displayed")
     public void the_heading_is_displayed(String headingText) {
-        By heading = By.xpath(String.format("//h1[contains(normalize-space(),'%s')]", headingText));
-        assertThat(!driver.findElements(heading).isEmpty() && driver.findElement(heading).isDisplayed())
+        // Matches on Selenium's RENDERED text, not on XPath's view of the DOM text, and
+        // considers EVERY visible h1 rather than the first one in the document.
+        //
+        // The old form was `//h1[contains(normalize-space(),'...')]` + findElement(...),
+        // and it failed on Share Your Moment for two independent reasons at once:
+        //
+        //  1. THE <br> TRAP. The markup is
+        //         <h1>Show your<br><span>Timepieces moment</span></h1>
+        //     A <br> contributes NO character to the DOM text, so the h1's textContent is
+        //     the run-together "Show yourTimepieces moment". XPath matches DOM text, so
+        //     contains(normalize-space(), 'Show your Timepieces moment') can never be true —
+        //     the space a reader sees is painted by the line break, not present in the
+        //     string. getText() reports the rendered text ("Show your\nTimepieces moment"),
+        //     which normalises to exactly what the Gherkin says.
+        //  2. THE HIDDEN-TWIN TRAP. The page renders a second, hidden mobile h1. The old
+        //     XPath happened to match THAT one, so findElement(...).isDisplayed() returned
+        //     false — reporting "not displayed" instead of "not found", which sent the
+        //     diagnosis in completely the wrong direction.
+        //
+        // Both verified against production, 2026-07-17.
+        String expected = normalise(headingText);
+        boolean found = driver.findElements(By.tagName("h1")).stream().anyMatch(h1 -> {
+            try {
+                return h1.isDisplayed() && normalise(h1.getText()).contains(expected);
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                return false; // Re-rendered mid-check; the other candidates still get a look.
+            }
+        });
+        assertThat(found)
                 .as("An h1 heading containing '%s' should be displayed", headingText).isTrue();
+    }
+
+    /** Collapses every run of whitespace (including the newline a &lt;br&gt; renders as) to one space. */
+    private static String normalise(String text) {
+        return text == null ? "" : text.replaceAll("\\s+", " ").trim();
     }
 
     // ==========================================

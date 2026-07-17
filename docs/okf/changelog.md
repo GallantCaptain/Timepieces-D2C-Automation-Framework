@@ -1315,3 +1315,75 @@ This changelog is append-only. New entries must be added chronologically and mus
   the value cell **on top of it, mangling every table in the document**, including ones
   that had been fine for months. Column widths must come from content. Recorded in the
   generator so it cannot be reintroduced.
+
+### Failure triage: ~90% of the 71 failures were the framework, not the app (STAT-043, STAT-044)
+
+- **Baseline:** the 2026-07-17 production run — 476 tests, **71 failed**, 148 skipped. The
+  owner's read ("most of these are false failures; the app is fine") was **correct**, and
+  is now proven per-failure rather than asserted.
+- **Method:** browser probes dumping the **real rendered DOM**. The storefront is
+  client-rendered Next.js, so curl cannot see the app — an early probe pass wasted effort
+  because three of five dumps were 404 pages from guessed URLs (`/timepieces-world` is a
+  separate origin, `world.timepieces-d2c.example`; `/become-more` is really `/becomemore`;
+  `/share-your-moment` is `/timepieces-wall/share`). Recorded here because "verify the URL
+  before you trust the dump" is the cheap lesson.
+- **Cause 1 — the cookie consent bar was eating clicks.** `role=dialog`,
+  `aria-labelledby=cookie-consent-title`, `z-index:9999`, pinned `bottom-0`, occupying
+  **y=896..986** in the 1920x1080 window; wrapper `pointer-events:none` but the inner card
+  `pointer-events:auto`. **Every** `ElementClickInterceptedException` reported a click
+  point inside that band — e.g. **(740,929)**. New `SiteOverlayHandler` (reject by
+  default, `cookie.consent.mode`) runs from `BasePage.open()`. One click per scenario; the
+  site persists `timepieces_cookie_consent`, so later navigations no-op. Verified: bar 1→0
+  nodes; the element at (740,929) is now real page content.
+- **Cause 2 — `BasePage` took the first DOM match, which is usually the hidden twin.** The
+  site renders responsive mobile+desktop duplicates. `visibilityOfElementLocated` /
+  `elementToBeClickable` only ever consider the FIRST match, so the suite waited the full
+  15s on a node CSS will never show, then reported "not displayed" about something plainly
+  on screen. Measured: the hidden mobile `product-media-carousel` sits at document
+  ~31,940, **before** the visible `desktop-image-gallery` at ~36,688 — which is why all
+  five accessory PDP tests claimed the gallery was missing. Same shape for
+  `header-stories-toggle` and the consent buttons. Now resolves the first **visible**
+  match, which is also faster.
+- **Cause 3 — tag-qualified testid selectors matching zero nodes.**
+  `section[data-testid='home-hero-overlay']` → 0 (it is a `<div>`). An audit of every such
+  selector against the rendered DOM caught `footer-accordion-toggle` (really `<button>`)
+  and `country-selector` (really `<div>`, used by the intl payment tests).
+  `home-two-stories-title` is not a `<p>` at the headless viewport. **The testid is the
+  contract; the tag is an implementation detail.** All now tag-free.
+- **Text-anchoring traps found (two of a kind).** (a) `<h1>Show your<br><span>Timepieces
+  moment</span></h1>` — a `<br>` contributes **no character** to DOM text, so XPath
+  `normalize-space()` can never match "Show your Timepieces moment" even though `getText()`
+  shows the break; worse, it matched a *hidden* mobile h1, so it failed "not displayed"
+  instead of "not found". (b) `unsupportedCountryAlert` hard-coded a **straight**
+  apostrophe in "isn't supported" while web copy routinely uses a **typographic** `’`
+  (U+2019). Both now anchor on text that avoids the trap.
+- **A locator collision worth remembering:** `StoriesModalComponent`'s dialog was the bare
+  `div[role=dialog][aria-modal=true]` — **markup-identical to the cookie bar**. It could
+  have reported the stories modal open while looking at the consent banner: a false PASS,
+  which is worse than a failure.
+- **(b) Chrome's save-password / leak-detection / autofill bubbles suppressed** in
+  `DriverFactory`. They are browser chrome painted over the page — Selenium cannot see or
+  dismiss them, and they steal focus and swallow the next click.
+- **The build changed mid-triage.** Devs shipped a production build that **removed "Slide
+  to Pay"**: the drag track, handle and label all match 0 nodes; it is now
+  `<button data-testid="cart-secure-checkout">`. `performSlideToPay()` became a plain
+  click — a straight win, as the synthetic pixel-offset drag was the suite's most fragile
+  interaction. The same build rolled data-testids across the whole cart drawer. All
+  previously-fixed suites were re-verified against the new build and stayed green.
+- **(g) The idempotency scenario was lying, and now says so.** `/checkout` redirects to the
+  homepage with an empty cart (126 testids on the landed page, **zero** of them checkout),
+  a `catch` swallowed the resulting `NoSuchElementException`, and
+  `isProcessingIndicatorActive()` fell back to `isPlaceOrderButtonDisabled()` — the very
+  thing the next step asserts, i.e. a tautology. There is also **no "Place Order" button**:
+  "Proceed to Payment" only launches the Razorpay modal and the real submit lives in a
+  third-party iframe. Now an explicit `PendingException` naming exactly what is missing
+  (bag pre-seeding; **staging-only** if ever completed — double-clicking would create real
+  orders in the payment gateway). The meaningful server-side guarantee **is** covered by
+  `IdempotencyApiTest`.
+- **Three real app bugs the suite caught correctly** (ISSUE-010/011/012): Monarch's hero
+  logo carries `alt="ARVION"`; the Become More `contact` step performs **zero validation**
+  (Continue with both phone and email empty advances); `/checkout` redirects with an empty
+  cart. **ISSUE-010 was initially assumed to be one of the "false failures" and was not** —
+  worth checking every one.
+- **Verified:** `AccessoryPdpSmokeTest` **0/5 → 5/5**, `HomepageContentSmokeTest` **2/4 →
+  4/4**, each run twice (a single green proves nothing) and again after the new build.

@@ -202,7 +202,7 @@ public class TimepiecesWallPage extends HeaderOnlyBasePage<TimepiecesWallPage> {
      * @return true if music is playing, false if muted.
      */
     public boolean isMusicPlaying() {
-        return MUSIC_LABEL_ON.equals(musicToggleLabel());
+        return waitForMusicLabel(MUSIC_LABEL_ON);
     }
 
     /**
@@ -212,7 +212,38 @@ public class TimepiecesWallPage extends HeaderOnlyBasePage<TimepiecesWallPage> {
      * @return true if music is muted, false if playing.
      */
     public boolean isMusicMuted() {
-        return MUSIC_LABEL_OFF.equals(musicToggleLabel());
+        return waitForMusicLabel(MUSIC_LABEL_OFF);
+    }
+
+    /**
+     * Waits for the toggle's {@code aria-label} to settle on the expected state.
+     *
+     * <p>WHY A WAIT: the label is the state, and React rewrites it AFTER the click's
+     * event handler runs. Reading it the instant the click returns is a race — you get the
+     * PREVIOUS state and conclude the toggle does not work.
+     *
+     * <p>This surfaced on 2026-07-17 as a scenario that had been passing and suddenly went
+     * red without the app changing. The cause was our own speed-up: {@code BasePage} used
+     * to resolve elements via {@code visibilityOfElementLocated} on the first DOM match,
+     * which incidentally burned enough time for React to re-render before the read
+     * happened. Once that was fixed to take the first VISIBLE match immediately, the read
+     * got there first and the latent race became a failure. The test was always wrong;
+     * it had simply been getting away with it.
+     *
+     * <p>The lesson worth keeping: a test that only passes because something else is slow
+     * is not passing — it is waiting by accident.
+     *
+     * @param expectedLabel {@link #MUSIC_LABEL_ON} or {@link #MUSIC_LABEL_OFF}
+     * @return true if the label reached the expected state within the timeout
+     */
+    private boolean waitForMusicLabel(String expectedLabel) {
+        try {
+            return wait.until(driver -> expectedLabel.equals(musicToggleLabel()));
+        } catch (Exception e) {
+            log.debug("Music toggle label never settled on [{}]; last read was [{}].",
+                    expectedLabel, musicToggleLabel());
+            return false;
+        }
     }
 
     /**

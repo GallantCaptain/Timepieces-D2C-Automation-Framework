@@ -495,8 +495,11 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
      * B.5b Clicks "Continue" on the contact screen (advances to "Step 01 of 07").
      *
      * <p>
-     * ============================ APP BUG — NOT A TEST BUG ============================
+     * ==================== APP BUG (ISSUE-011) — NOT A TEST BUG =======================
      * <br>
+     * Tracked as ISSUE-011 in docs/okf/known-issues.md (Open, app-side).
+     *
+     * <p>
      * The contact screen performs <b>ZERO validation</b>. Verified live on
      * 2026-07-17: clicking "Continue" with BOTH the phone and the email field
      * EMPTY advances straight to Step 01, and the button is never disabled at

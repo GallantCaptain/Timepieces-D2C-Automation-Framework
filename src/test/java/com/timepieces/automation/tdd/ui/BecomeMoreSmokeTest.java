@@ -73,6 +73,60 @@ public class BecomeMoreSmokeTest {
     // ==========================================
     // Tests
     // ==========================================
+    @Test(groups = { "diag" })
+    public void diagSubmitButtonsOnNameScreen() throws InterruptedException {
+        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_CONTACT);
+        page.enterJourneyAtPersonalInfo();
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        String probe = "var out={};"
+                + "var b=document.querySelector(\"button[type='submit'][aria-label='Next']\");"
+                + "out.nextDisabled=b?b.disabled:null;"
+                + "out.nextCls=b?(''+b.className).slice(0,60):null;"
+                + "out.fields=[].map.call(document.querySelectorAll('textarea,select,input'),function(f){"
+                + "  return f.tagName+'['+(f.placeholder||f.type||'')+']='+JSON.stringify(f.value);});"
+                + "return JSON.stringify(out);";
+        // Sample over time: if the gate is real but transient, it shows up here.
+        for (int i = 0; i < 5; i++) {
+            log.error("DIAG name t={}ms >>> {}", i * 700, js.executeScript(probe));
+            Thread.sleep(700);
+        }
+        page.fillPersonalInfo("Test User", "Mr", "01/01/1990", "Professional");
+        log.error("DIAG name AFTER-FILL >>> {}", js.executeScript(probe));
+    }
+
+    @Test(groups = { "diag" })
+    public void diagNameScreenViaDeepLinkRedirect() {
+        // The ORIGINAL entry the old test used: deep-link to ?section=name.
+        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_NAME);
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        log.error("DIAG deep-link name landed >>> {}", js.executeScript(
+                "var b=document.querySelector(\"button[type='submit']\");"
+                        + "return JSON.stringify({url:location.href,"
+                        + "h1:(document.querySelector('main h1')||{}).innerText,"
+                        + "aria:b?b.getAttribute('aria-label'):null,"
+                        + "disabled:b?b.disabled:null,cls:b?(''+b.className).slice(0,60):null});"));
+        log.error("DIAG deep-link isNextEnabled()={}", page.isNextEnabled());
+    }
+
+    @Test(groups = { "diag" })
+    public void diagTimepiecesHouseInspirationModal() {
+        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_TIMEPIECES_HOUSE);
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        String probe = "var out={};"
+                + "var sk=[].filter.call(document.querySelectorAll('button'),function(b){return /do this later/i.test(b.innerText||'');})[0];"
+                + "if(sk){var r=sk.getBoundingClientRect();out.skipRect=[r.x,r.y,r.width,r.height];"
+                + "var hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);"
+                + "out.hitTag=hit?hit.tagName:'none';out.hitCls=hit?(''+hit.className).slice(0,90):'none';}"
+                + "out.overlays=[].map.call(document.querySelectorAll('div.fixed'),function(d){"
+                + "  var s=getComputedStyle(d);return {cls:(''+d.className).slice(0,60),z:s.zIndex,pe:s.pointerEvents,disp:s.display};})"
+                + "  .filter(function(o){return o.z && o.z!=='auto';});"
+                + "out.closeBtns=[].map.call(document.querySelectorAll('button[aria-label]'),function(b){return b.getAttribute('aria-label');});"
+                + "return JSON.stringify(out);";
+        log.error("DIAG house BEFORE-inspiration >>> {}", js.executeScript(probe));
+        page.clickNeedInspiration();
+        log.error("DIAG house AFTER-inspiration >>> {}", js.executeScript(probe));
+    }
+
     @Test(groups = { "ui-smoke", "becomemore" })
     public void introOpensTheMethodDialog() {
         Onboarding_BecomeMore page = new Onboarding_BecomeMore(driver).open();

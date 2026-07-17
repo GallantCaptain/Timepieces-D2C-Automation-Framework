@@ -18,7 +18,8 @@ Feature: Become More Onboarding Journey
   # in-journey state and redirects to `contact`. Scenarios needing those two
   # screens enter via `contact` or walk the whole journey. See the page object.
   #
-  # ############################ APP BUG — FILE WITH DEV ########################
+  # ##################### APP BUG — ISSUE-011 (filed, app-side) #################
+  # Tracked in docs/okf/known-issues.md as ISSUE-011.
   # The `contact` screen validates NOTHING: "Continue" advances to Step 01 with
   # BOTH the phone and the email field EMPTY, and the button is never disabled
   # (verified 2026-07-17). Its own copy says "How can we reach you? We'll verify
