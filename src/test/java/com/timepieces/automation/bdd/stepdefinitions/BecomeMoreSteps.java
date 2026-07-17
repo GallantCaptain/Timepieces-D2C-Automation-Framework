@@ -29,6 +29,21 @@ import lombok.extern.log4j.Log4j2;
  * auto-advance the journey, so the section assertions wait on the URL's
  * {@code section=} query value.
  *
+ * <p>
+ * ENTRY MATTERS (corrected 2026-07-17). The journey has 9 screens and starts on
+ * {@code contact}, which the original scrape missed. Two of those screens —
+ * {@code name} and {@code photo} — are NOT deep-linkable: opening their URL cold
+ * redirects to {@code contact}. So there are three distinct entry steps here and
+ * they are not interchangeable:
+ * <ul>
+ * <li>"opens the Become More section X" — deep-link; valid for the 7 screens
+ * that accept one.</li>
+ * <li>"enters the Become More journey at the personal info step" — enters at
+ * {@code contact} and advances one screen to reach Step 01.</li>
+ * <li>"walks the whole Become More journey to the photo step" — walks all 9
+ * screens; the only way onto {@code photo}.</li>
+ * </ul>
+ *
  * @version 1.0
  * @author Avinash Rath
 * @Description "Description of BecomeMoreSteps"
@@ -71,6 +86,41 @@ public class BecomeMoreSteps {
         }
     }
 
+    /**
+     * Lands on the journey's first screen with the staging gate cleared.
+     *
+     * <p>
+     * Both walk-based entries below need this, and neither can deep-link to the
+     * screen it actually wants.
+     */
+    private void openContactScreenPastTheStagingGate() {
+        becomeMore = new Onboarding_BecomeMore(driver);
+        becomeMore.openSection(Onboarding_BecomeMore.SECTION_CONTACT);
+        if (new StagingGatePage(driver).unlockIfPresent()) {
+            becomeMore.openSection(Onboarding_BecomeMore.SECTION_CONTACT);
+        }
+    }
+
+    @Given("the user enters the Become More journey at the personal info step")
+    public void the_user_enters_the_become_more_journey_at_the_personal_info_step() {
+        // NOT a deep-link: ?section=name redirects to `contact` (verified
+        // 2026-07-17). The journey has to be entered one screen earlier and
+        // walked forward, exactly as a real visitor does.
+        log.info("STEP: enter the Become More journey via contact and advance to Step 01.");
+        openContactScreenPastTheStagingGate();
+        becomeMore.enterJourneyAtPersonalInfo();
+    }
+
+    @Given("the user walks the whole Become More journey to the photo step")
+    public void the_user_walks_the_whole_become_more_journey_to_the_photo_step() {
+        // The photo screen cannot be deep-linked (?section=photo redirects to
+        // `contact`, as does every alias tried). Walking all 9 screens is the only
+        // way onto it. The walk stops ON the photo screen — it never submits.
+        log.info("STEP: walk the full Become More journey to the photo screen.");
+        openContactScreenPastTheStagingGate();
+        becomeMore.walkToPhotoStep();
+    }
+
     // ==========================================
     // Intro + method dialog
     // ==========================================
@@ -96,13 +146,27 @@ public class BecomeMoreSteps {
         becomeMore.closeMethodDialog();
     }
 
+    @Then("the profile method dialog is dismissed")
+    public void the_profile_method_dialog_is_dismissed() {
+        // The scenario previously clicked close and asserted NOTHING, so it could
+        // not have caught that the close locator matched 0 nodes. Closing is only
+        // meaningful if the dialog actually goes away — assert it.
+        assertThat(becomeMore.isMethodDialogDismissed())
+                .as("The method dialog should be gone after closing it").isTrue();
+    }
+
     // ==========================================
     // Steps + progression
     // ==========================================
     @Then("the step indicator reads {string}")
     public void the_step_indicator_reads(String expected) {
+        // isEqualTo, not contains. The old page-object locator matched 6 nodes (the
+        // <span> plus five ancestor containers) so getText() returned the ENTIRE
+        // page text, and a contains() check against that haystack would have passed
+        // for any step number at all — the assertion was decorative. The locator now
+        // resolves the single <span>, so the exact string is assertable.
         assertThat(becomeMore.getStepIndicatorText())
-                .as("The step indicator should read '%s'", expected).contains(expected);
+                .as("The step indicator should read '%s'", expected).isEqualTo(expected);
     }
 
     @And("the next step control is disabled")
@@ -192,7 +256,9 @@ public class BecomeMoreSteps {
     @Then("the submit profile button is enabled")
     public void the_submit_profile_button_is_enabled() {
         // Assert-only: the button is NEVER clicked (a real profile would be created).
-        assertThat(becomeMore.isSubmitProfileEnabled())
+        // Polls rather than reading instantly — ticking consent flips React state
+        // and the re-render is not synchronous with Selenium's click.
+        assertThat(becomeMore.waitUntilSubmitProfileEnabled())
                 .as("'Submit Profile' should ENABLE once consent is ticked").isTrue();
     }
 }

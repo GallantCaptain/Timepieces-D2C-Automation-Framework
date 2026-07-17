@@ -34,10 +34,20 @@ Feature: Timepieces World Product Showcases
     And material learn-more buttons are offered
     And the showcase footer support links are present
 
-  Scenario: Verify Back to scene returns to the experience page
-    Given the user navigates to the Timepieces World showcase of "monarch"
-    When the user clicks Back to scene
-    Then the browser returns to the Timepieces World experience page
+  # DELETED 2026-07-17 — "Verify Back to scene returns to the experience page".
+  #
+  # The scenario tested a feature that has never existed. "Back to scene" matches 0
+  # nodes on all 5 showcase pages, and the string appears nowhere in any of their
+  # DOMs — it came from the 2026-07-16 scrape's reading of the page, not from the
+  # markup. A test cannot be repaired into passing against a button that was never
+  # built, and leaving it red would have buried the real failures underneath it.
+  #
+  # No coverage is lost: the only route from a showcase back to the experience is
+  # the header logo, which the scenario immediately below already exercises (and on
+  # a different family, so both are still covered).
+  #
+  # If a "Back to scene" control is ever built, restore this scenario along with
+  # clickBackToScene()/isBackToSceneDisplayed() in SharedTemplate_TimepiecesWorldProduct.
 
   Scenario: Verify the header logo returns to the experience from a showcase page
     Given the user navigates to the Timepieces World showcase of "auriqua"

@@ -588,8 +588,20 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
     // unsupported country (e.g. KP, CU) and clicking Proceed to Payment halts
     // with a validation alert — "Country/Region in the shipping address isn't
     // supported" (and the billing twin).
+    // Anchored on the text BEFORE the apostrophe, deliberately.
+    //
+    // The old form hard-coded "isn't supported" with a STRAIGHT apostrophe ('). Web copy is
+    // routinely authored with a TYPOGRAPHIC apostrophe (’ U+2019) — designers, CMSes and
+    // smart-quote editors all produce it — and the two are different characters, so an
+    // XPath containing one will never match text containing the other. It is the same
+    // class of trap as matching across a <br>: the string a human reads is not the string
+    // the DOM holds.
+    //
+    // Matching on "in the shipping address" / "in the billing address" sidesteps the
+    // apostrophe entirely and still cannot collide with anything else on a checkout page.
     private final By unsupportedCountryAlert = By.xpath(
-            "//*[contains(normalize-space(),\"Country/Region in the shipping address isn't supported\") or contains(normalize-space(),\"Country/Region in the billing address isn't supported\")]"); // ROLLOUT-GAP: text-anchor
+            "//*[contains(normalize-space(),'Country/Region in the shipping address')"
+                    + " or contains(normalize-space(),'Country/Region in the billing address')]"); // ROLLOUT-GAP: text-anchor
 
     // ==========================================
     // PRIVATE HELPERS
@@ -651,6 +663,18 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
     // VERIFICATION METHODS
     // ==========================================
 
+    /**
+     * Returns the "Proceed to Payment" button.
+     *
+     * <p><b>THERE IS NO "PLACE ORDER" BUTTON ON THIS PAGE.</b> The name is a leftover and
+     * it is actively misleading: "Proceed to Payment" only LAUNCHES the Razorpay modal
+     * (see {@link #clickProceedToPayment()}); the actual order submission happens inside
+     * Razorpay's third-party iframe, which Selenium cannot reach and which we are not
+     * authorised to drive. Any test reasoning about "the order submit button" on this page
+     * is reasoning about a control that does not exist.
+     *
+     * @return the Proceed to Payment element
+     */
     public org.openqa.selenium.WebElement getPlaceOrderButton() {
         return driver.findElement(proceedToPaymentButtonDesktop);
     }
@@ -664,12 +688,45 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
         }
     }
 
+    /**
+     * Reports whether a submission-in-progress indicator is showing.
+     *
+     * <p>REMOVED 2026-07-17: this used to {@code catch} and fall back to
+     * {@link #isPlaceOrderButtonDisabled()} — which is precisely what the NEXT step of the
+     * idempotency scenario asserts. That made the two assertions a tautology: the first
+     * could only pass by measuring the second. Worse, the {@code catch} also swallowed the
+     * {@link org.openqa.selenium.NoSuchElementException} thrown when the page is not the
+     * checkout page at all, so a test that had silently landed on the homepage reported
+     * "processing is not active" instead of "I am not where I think I am".
+     *
+     * <p>It now answers only its own question and lets an absent page surface as an error.
+     *
+     * <p>CAVEAT for whoever picks this up: the selectors below are UNVERIFIED. Reaching a
+     * real submitting state needs a seeded cart (see the scenario in
+     * {@code Checkout_Idempotency.feature}), which no test can currently do, so nobody has
+     * ever observed this indicator. Treat them as a hypothesis, not a contract.
+     *
+     * @return true if a processing indicator is visible
+     */
     public boolean isProcessingIndicatorActive() {
-        try {
-            return driver.findElement(By.cssSelector("div.processing, .spinner-active, [data-testid='checkout-processing'], div.razorpay-loading")).isDisplayed();
-        } catch (Exception e) {
-            return isPlaceOrderButtonDisabled();
-        }
+        return isDisplayed(By.cssSelector(
+                "div.processing, .spinner-active, [data-testid='checkout-processing'], div.razorpay-loading"));
+    }
+
+    /**
+     * Reports whether the checkout page actually rendered, rather than bouncing away.
+     *
+     * <p>VERIFIED 2026-07-17: {@code /checkout} REDIRECTS to the homepage when the cart is
+     * empty. Of the 126 data-testids on the landed page, every one is {@code home-*} /
+     * {@code header-*} / {@code footer-*} — there are ZERO checkout testids. ({@code /cart}
+     * is a 404; the cart is a drawer, not a page.) A test that navigates straight to
+     * /checkout without seeding a cart is therefore asserting against the HOMEPAGE, and
+     * every failure it reports is meaningless.
+     *
+     * @return true if the browser is still on a checkout URL after the redirect settles
+     */
+    public boolean isCheckoutPageLoaded() {
+        return driver.getCurrentUrl().contains("/checkout");
     }
 
     /**
@@ -681,6 +738,10 @@ public class CheckoutPage extends HeaderOnlyBasePage<CheckoutPage> {
      * @return true if the unsupported-country alert is displayed.
      */
     public boolean isUnsupportedCountryAlertDisplayed() {
-        return !driver.findElements(unsupportedCountryAlert).isEmpty();
+        // isEventuallyDisplayed, not findElements(...).isEmpty(): the alert appears AFTER
+        // the Proceed-to-Payment round-trip, so a presence check the instant after the
+        // click races the response. Presence also can't tell a rendered alert from one
+        // sitting hidden in the DOM.
+        return isEventuallyDisplayed(unsupportedCountryAlert);
     }
 }

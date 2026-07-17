@@ -155,19 +155,34 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
     // Helpful Comment
     private final By privacyPolicyLink = By.cssSelector("a[href='/policies/privacy-policy']");
 
-    /*
-     * Get size of the Slide to Pay track minus the distance the button handle
-     * travels until it is zero, to ensure the slide to pay features works and can
-     * be tested.
-     */
-    // Slide To Pay Track
-    private final By slideToPayTrack = By.cssSelector("div[class='drag-button-track']");
+    // ---------------------------------------------------------------------------
+    // Checkout CTA — "Slide to Pay" was REMOVED by the production build of 2026-07-17.
+    //
+    // The drawer used to end in a drag-to-confirm track: you had to press the handle and
+    // drag it the full width to proceed, which the suite drove with an Actions
+    // click-and-hold + moveByOffset. That control no longer exists. Verified against the
+    // new build on 2026-07-17 with a seeded cart (1 x Premium Watch Case):
+    //     div[class='drag-button-track']              -> 0 nodes
+    //     [data-testid='slide-to-pay-text']           -> 0 nodes
+    //     [data-testid='slide-to-pay-handle']         -> 0 nodes
+    //     [class*='drag']                             -> 0 nodes (nothing drag-like left)
+    // It is now an ordinary button:
+    //     <button data-testid="cart-secure-checkout">Secure Checkout | ₹4,500</button>
+    //
+    // That is a straight win for the suite: a real click replaces a synthetic drag, which
+    // was the single most fragile interaction we had (it depended on pixel offsets and
+    // broke whenever the drawer width changed).
+    // ---------------------------------------------------------------------------
+    private final By secureCheckoutButton = By.cssSelector("button[data-testid='cart-secure-checkout']");
 
-    // Slide To Pay text
-    private final By slideToPay_TextLabel = By.cssSelector("span[data-testid='slide-to-pay-text']");
-
-    // Cart Button Handle in Slide To Pay Container
-    private final By cartButtonHandle_In_SlideToPayTrack = By.cssSelector("button[data-testid='slide-to-pay-handle']");
+    // Also confirmed present on the same build, for whoever extends this component next:
+    //   cart-line-item · cart-line-item-image-link · cart-line-item-title-link
+    //   cart-line-item-title · cart-line-item-variant · cart-line-item-price
+    //   cart-line-item-quantity-controls · cart-line-item-quantity
+    //   cart-line-item-increase · cart-line-item-remove
+    //   cart-order-summary · cart-summary-subtotal
+    // (cart-drawer-overlay / cart-drawer / cart-drawer-title / cart-drawer-close /
+    //  cart-drawer-content are already mapped at the top of this class.)
 
     // ==========================================
     // PRIVATE HELPERS
@@ -208,17 +223,27 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
      * @return this CartDrawerComponent for method chaining.
      */
     public CartDrawerComponent performSlideToPay() {
-        log.info("Performing the Slide-to-Pay drag gesture.");
-        org.openqa.selenium.WebElement track = getElement(slideToPayTrack);
-        org.openqa.selenium.WebElement handle = getElement(cartButtonHandle_In_SlideToPayTrack);
-        int distance = track.getSize().getWidth() - handle.getSize().getWidth();
-        new org.openqa.selenium.interactions.Actions(driver)
-                .clickAndHold(handle)
-                .moveByOffset(distance, 0)
-                .release()
-                .perform();
-        log.info("Slide-to-Pay gesture completed (dragged {}px).", distance);
+        // NO LONGER A DRAG. The 2026-07-17 production build replaced the slide-to-confirm
+        // track with an ordinary <button data-testid="cart-secure-checkout">. The old
+        // implementation did an Actions clickAndHold + moveByOffset across the measured
+        // track width; every part of that is now gone (drag-button-track, the handle and
+        // the label all match 0 nodes).
+        //
+        // The method name is kept so the existing step definitions and their Gherkin keep
+        // reading naturally, and because "the shopper confirms payment" is the behaviour
+        // under test — the gesture was only ever the implementation of it.
+        log.info("Clicking Secure Checkout (the build of 2026-07-17 replaced the slide-to-pay drag).");
+        clickElement(secureCheckoutButton);
         return this;
+    }
+
+    /**
+     * Verifies the Secure Checkout CTA is displayed.
+     *
+     * @return true if the checkout button is visible in the drawer.
+     */
+    public boolean isSecureCheckoutDisplayed() {
+        return isDisplayed(secureCheckoutButton);
     }
 
     // ==========================================

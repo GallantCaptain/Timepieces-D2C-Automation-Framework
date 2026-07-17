@@ -86,15 +86,16 @@ public class TimepiecesWorldSmokeTest {
     public void canvasNudgesToAFamilySceneWithDiscover() {
         TimepiecesWorld_ExperiencePage page = new TimepiecesWorld_ExperiencePage(driver).open();
         page.enterExperience();
-        new WebDriverWait(driver, Duration.ofSeconds(90)).until(d -> {
-            if (page.isDiscoverCtaDisplayed()) {
-                return true;
-            }
-            page.advanceCanvas(3000);
-            return false;
-        });
+        // The nudge-until-a-family-scene loop used to be spelled out here (and again,
+        // separately, in TimepiecesWorldSteps). It now lives in the page object, because
+        // getting it right needs two phases that are easy to get wrong: nudge until the
+        // CTA is PRESENT, then stop nudging and let the scene settle until it is VISIBLE.
+        // See TimepiecesWorld_ExperiencePage#nudgeToFamilyScene.
+        page.nudgeToFamilyScene();
         assertThat(page.getActiveFamilyHeading())
                 .as("Experience: a family heading should accompany the DISCOVER CTA").isNotBlank();
+        assertThat(page.isDiscoverCtaDisplayed())
+                .as("Experience: the DISCOVER CTA should be visible once the scene settles").isTrue();
     }
 
     @Test(groups = { "ui-smoke", "timepieces-world" })

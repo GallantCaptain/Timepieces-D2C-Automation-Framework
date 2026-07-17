@@ -124,13 +124,13 @@ public class TimepiecesWorldSteps {
     @When("the user nudges the canvas forward until a family scene appears")
     public void the_user_nudges_the_canvas_forward_until_a_family_scene_appears() {
         log.info("STEP: nudge the canvas forward until a DISCOVER CTA appears.");
-        new WebDriverWait(driver, Duration.ofSeconds(90)).until(d -> {
-            if (experiencePage.isDiscoverCtaDisplayed()) {
-                return true;
-            }
-            experiencePage.advanceCanvas(3000);
-            return false;
-        });
+        // The loop this step used to spell out inline (nudge until isDiscoverCtaDisplayed)
+        // now lives in the page object, and for a reason worth knowing: it has to nudge
+        // until the CTA is PRESENT and then STOP nudging so the scene can finish rendering,
+        // because every nudge restarts the CTA's fade-in animation. Waiting on visibility
+        // while still nudging never terminates. See
+        // TimepiecesWorld_ExperiencePage#nudgeToFamilyScene.
+        experiencePage.nudgeToFamilyScene();
     }
 
     @Then("the active scene shows a family heading")
@@ -252,6 +252,13 @@ public class TimepiecesWorldSteps {
                 .as("The waitlist submit should start DISABLED until the form validates").isFalse();
     }
 
+    /**
+     * The spec label is matched case-insensitively, so the feature can keep naming
+     * these the way they LOOK on screen ("BASE CALIBRE"), which is what a reader of
+     * the feature will have seen. The DOM text is actually sentence case ("Base
+     * calibre") — the uppercase is CSS text-transform, which XPath cannot see. See
+     * SharedTemplate_TimepiecesWorldProduct#specValueTemplate.
+     */
     @Then("the showcase lists the calibre spec {string}")
     public void the_showcase_lists_the_calibre_spec(String specLabel) {
         assertThat(showcasePage.hasSpec(specLabel))
@@ -270,8 +277,8 @@ public class TimepiecesWorldSteps {
                 .as("The footer reservations/Instagram/LinkedIn links should be present").isTrue();
     }
 
-    @When("the user clicks Back to scene")
-    public void the_user_clicks_back_to_scene() {
-        showcasePage.clickBackToScene();
-    }
+    // the_user_clicks_back_to_scene() DELETED 2026-07-17 along with its scenario and
+    // SharedTemplate_TimepiecesWorldProduct.clickBackToScene(): no "Back to scene" control
+    // exists on any showcase page (0 nodes on all 5). See the note in
+    // Timepieces_World_Showcase.feature. Nothing else referenced this step.
 }

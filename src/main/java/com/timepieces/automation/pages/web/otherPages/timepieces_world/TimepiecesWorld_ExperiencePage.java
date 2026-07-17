@@ -1,8 +1,12 @@
 package com.timepieces.automation.pages.web.otherPages.timepieces_world;
 
+import java.time.Duration;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.timepieces.automation.pages.BasePage;
 
@@ -119,7 +123,29 @@ public class TimepiecesWorld_ExperiencePage extends BasePage<TimepiecesWorld_Exp
      */
     public TimepiecesWorld_ExperiencePage enterExperience() {
         log.info("Entering the Timepieces World experience.");
-        clickElement(enterExperienceButton);
+        // THIS GATE GETS ITS OWN 60s BUDGET, DELIBERATELY — do not swap it back to the
+        // shared clickElement()/explicit.wait.timeout (15s).
+        //
+        // The button is never missing and was never renamed (measured 2026-07-17: 1 node,
+        // displayed, text "Enter Experience"). What defeats a 15s budget is that this gate
+        // sits in front of a canvas preloader that fetches ~300 frame images from S3, and
+        // it does not become clickable until enough of them are in. Across runs on
+        // 2026-07-17, driver.get() returned anywhere between 1.2s and ~24s, and the gate
+        // then became clickable a further 2.7s to 8.0s after that — a worst case around
+        // 32s, comfortably past 15s.
+        //
+        // That timing also explains why this failed in only 2 of the 3 scenarios that use
+        // it, which looks inexplicable until you count the waits: scenario 1 asserts "the
+        // gate is displayed" FIRST, which burns its own 15s window on the preloader, and
+        // only then clicks with a FRESH 15s — up to 30s in total. Scenarios 2 and 3 go
+        // straight to the click and got a single 15s window. The gate was never broken;
+        // the budget was.
+        //
+        // 60s is scoped to this one click rather than raised globally: the rest of the
+        // suite should stay strict, and no other element on the site waits on a preloader.
+        new WebDriverWait(driver, Duration.ofSeconds(60))
+                .until(ExpectedConditions.elementToBeClickable(enterExperienceButton))
+                .click();
         return this;
     }
 
@@ -135,6 +161,55 @@ public class TimepiecesWorld_ExperiencePage extends BasePage<TimepiecesWorld_Exp
         log.info("Dispatching a wheel event (deltaY={}) to nudge the canvas.", deltaY);
         ((JavascriptExecutor) driver).executeScript(
                 "window.dispatchEvent(new WheelEvent('wheel', { deltaY: arguments[0], bubbles: true }));", deltaY);
+        return this;
+    }
+
+    /**
+     * B.2a Nudges the canvas forward until a family scene is reached AND has
+     * finished rendering, leaving the DISCOVER CTA visible and clickable.
+     *
+     * <p>
+     * TWO PHASES, AND THE ORDER MATTERS — this looks over-engineered and is not.
+     * Measured on 2026-07-17:
+     *
+     * <ol>
+     * <li>NUDGE UNTIL PRESENT. The exit condition is DOM PRESENCE, not visibility.
+     * A family scene's DISCOVER CTA mounts with {@code visibility:hidden;
+     * opacity:0} and only fades in once the scene animation completes — and EVERY
+     * wheel nudge restarts that animation. So a loop that nudges on each poll and
+     * waits for visibility never lets the CTA finish appearing: it stays
+     * {@code visibility:hidden} forever and the loop nudges straight past the
+     * scene. Observed directly: 25 nudges, CTA present from nudge 9, never once
+     * visible.</li>
+     * <li>THEN STOP AND SETTLE. With the nudging stopped, the scene completes on
+     * its own: the family heading turned visible ~4.1s later and the CTA ~4.7s
+     * later (opacity ramping 0 → 0.087 → 1), after which it clicks through to
+     * {@code /products/arvion?from=scene&frame=298}.</li>
+     * </ol>
+     *
+     * <p>
+     * Phase 2 is what makes the assertions that follow trustworthy: presence alone
+     * is NOT readiness. While the CTA is present-but-hidden the heading reads "" —
+     * so a caller that stopped at presence would ask getActiveFamilyHeading() for
+     * text that has not rendered yet and fail an isNotBlank() assertion against a
+     * page that was about to be perfectly fine.
+     *
+     * @return this page instance for method chaining.
+     */
+    public TimepiecesWorld_ExperiencePage nudgeToFamilyScene() {
+        log.info("Nudging the canvas forward until a family scene appears.");
+        // Phase 1 — reach the scene. 90s: each nudge is followed by a poll, and the
+        // opening scene can take a dozen-plus nudges to clear.
+        new WebDriverWait(driver, Duration.ofSeconds(90)).until(d -> {
+            if (isDiscoverCtaPresent()) {
+                return true;
+            }
+            advanceCanvas(3000);
+            return false;
+        });
+        // Phase 2 — hands off the wheel; let the reveal animation finish.
+        log.info("Family scene reached; letting the scene settle so the CTA can fade in.");
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> isDiscoverCtaDisplayed());
         return this;
     }
 
@@ -218,6 +293,37 @@ public class TimepiecesWorld_ExperiencePage extends BasePage<TimepiecesWorld_Exp
      * @return true if the DISCOVER CTA is present.
      */
     public boolean isDiscoverCtaDisplayed() {
+        // VISIBILITY, not presence. This used to be a findElements().isEmpty() check, which
+        // answers "is it in the DOM" — and on this page that is emphatically NOT the same
+        // question. Measured 2026-07-17: the CTA mounts with visibility:hidden; opacity:0
+        // and fades in only once the scene animation completes, ~4.7s after the wheel goes
+        // quiet. While it sits present-but-hidden, its innerText is "" and the family
+        // heading alongside it is blank too.
+        //
+        // So "displayed" now means what it says, and the assertion "the DISCOVER call to
+        // action is displayed" tests something real: that the CTA is on screen for a user
+        // to click, not merely parked in the DOM.
+        //
+        // isDisplayed() (not isEventuallyDisplayed) on purpose: this is polled inside the
+        // nudge loop, so it must answer about the CURRENT frame and return promptly. A
+        // waiting variant would sit on the 15s timeout on every scene that has no CTA —
+        // the opening and end scenes — and starve the loop of nudges.
+        return isDisplayed(discoverButton);
+    }
+
+    /**
+     * V.6a Reports whether a DISCOVER CTA is PRESENT IN THE DOM, visible or not.
+     *
+     * <p>
+     * The weaker sibling of {@link #isDiscoverCtaDisplayed()}, and the correct exit
+     * condition for the nudge loop specifically — see
+     * {@link #nudgeToFamilyScene()} for why waiting on visibility while still
+     * nudging can never succeed. Prefer {@link #isDiscoverCtaDisplayed()} for
+     * assertions: presence here does NOT mean the scene has rendered.
+     *
+     * @return true if a DISCOVER CTA exists in the DOM.
+     */
+    public boolean isDiscoverCtaPresent() {
         return !driver.findElements(discoverButton).isEmpty();
     }
 

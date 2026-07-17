@@ -88,9 +88,22 @@ public class BecomeMoreSmokeTest {
 
     @Test(groups = { "ui-smoke", "becomemore" })
     public void personalInfoStepGatesUntilValid() {
-        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_NAME);
+        // Entered via the contact screen, NOT openSection(SECTION_NAME): the name
+        // screen does not deep-link — it redirects to contact (verified
+        // 2026-07-17), and contact has no step indicator, so the old entry sat in
+        // a 15s wait for "Step 01 of 07" on a screen that never shows one. That
+        // was this test's only failure; the gate itself works.
+        // openSection() first purely to clear the staging gate on this fresh
+        // driver; enterJourneyAtPersonalInfo() then walks contact -> Step 01.
+        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_CONTACT);
+        page.enterJourneyAtPersonalInfo();
+
+        // isEqualTo, not contains: the step indicator now resolves to the single
+        // <span> that holds the text, so the exact string is assertable. The old
+        // locator matched 6 ancestor containers and returned the whole page text,
+        // where a contains() check would pass for ANY step.
         assertThat(page.getStepIndicatorText())
-                .as("Step 1 indicator").contains("Step 01 of 07");
+                .as("Step 1 indicator").isEqualTo("Step 01 of 07");
         assertThat(page.isNextEnabled())
                 .as("Next should start DISABLED").isFalse();
         page.fillPersonalInfo("Test User", "Mr", "01/01/1990", "Professional");
@@ -112,14 +125,28 @@ public class BecomeMoreSmokeTest {
 
     @Test(groups = { "ui-smoke", "becomemore" })
     public void photoConsentGatesTheSubmit() {
-        Onboarding_BecomeMore page = openSection(Onboarding_BecomeMore.SECTION_PHOTO);
+        // The photo screen CANNOT be deep-linked — ?section=photo redirects to
+        // contact, as does every alias tried on 2026-07-17 (avatar, profilephoto,
+        // picture, image, submit, review, final). The old
+        // openSection(SECTION_PHOTO) therefore asserted against the contact
+        // screen, which has no avatar and no consent box, and reported the
+        // consent gate as missing. The gate is fine; the entry was impossible.
+        // Walking all 9 screens is the only way in.
+        openSection(Onboarding_BecomeMore.SECTION_CONTACT); // Clears the staging gate first.
+        Onboarding_BecomeMore page = new Onboarding_BecomeMore(driver).walkToPhotoStep();
+
+        assertThat(page.isOnSection(Onboarding_BecomeMore.SECTION_PHOTO))
+                .as("The walk should land on the photo screen").isTrue();
         assertThat(page.isPhotoStepDisplayed())
                 .as("Photo step: avatar + consent should render").isTrue();
         assertThat(page.isSubmitProfileEnabled())
                 .as("'Submit Profile' should start DISABLED").isFalse();
+
         page.tickConsent();
+
         // Assert-only: NEVER click Submit Profile (it creates a real profile).
-        assertThat(page.isSubmitProfileEnabled())
+        // The whole test is the disabled -> enabled TRANSITION.
+        assertThat(page.waitUntilSubmitProfileEnabled())
                 .as("'Submit Profile' should ENABLE once consent is ticked").isTrue();
     }
 }
