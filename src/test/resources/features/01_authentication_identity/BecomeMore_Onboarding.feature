@@ -18,6 +18,25 @@ Feature: Become More Onboarding Journey
   # in-journey state and redirects to `contact`. Scenarios needing those two
   # screens enter via `contact` or walk the whole journey. See the page object.
   #
+  # ############ DRAFT RESTORE — WHY NO SCENARIO ASSUMES AN EMPTY FORM #########
+  # The journey does NOT start empty on production. It restores a previously
+  # entered profile draft into a BRAND-NEW anonymous session. Measured
+  # 2026-07-17 in a fresh Chrome profile using a phone/email never used before,
+  # the `name` screen still arrived holding "Test User" / "Mr" / "01/01/1990" /
+  # "Professional" and the `interest` screen arrived with "Watches" already
+  # selected — the exact values this suite types, so the suite's own earlier runs
+  # seeded it. It is not localStorage and not keyed to the contact details
+  # entered, so a fresh browser cannot escape it.
+  #
+  # Consequence for these scenarios: "Next starts disabled" and "nothing is
+  # selected" are only true for a genuine first-time visitor, which production is
+  # not. Any scenario needing those preconditions CREATES them (clears the name,
+  # clears the chips) instead of assuming them. That is why the gate scenarios
+  # below look more verbose than they otherwise would — the extra steps are the
+  # point, not noise. Reported for dev; a privacy review is warranted, since one
+  # anonymous visitor's in-progress details are served to another.
+  # ############################################################################
+  #
   # ##################### APP BUG — ISSUE-011 (filed, app-side) #################
   # Tracked in docs/okf/known-issues.md as ISSUE-011.
   # The `contact` screen validates NOTHING: "Continue" advances to Step 01 with
@@ -46,12 +65,20 @@ Feature: Become More Onboarding Journey
   # Entered via `contact` rather than a "name" deep-link: ?section=name
   # redirects to `contact`, which has no step indicator, so the deep-link entry
   # waited 15s for "Step 01 of 07" on a screen that never shows one.
+  #
+  # The full name is CLEARED before the gate is asserted. The screen arrives
+  # PRE-FILLED from the restored draft (see the DRAFT RESTORE block at the top),
+  # so "Next starts disabled" is not observable on arrival — the form is already
+  # valid and Next is legitimately enabled. Emptying a required field re-arms the
+  # gate deterministically and asserts the app's real rule rather than an
+  # assumption about how the journey happened to arrive.
   Scenario: Verify the personal info step gates progression until valid
     Given the user enters the Become More journey at the personal info step
     Then the browser is on the Become More section "name"
     And the step heading contains "Tell us about yourself"
     And the step indicator reads "Step 01 of 07"
-    And the next step control is disabled
+    When the user clears the full name
+    Then the next step control is disabled
     When the user fills the personal info with "Test User", "Mr", "01/01/1990" and "Professional"
     Then the next step control is enabled
 
@@ -88,23 +115,44 @@ Feature: Become More Onboarding Journey
     When the user selects the chip "This would be my first serious watch"
     Then the browser is on the Become More section "interest"
 
+  # The selection is cleared first: this screen also arrives with chips already
+  # chosen from the restored draft, which makes "Next starts disabled"
+  # unobservable (the gate is legitimately open) AND makes "select Watches"
+  # DESELECT it, because the chips toggle.
   Scenario: Verify the interests multi-select gates progression
     Given the user opens the Become More section "interest"
+    When the user clears every selected interest
     Then the next step control is disabled
     When the user selects the chip "Watches"
     Then the chip "Watches" is selected
     And the next step control is enabled
 
-  Scenario: Verify the Timepieces House step offers inspiration and can be skipped
+  # The modal is CLOSED before the step is left. "Need inspiration?" opens a real
+  # full-viewport modal (fixed inset-0 z-[80]) that covers everything behind it,
+  # including "I'll do this later" — so clicking skip while it is open is
+  # intercepted BY THE MODAL. Closing it first is what a real user does; the
+  # previous version of this scenario simply skipped that step.
+  #
+  # This scenario deliberately STOPS at closing the modal. It used to end with
+  # "Then the browser is on the Become More section photo", which CANNOT hold from
+  # a deep-link entry: `photo` is guarded by journey state, so skipping from a
+  # cold ?section=timepieceshouse lands on `contact` ("Let's get started"), not
+  # `photo` — measured 2026-07-17, the URL sits on section=contact for 6s+ after
+  # the click. That is the same guard that makes ?section=photo redirect.
+  # The skip -> photo transition is NOT lost: the full-walk scenario below reaches
+  # timepieceshouse legitimately and skips to photo, and asserts exactly that.
+  Scenario: Verify the Timepieces House step offers curated inspiration
     Given the user opens the Become More section "timepieceshouse"
     When the user opens the curated inspirations
     Then the curated inspirations are displayed
-    When the user skips the house step
-    Then the browser is on the Become More section "photo"
+    When the user closes the curated inspirations
+    Then the curated inspirations are dismissed
 
   # Walks all 9 screens because `photo` cannot be deep-linked (see the Examples
-  # note above). This also carries the `photo` heading assertion that the
-  # deep-link table can no longer reach.
+  # note above). This carries two assertions the deep-link scenarios cannot reach:
+  # the `photo` heading, and that "I'll do this later" on the Timepieces House step
+  # really does advance the journey to `photo` (walkToPhotoStep leaves that step
+  # via the skip control).
   Scenario: Verify the profile consent gates the final submission
     Given the user walks the whole Become More journey to the photo step
     Then the browser is on the Become More section "photo"

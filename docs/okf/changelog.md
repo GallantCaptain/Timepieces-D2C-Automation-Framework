@@ -1387,3 +1387,40 @@ This changelog is append-only. New entries must be added chronologically and mus
   worth checking every one.
 - **Verified:** `AccessoryPdpSmokeTest` **0/5 → 5/5**, `HomepageContentSmokeTest` **2/4 →
   4/4**, each run twice (a single green proves nothing) and again after the new build.
+
+### Become More rework + two serious findings (STAT-045, ISSUE-013, ISSUE-014)
+
+- **Become More onboarding reworked** against the real journey: `/becomemore` (not
+  `/become-more`, which 404s), **9 screens / 7 numbered steps**, and `?section=name` /
+  `?section=photo` are **not deep-linkable** — both redirect to a `contact` first screen
+  the page object never modelled. TDD smoke **2/4 → 4/4** (twice); BDD `@BecomeMore`
+  **4 failures → 13/13**. Submit Profile is never clicked; no profile is created.
+- **ISSUE-013 (PRIVACY, High) — the journey restores a saved profile draft into brand-new
+  anonymous sessions on production.** A fresh Chrome profile with a never-used phone/email
+  arrived at the `name` screen already holding `"Test User" / "Mr" / "01/01/1990" /
+  "Professional"`, and at `interest` with "Watches" pre-selected. **Not localStorage, and
+  not keyed to the contact details entered** — the server is serving one anonymous
+  visitor's in-progress details to another. **This single bug caused all four BDD
+  failures**: it opens the gates the tests assert are closed, and it made `selectChip()`
+  *toggle off* an already-selected chip. It also explains why they passed once and never
+  again — the earlier run seeded the draft. The tests now CREATE the state they assert
+  rather than depend on it; measured proof the gate itself is sound: clear name →
+  `disabled=true`, refill → `disabled=false`. **Needs a dev privacy review.**
+- **ISSUE-014 (High) — `BaseRunner` silently overrode `-Denv`.** It did an unconditional
+  `System.setProperty("env", suiteParameter)`, and every suite XML hard-codes
+  `value="staging"` — so `-Dsurefire.suite=testng-bdd.xml -Denv=production` ran against
+  **staging** while the command line, the operator and the report all said production. This
+  inverts the framework's own documented precedence (`-D` > OS env > properties). Caught
+  when a **staging-gate password prompt** appeared in a run pointed at production, which
+  has no such gate. Fixed: an explicit `-Denv` now wins and a warning is logged when the
+  suite parameter is ignored. Verified after the fix: BaseRunner reports `production` and
+  the staging gate is hit **0 times** (it was being hit before).
+  **A framework that quietly tests the wrong environment is worse than one that fails:
+  every result it gives is a truthful answer about a system you did not mean to look at.**
+  It also means any earlier "verified on production" claim made through `testng-bdd.xml`
+  was really a staging result — re-verified on genuine production afterwards.
+- **Still open:** one background-music toggle scenario. It surfaced only because the other
+  fixes unblocked steps that previously aborted first. The obvious hypothesis (headless
+  blocks audio autoplay) was **disproved** by running it headed — it fails there too. Most
+  likely the test assumes music starts muted and inverts when it does not. Left documented
+  rather than guessed at.

@@ -181,6 +181,22 @@ public class BecomeMoreSteps {
                 .as("The Next control should be ENABLED once the step validates").isTrue();
     }
 
+    @When("the user clears the full name")
+    public void the_user_clears_the_full_name() {
+        // The name screen arrives PRE-FILLED from the restored draft, so the
+        // validation gate is already satisfied and cannot be observed on arrival.
+        // Emptying a required field re-arms it deterministically.
+        becomeMore.clearFullName();
+    }
+
+    @When("the user clears every selected interest")
+    public void the_user_clears_every_selected_interest() {
+        // Same reason as above: the interest screen can arrive with chips already
+        // selected, which both opens the gate and makes "select Watches" toggle it
+        // OFF instead of on.
+        becomeMore.clearAllSelectedChips();
+    }
+
     @When("the user fills the personal info with {string}, {string}, {string} and {string}")
     public void the_user_fills_the_personal_info_with_and(String name, String salutation, String dob, String persona) {
         becomeMore.fillPersonalInfo(name, salutation, dob, persona);
@@ -228,10 +244,25 @@ public class BecomeMoreSteps {
                 .as("The curated inspirations should be displayed").isTrue();
     }
 
-    @When("the user skips the house step")
-    public void the_user_skips_the_house_step() {
-        becomeMore.skipHouseStep();
+    @When("the user closes the curated inspirations")
+    public void the_user_closes_the_curated_inspirations() {
+        // Mandatory before skipping: the inspirations modal is a full-viewport
+        // fixed inset-0 z-[80] layer and intercepts every click behind it.
+        becomeMore.closeCuratedInspirations();
     }
+
+    @Then("the curated inspirations are dismissed")
+    public void the_curated_inspirations_are_dismissed() {
+        assertThat(becomeMore.isCuratedInspirationsDismissed())
+                .as("The curated-inspirations modal should be gone after closing it").isTrue();
+    }
+
+    // NOTE: there is deliberately NO "the user skips the house step" glue here.
+    // Skipping is exercised INSIDE walkToPhotoStep(), which is the only context
+    // where it can be asserted: from a cold ?section=timepieceshouse deep-link the
+    // skip does not reach `photo` at all — the journey-state guard sends it to
+    // `contact` (verified 2026-07-17) — so a standalone skip step could only ever
+    // assert the guard, not the feature.
 
     // ==========================================
     // Photo + consent gate (never submits)

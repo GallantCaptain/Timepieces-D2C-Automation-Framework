@@ -32,9 +32,33 @@ public abstract class BaseRunner extends AbstractTestNGCucumberTests {
     @BeforeTest(alwaysRun = true)
     @Parameters({ "environment" })
     public void beforeTestSetup(@Optional("staging") String env) {
-        System.setProperty("test.environment", env);
-        System.setProperty("env", env);
-        log.info("=== BEFORE TEST: Starting test execution for environment: " + env + " ===");
+        // THE CLI WINS. This used to do an unconditional System.setProperty("env", env),
+        // which silently overwrote -Denv with the suite XML's <parameter> — inverting the
+        // framework's own documented 3-tier precedence (-D  >  OS env  >  properties file).
+        //
+        // The consequence was not theoretical. Every suite XML hard-codes
+        // <parameter name="environment" value="staging"/>, so
+        //     ./mvnw test -Dsurefire.suite=testng-bdd.xml -Denv=production
+        // ran against STAGING while the operator, the command line and the report all said
+        // production. It was caught on 2026-07-17 by a staging-gate password prompt
+        // (input[type='password']) appearing in a run that was supposed to be pointed at
+        // production, which has no such gate. A test framework that quietly tests the wrong
+        // environment is worse than one that fails: every result it gives you is a lie
+        // about a system you did not mean to look at.
+        //
+        // Now: an explicit -Denv is honoured, and the suite parameter only supplies the
+        // default when the operator did not choose one.
+        String cliEnv = System.getProperty("env");
+        String effectiveEnv = (cliEnv == null || cliEnv.isBlank()) ? env : cliEnv.trim();
+
+        if (cliEnv != null && !cliEnv.isBlank() && !cliEnv.equalsIgnoreCase(env)) {
+            log.warn("Suite parameter environment='{}' is being IGNORED because -Denv={} was "
+                    + "passed explicitly. The command line wins.", env, cliEnv);
+        }
+
+        System.setProperty("test.environment", effectiveEnv);
+        System.setProperty("env", effectiveEnv);
+        log.info("=== BEFORE TEST: Starting test execution for environment: {} ===", effectiveEnv);
     }
 
     @AfterTest(alwaysRun = true)

@@ -1,9 +1,12 @@
 package com.timepieces.automation.pages.web.account;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -109,6 +112,42 @@ import lombok.extern.log4j.Log4j2;
  * </ol>
  * ZERO page-specific {@code data-testid}s exist on the flow (only the shared
  * header) — every locator is a fallback tagged {@code // ROLLOUT-GAP}.
+ *
+ * <p>
+ * ============ THE DRAFT-RESTORE TRAP — READ THIS BEFORE WRITING A TEST ==========
+ * <br>
+ * <b>The journey does NOT start empty.</b> On production it restores a
+ * previously-entered profile draft into a brand-new anonymous session. Measured
+ * 2026-07-17 in a FRESH Chrome profile, with a phone/email never used before
+ * ({@code 6487146}/{@code qa+…@example.com}), the {@code name} screen still
+ * arrived pre-populated:
+ * <br>
+ * {@code Enter your full name="Test User"}, {@code SELECT="Mr"},
+ * {@code DD/MM/YYYY="01/01/1990"}, {@code SELECT="Professional"} — and the
+ * {@code interest} screen arrived with the "Watches" chip ALREADY selected.
+ * Those are exactly the values this suite types, so the suite's own earlier runs
+ * are what seeded the draft.
+ *
+ * <p>
+ * It is NOT localStorage (the contact screen holds only consent/analytics/country
+ * keys — no profile draft) and it is NOT keyed to the contact details entered, so
+ * a fresh browser cannot escape it. The state is server-side and is handed to a
+ * visitor who has never filled the form. Reported for dev (see the report for
+ * 2026-07-17); a privacy review is warranted, because one anonymous visitor's
+ * in-progress details are being served to another.
+ *
+ * <p>
+ * WHAT THIS MEANS FOR TESTS: <b>never assert on the journey's arrival state.</b>
+ * "Next starts disabled" and "no chips are selected" are true only for a
+ * genuinely first-time visitor, which production cannot be relied on to provide —
+ * that assumption is what made four scenarios fail intermittently, and it is why
+ * they passed once and then never again. Drive the state you intend to assert:
+ * {@link #clearFullName()} to observe the validation gate, and
+ * {@link #clearAllSelectedChips()} / {@link #ensureChipSelected(String)} to make
+ * chip selection deterministic. Verified 2026-07-17: clearing the name field
+ * flips Next to {@code disabled=true}, and refilling it flips it back — the gate
+ * itself is sound.
+ * ================================================================================
  *
  * <p>
  * SUBMISSION WARNING: {@link #clickSubmitProfile()} creates a REAL Timepieces
@@ -272,11 +311,27 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
     // --- Steps 5/6: choice chips (single-select auto-advance / multi-select) ---
     private final By choiceChips = By.cssSelector("form button[type='button']"); // ROLLOUT-GAP: structural
     private final By chipByTextTemplate = By.xpath("//form//button[@type='button'][contains(normalize-space(),'%s')]"); // ROLLOUT-GAP: text-anchor
+    // Chips currently in the SELECTED state. Needed because the journey can arrive
+    // with interests ALREADY chosen — see the DRAFT-RESTORE note on the class.
+    private final By selectedChips = By.xpath("//form//button[@type='button'][contains(@class,'bg-[#141414]')]"); // ROLLOUT-GAP: utility-class
 
     // --- Step 7: Timepieces House ---
     private final By houseTextarea = By.cssSelector("textarea[placeholder*='Anand Mahindra']"); // ROLLOUT-GAP: placeholder-anchor
     private final By needInspirationButton = By.xpath("//button[contains(normalize-space(),'Need inspiration?')]"); // ROLLOUT-GAP: text-anchor
     private final By curatedInspirationsHeading = By.xpath("//h2[contains(normalize-space(),'Curated inspirations')]"); // ROLLOUT-GAP: text-anchor
+    // "Need inspiration?" opens a REAL MODAL, not an inline panel. Measured
+    // 2026-07-17, the click stack on the Timepieces House screen goes from one layer
+    // to three: z-[60] (the journey itself), z-[70] (bg-black/40 backdrop-blur-sm)
+    // and z-[80] (fixed inset-0 — the modal). Because the z-80 layer is
+    // `inset-0` it covers the WHOLE viewport, so while it is open NOTHING behind
+    // it is clickable — including "I'll do this later" at y=917..940.
+    //
+    // The modal owns an icon-only close button (aria-label="Close") that exists
+    // ONLY while the modal is open, so it is scoped to the z-[80] ancestor rather
+    // than matched globally (an unscoped aria-label='Close' also hits the method
+    // dialog's and the cookie bar's).
+    private final By curatedInspirationsCloseButton = By.xpath(
+            "//div[contains(@class,'z-[80]')]//button[@aria-label='Close']"); // ROLLOUT-GAP: aria-anchor
     private final By skipLaterButton = By.xpath("//button[contains(normalize-space(),\"I'll do this later\")]"); // ROLLOUT-GAP: text-anchor
 
     // --- Step 8: photo + submit ---
@@ -622,8 +677,12 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
         selectChip(WALK_WATCH_CHIP);
 
         // Screen 7/9 — interest ("Step 06 of 07"). Next enables after >= 1 chip.
+        // ensureChipSelected, NOT selectChip: these chips TOGGLE, and the screen
+        // often arrives with this very chip already selected from the restored
+        // draft. A plain click would turn it OFF and leave Next correctly
+        // disabled, which is exactly how this walk used to die here.
         waitForSection(SECTION_INTEREST);
-        selectChip(WALK_INTEREST_CHIP);
+        ensureChipSelected(WALK_INTEREST_CHIP);
         clickNext();
 
         // Screen 8/9 — timepieceshouse ("Step 07 of 07"). Optional; skip it.
@@ -651,6 +710,37 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
         new Select(getElement(salutationSelect)).selectByVisibleText(salutation);
         sendKeys(dateOfBirthInput, dob);
         new Select(getElement(personaSelect)).selectByVisibleText(persona);
+        return this;
+    }
+
+    /**
+     * B.6a Empties the required full-name field so the step-1 validation gate can
+     * be observed.
+     *
+     * <p>
+     * WHY A TEST NEEDS THIS: the name screen arrives PRE-FILLED from the restored
+     * draft (see the DRAFT-RESTORE note on the class), so "Next starts disabled"
+     * is not observable on arrival — the form is already valid. Emptying a
+     * required field re-arms the gate deterministically, whatever the journey
+     * happened to arrive holding. Verified 2026-07-17: full name {@code ""} ->
+     * Next {@code disabled=true}; refilled -> {@code disabled=false}.
+     *
+     * <p>
+     * The type-then-backspace is NOT superstition. {@code WebElement.clear()}
+     * blanks the DOM value without dispatching the {@code input} event React
+     * listens for, so the component's state can still hold the old text and the
+     * gate never re-arms — the field looks empty while React believes it is
+     * filled. Typing one character and deleting it forces two genuine input
+     * events and leaves the field truly empty in BOTH the DOM and React's state.
+     *
+     * @return this page instance for method chaining.
+     */
+    public Onboarding_BecomeMore clearFullName() {
+        log.info("Clearing the full-name field to re-arm the step-1 validation gate.");
+        var field = getElement(fullNameInput);
+        field.clear();
+        field.sendKeys("x");
+        field.sendKeys(Keys.BACK_SPACE);
         return this;
     }
 
@@ -736,6 +826,68 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
     }
 
     /**
+     * B.10a Selects a chip ONLY if it is not already selected (idempotent).
+     *
+     * <p>
+     * {@link #selectChip(String)} is a raw click, and the multi-select chips
+     * TOGGLE — so on a screen that arrived with the chip already selected (the
+     * draft restore again), a plain click DESELECTS it. That is precisely how the
+     * full walk used to break: it clicked "Watches", turned the pre-selected chip
+     * OFF, and then timed out clicking a Next button that had correctly disabled
+     * itself because nothing was selected. The error read
+     * "waiting for element to be clickable, but the element was not enabled" and
+     * looked like a wait bug; it was the test undoing its own precondition.
+     *
+     * <p>
+     * Use this whenever the goal is "this chip ends up selected". Use
+     * {@link #selectChip(String)} only when the goal is genuinely "click it".
+     *
+     * @param chipText the chip label (or a distinctive fragment).
+     * @return this page instance for method chaining.
+     */
+    public Onboarding_BecomeMore ensureChipSelected(String chipText) {
+        if (isChipSelected(chipText)) {
+            log.info("Chip [{}] is already selected (restored draft); not clicking it OFF.", chipText);
+            return this;
+        }
+        return selectChip(chipText);
+    }
+
+    /**
+     * B.10b Deselects every currently-selected chip on the interest step.
+     *
+     * <p>
+     * The interest screen can arrive with chips already chosen, which makes "Next
+     * starts disabled" unobservable — the gate is legitimately open. Clearing the
+     * selection first is what makes the gate assertion mean something, and it is
+     * honest: it asserts the app's real rule (no interests -> no progress) instead
+     * of assuming a clean slate production does not provide.
+     *
+     * <p>
+     * Re-finds after every click because the click re-renders the list, and is
+     * bounded so a chip that refuses to deselect ends the loop instead of spinning.
+     *
+     * @return this page instance for method chaining.
+     */
+    public Onboarding_BecomeMore clearAllSelectedChips() {
+        for (int guard = 0; guard < 20; guard++) {
+            List<WebElement> selected = driver.findElements(selectedChips);
+            if (selected.isEmpty()) {
+                return this;
+            }
+            log.info("Deselecting a restored chip ({} still selected).", selected.size());
+            try {
+                selected.get(0).click();
+            } catch (Exception e) {
+                log.warn("Could not deselect a chip: {}", e.getClass().getSimpleName());
+                return this;
+            }
+        }
+        log.warn("Chips were still selected after 20 deselect attempts.");
+        return this;
+    }
+
+    /**
      * B.11 Enters the Timepieces House inspiration text (optional step).
      *
      * @param inspiration the inspiration text.
@@ -757,8 +909,36 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
     }
 
     /**
+     * B.12a Closes the curated-inspirations modal.
+     *
+     * <p>
+     * MUST be called before touching anything on the Timepieces House screen again.
+     * The modal is a full-viewport {@code fixed inset-0 z-[80]} layer, so while it
+     * is open every click behind it is intercepted BY THE MODAL — which is exactly
+     * how the "offers inspiration and can be skipped" scenario failed: it opened
+     * the modal and then tried to click "I'll do this later" underneath it,
+     * producing an ElementClickInterceptedException naming the z-[80] div. That is
+     * correct browser behaviour and correct app behaviour; the scenario was simply
+     * skipping the step a real user has to perform — closing the modal.
+     *
+     * @return this page instance for method chaining.
+     */
+    public Onboarding_BecomeMore closeCuratedInspirations() {
+        log.info("Closing the curated-inspirations modal.");
+        clickElement(curatedInspirationsCloseButton);
+        // The modal fades out; clicking through before it has gone re-creates the
+        // very interception this method exists to avoid.
+        isEventuallyHidden(curatedInspirationsHeading);
+        return this;
+    }
+
+    /**
      * B.13 Skips the Timepieces House step via "I'll do this later" (advances
      * immediately).
+     *
+     * <p>
+     * If the curated-inspirations modal is open, close it first
+     * ({@link #closeCuratedInspirations()}) — it covers this button.
      *
      * @return this page instance for method chaining.
      */
@@ -973,6 +1153,20 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
      */
     public boolean isCuratedInspirationsDisplayed() {
         return !driver.findElements(curatedInspirationsHeading).isEmpty();
+    }
+
+    /**
+     * V.7a Verifies the curated-inspirations modal has CLOSED.
+     *
+     * <p>
+     * Worth asserting rather than assuming: while this modal is open it covers the
+     * whole viewport, so a test that believes it closed when it did not will fail
+     * later with a confusing interception on some unrelated control.
+     *
+     * @return true if the modal is no longer visible.
+     */
+    public boolean isCuratedInspirationsDismissed() {
+        return isEventuallyHidden(curatedInspirationsHeading);
     }
 
     /**
