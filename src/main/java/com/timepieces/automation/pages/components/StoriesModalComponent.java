@@ -52,7 +52,13 @@ public class StoriesModalComponent extends BasePage<StoriesModalComponent> {
     // The header trigger that opens the stories modal (real testid).
     private final By storiesToggle = By.cssSelector("button[data-testid='header-stories-toggle']");
     // The dialog container (aria-modal over the blurred backdrop).
-    private final By dialog = By.cssSelector("div[role='dialog'][aria-modal='true']"); // ROLLOUT-GAP: aria
+    // Scoped with :not(...) deliberately. The bare div[role='dialog'][aria-modal='true']
+    // ALSO matches the site-wide cookie consent bar, which is markup-identical at that
+    // level (it is only distinguishable by aria-labelledby='cookie-consent-title'). With
+    // the bare selector this component would happily report "the stories modal is open"
+    // while looking at the cookie banner — a false pass, which is worse than a failure.
+    private final By dialog = By.cssSelector(
+            "div[role='dialog'][aria-modal='true']:not([aria-labelledby='cookie-consent-title'])");
     // The per-story progress bar segments.
     private final By progressSegments = By.cssSelector("div[role='dialog'] div.flex-1.h-\\[3px\\]"); // ROLLOUT-GAP: structural
     // The ACTIVE segment's animated fill (inline width % advances over time).
@@ -127,6 +133,11 @@ public class StoriesModalComponent extends BasePage<StoriesModalComponent> {
     public StoriesModalComponent closeStories() {
         log.info("Closing the stories modal.");
         clickElement(closeButton);
+        // Wait for the close to actually finish. The modal fades out, so returning the
+        // instant the click lands leaves the caller asserting against an element that is
+        // still mid-animation and still "displayed" — which reads as "the modal will not
+        // close" when it is closing perfectly well.
+        isEventuallyHidden(dialog);
         return this;
     }
 

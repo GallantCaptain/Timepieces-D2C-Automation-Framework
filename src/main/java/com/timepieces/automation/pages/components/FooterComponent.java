@@ -53,7 +53,9 @@ public class FooterComponent extends BasePage<FooterComponent> {
 
         /* Only mobile view accordions and their links */
         // Footer Accordion Toggle Buttons: (Mobile Viewport) [Not Unique]
-        private final By footerAccordionToggles = By.cssSelector("div[data-testid='footer-accordion-toggle']");
+        // Matched on the testid alone: the app renders this on a <button>, so the old
+        // div[...] form matched zero nodes (verified against the rendered DOM 2026-07-17).
+        private final By footerAccordionToggles = By.cssSelector("[data-testid='footer-accordion-toggle']");
 
         // Timepieces Accordion Toggle Button (Mobile Viewport)
         private final By accordionButton_Timepieces = By.cssSelector("div[data-accordion='Timepieces'] > button");
@@ -267,11 +269,11 @@ public class FooterComponent extends BasePage<FooterComponent> {
 
         // Country Selector Wrapper (Mobile Viewport)
         private final By countrySelectorWrapper_Footer_Mobile = By
-                        .cssSelector("div[data-testid='footer-mobile'] button[data-testid='country-selector']");
+                        .cssSelector("div[data-testid='footer-mobile'] [data-testid='country-selector']");
 
         // Country Selector Wrapper (Desktop Viewport)
         private final By countrySelectorWrapper_Footer_Desktop = By
-                        .cssSelector("div[data-testid='footer-desktop'] button[data-testid='country-selector']");
+                        .cssSelector("div[data-testid='footer-desktop'] [data-testid='country-selector']");
 
         // Country Selector Button / Toggle (Mobile Viewport)
         private final By countrySelectorToggle_Footer_Mobile = By

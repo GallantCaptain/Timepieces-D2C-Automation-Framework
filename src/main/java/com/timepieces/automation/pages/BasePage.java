@@ -10,6 +10,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.timepieces.automation.pages.components.SiteOverlayHandler;
 import com.timepieces.automation.utils.ConfigReader;
 
 import lombok.extern.log4j.Log4j2;
@@ -161,7 +162,57 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
      */
     protected WebElement getElement(By locator) {
         log.debug("Synchronizing element visibility tracking for locator target: [{}]", locator);
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        // visibilityOfANYElementsLocated, deliberately — NOT visibilityOfElementLocated.
+        //
+        // The Timepieces storefront renders RESPONSIVE DUPLICATES: the same logical control
+        // exists twice in the DOM, once for mobile and once for desktop, and CSS hides
+        // whichever does not apply. visibilityOfElementLocated waits for the FIRST match
+        // in document order to become visible — and that is very often the hidden mobile
+        // node, so it waits the full timeout and then throws, against a page that is
+        // working perfectly.
+        //
+        // Measured on the production accessory PDP (2026-07-17): the gallery selector
+        // matched product-media-carousel (mobile, hidden) at document position ~31,940
+        // BEFORE desktop-image-gallery (visible) at ~36,688. Every one of the five
+        // accessory PDP smoke tests failed "image gallery should be displayed" for that
+        // reason alone. Same shape for header-stories-toggle (2 nodes, first hidden) and
+        // the cookie consent buttons.
+        //
+        // Taking the first VISIBLE match is both correct and faster: no timeout burned
+        // waiting on a node CSS will never show.
+        return waitForFirstVisible(locator);
+    }
+
+    /**
+     * B.4a Waits until at least one element matching {@code locator} is VISIBLE and
+     * returns it.
+     *
+     * <p>Selenium ships no "any of these is visible" condition — {@code
+     * visibilityOfElementLocated} only ever considers the first match, and {@code
+     * visibilityOfAllElementsLocatedBy} demands every match be visible, which is exactly
+     * wrong when the page deliberately hides the mobile or desktop twin. So the condition
+     * is spelled out here.
+     *
+     * <p>Returning {@code null} from the lambda is not a bug: {@link WebDriverWait} treats
+     * null/false as "not ready yet" and keeps polling until the timeout.
+     *
+     * @param locator the By locator, which may legitimately match several nodes
+     * @return the first visible matching element
+     */
+    protected WebElement waitForFirstVisible(By locator) {
+        return wait.until(driver -> {
+            for (WebElement candidate : driver.findElements(locator)) {
+                try {
+                    if (candidate.isDisplayed()) {
+                        return candidate;
+                    }
+                } catch (org.openqa.selenium.StaleElementReferenceException ignored) {
+                    // Re-rendered between find and check (React does this constantly).
+                    // Skip it; the next poll re-finds a fresh reference.
+                }
+            }
+            return null; // Nothing visible yet -> keep polling.
+        });
     }
 
     /**
@@ -195,7 +246,13 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
     protected void clickElement(By locator) {
         log.info("Executing safe click transaction on target element: [{}]", locator);
         try {
-            wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+            // Resolve the VISIBLE twin first (see getElement/waitForFirstVisible for why
+            // the first DOM match is so often the hidden responsive duplicate), then wait
+            // for that specific element to be clickable. Passing the By straight to
+            // elementToBeClickable would re-introduce the first-match trap and time out
+            // on a node CSS will never show.
+            WebElement visible = waitForFirstVisible(locator);
+            wait.until(ExpectedConditions.elementToBeClickable(visible)).click();
         } catch (Exception e) {
             log.error("Click transaction aborted. Element was un-interactable: [{}]", locator, e);
             throw e;
@@ -316,6 +373,29 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
     @SuppressWarnings("unchecked")
     public SELF open() {
         driver.get(getBaseUrl() + getPagePath());
+        // Clear the site-wide overlays before handing control back. The cookie consent
+        // bar is a real modal pinned to the bottom of the viewport at z-index 9999, and
+        // it intercepted clicks in the 2026-07-17 run; the Astonia drop card does the
+        // same intermittently. Doing this here — the single navigation funnel every page
+        // object goes through — means no test has to remember to. It costs one click on
+        // the first page of a scenario and then no-ops, because the site persists the
+        // choice in the timepieces_cookie_consent cookie. See SiteOverlayHandler.
+        SiteOverlayHandler.dismissBlockingOverlays(driver);
+        return (SELF) this;
+    }
+
+    /**
+     * B.13a Clears the cookie bar / drop card on the CURRENT page.
+     *
+     * <p>{@link #open()} already does this. Call it directly only when a page was reached
+     * without {@code open()} — a link click, a redirect, or a browser back — and an
+     * overlay may have re-rendered.
+     *
+     * @return this page instance, typed as the concrete subclass, for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public SELF dismissOverlays() {
+        SiteOverlayHandler.dismissBlockingOverlays(driver);
         return (SELF) this;
     }
 
@@ -348,10 +428,98 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
     protected Boolean isDisplayed(By locator) {
         log.debug("Verifying display status of target element: [{}]", locator);
         try {
-            return getElement(locator).isDisplayed();
+            // "Is anything matching this visible?" — check EVERY match, not just the
+            // first. The old form asked getElement(...).isDisplayed(), which waited on
+            // the first DOM match; when that was the hidden mobile twin it burned the
+            // full timeout and reported false about a section the user can plainly see.
+            // That single line is why all five accessory PDP tests claimed the image
+            // gallery was missing while it was on screen the whole time.
+            for (WebElement candidate : driver.findElements(locator)) {
+                try {
+                    if (candidate.isDisplayed()) {
+                        return true;
+                    }
+                } catch (org.openqa.selenium.StaleElementReferenceException ignored) {
+                    // Re-rendered mid-check; the remaining candidates still get a look.
+                }
+            }
+            return false;
         } catch (Exception e) {
             log.warn("Display verification failed for target element: [{}]. Element may not be present or visible.",
                     locator, e);
+            return false;
+        }
+    }
+
+    /**
+     * V.2a Waits for an element matching {@code locator} to become visible, then reports
+     * whether it did.
+     *
+     * <p>{@link #isDisplayed(By)} answers "is it visible RIGHT NOW" with no waiting, which
+     * is the correct question once a page has settled but the wrong one immediately after
+     * navigation: React mounts sections after hydration, so an instant check can race the
+     * render and report a false negative. Use this when asserting a section exists shortly
+     * after landing on a page.
+     *
+     * @param locator the By locator to look for
+     * @return true if an element became visible within the configured timeout
+     */
+    protected boolean isEventuallyDisplayed(By locator) {
+        try {
+            waitForFirstVisible(locator);
+            return true;
+        } catch (Exception e) {
+            log.debug("No visible element matched [{}] within the timeout.", locator);
+            return false;
+        }
+    }
+
+    /**
+     * B.14 Scrolls the first matching element to the centre of the viewport.
+     *
+     * <p>The storefront reveals its lower sections on scroll (IntersectionObserver), so a
+     * section that sits ~2000px below the fold may not be painted until the user — or the
+     * test — actually scrolls to it. Asserting on such a section without scrolling is a
+     * coin flip: it passes when the render happens to have run and fails when it has not,
+     * which is precisely the kind of intermittent red that makes a suite untrustworthy.
+     *
+     * <p>Uses presence rather than visibility to find the target, because the whole point
+     * is that it may not be visible yet. Never throws: a scroll is an optimisation for the
+     * assertion that follows, not the assertion itself.
+     *
+     * @param locator the By locator to bring into view
+     * @return this page instance, typed as the concrete subclass, for chaining
+     */
+    @SuppressWarnings("unchecked")
+    protected SELF scrollIntoView(By locator) {
+        try {
+            WebElement target = getElementPresence(locator);
+            ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView({block:'center', behavior:'instant'});", target);
+        } catch (Exception e) {
+            log.debug("Could not scroll [{}] into view: {}", locator, e.getMessage());
+        }
+        return (SELF) this;
+    }
+
+    /**
+     * V.2b Waits for every element matching {@code locator} to become invisible or leave
+     * the DOM.
+     *
+     * <p>The counterpart to {@link #isEventuallyDisplayed(By)}, and the correct way to
+     * assert a modal/drawer has CLOSED. Overlays close with a CSS transition, so checking
+     * the instant after clicking "close" catches the element mid-animation and reports it
+     * as still open — a failure that says "the app is broken" when the app is merely
+     * animating.
+     *
+     * @param locator the By locator expected to disappear
+     * @return true if nothing matching is visible within the configured timeout
+     */
+    protected boolean isEventuallyHidden(By locator) {
+        try {
+            return wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+        } catch (Exception e) {
+            log.debug("Element [{}] was still visible when the timeout expired.", locator);
             return false;
         }
     }

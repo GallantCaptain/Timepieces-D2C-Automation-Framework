@@ -51,7 +51,14 @@ public class HomePage extends BasePage<HomePage> {
 
     // Use this to locate the homepage
     // Timepieces Homepage Hero Section
-    private final By heroSection = By.cssSelector("section[data-testid='home-hero-overlay']");
+    // The overlay is a <div>, NOT a <section>. Verified against the rendered production
+    // DOM on 2026-07-17: section[data-testid='home-hero-overlay'] matches 0 nodes, while
+    // div[data-testid='home-hero-overlay'] matches 1 and is displayed. The tag-qualified
+    // selector is what made "the hero overlay should be displayed" fail — the element was
+    // there all along. Tag names are the most brittle half of a testid selector; the
+    // testid is the contract, the tag is an implementation detail that can change with a
+    // refactor. Matching on the testid alone is the safer form.
+    private final By heroSection = By.cssSelector("[data-testid='home-hero-overlay']");
 
     // Hero mute/un-mute toggle for the background showreel video.
     private final By muteButton_In_HeroSection = By.cssSelector("button[data-testid='home-hero-mute-toggle']");
@@ -66,7 +73,12 @@ public class HomePage extends BasePage<HomePage> {
 
     // --- "Two Stories, One Philosophy" section (release preview cards) ---
     private final By twoStoriesSection = By.cssSelector("div[data-testid='home-two-stories']");
-    private final By twoStoriesTitle = By.cssSelector("p[data-testid='home-two-stories-title']");
+    // Tag-free on purpose. Probed headless (1904x985) on 2026-07-17:
+    // p[data-testid='home-two-stories-title'] matched ZERO nodes while the section and
+    // both story cards were displayed — the title element is not a <p> at that viewport.
+    // Pinning the tag is what broke this; the testid is the contract the app owns, the
+    // tag is an implementation detail that changes with the responsive variant.
+    private final By twoStoriesTitle = By.cssSelector("[data-testid='home-two-stories-title']");
     // The Astonia release card (→ /new-release/astonia) + its arrow CTA.
     private final By astoniaStoryCard = By.cssSelector("a[data-testid='home-discover-astonia']");
     private final By astoniaStoryCta = By.cssSelector("button[data-testid='home-discover-astonia-cta']");
@@ -303,8 +315,15 @@ public class HomePage extends BasePage<HomePage> {
      * @return true if the section, title and both cards are displayed.
      */
     public boolean isTwoStoriesSectionDisplayed() {
-        return isDisplayed(twoStoriesSection)
-                && isDisplayed(twoStoriesTitle)
+        // Scroll first, then wait. This section sits ~2000px below the fold and the
+        // storefront reveals lower sections on scroll, so asserting from the top of the
+        // page is a race: it passed on one run and failed on the next against an
+        // unchanged site. Probing production on 2026-07-17 found the section, its title
+        // and both cards all present and displayed — the section was never the problem,
+        // the test just never looked at it properly.
+        scrollIntoView(twoStoriesSection);
+        return isEventuallyDisplayed(twoStoriesSection)
+                && isEventuallyDisplayed(twoStoriesTitle)
                 && !driver.findElements(astoniaStoryCard).isEmpty()
                 && !driver.findElements(manifestaStoryCard).isEmpty();
     }

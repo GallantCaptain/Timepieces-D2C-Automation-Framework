@@ -307,9 +307,53 @@ public class DriverFactory {
     options.addArguments("--disable-blink-features=AutomationControlled");
     options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
     options.setExperimentalOption("useAutomationExtension", false);
+    applyPasswordManagerSuppression(options);
     if (disableSandbox) {
       options.addArguments("--no-sandbox");
     }
+  }
+
+  /**
+   * Stops Chromium popping its "Save password?" / "Change your password" bubbles during a
+   * run.
+   *
+   * <p>WHY THIS MATTERS FOR TESTS: any scenario that types into a password field (login,
+   * OTP, checkout) makes Chrome offer to save the credential. That bubble is browser
+   * chrome painted OVER the page near the omnibox — Selenium cannot see or dismiss it via
+   * the DOM, and it steals focus and can swallow the next click. The result is a flaky
+   * failure that looks like an app bug but is purely the browser being helpful.
+   *
+   * <p>Belt AND braces on purpose, because these knobs have moved between Chrome versions:
+   * <ul>
+   *   <li>the {@code prefs} switch off the password manager and the "leak detection"
+   *       dialog ("Change your password" after a breach match) at the profile level;</li>
+   *   <li>the {@code --disable-features} flags cover the same behaviour where it has been
+   *       re-homed behind a feature flag;</li>
+   *   <li>{@code --disable-save-password-bubble} kills the bubble itself.</li>
+   * </ul>
+   * Unknown feature names are ignored by Chromium rather than fatal, so listing extras is
+   * safe and keeps this working across the version upgrades that inevitably follow.
+   */
+  private static void applyPasswordManagerSuppression(ChromiumOptions<?> options) {
+    Map<String, Object> prefs = new HashMap<>();
+    // The classic pair: no "save password?" offer, no password manager UI at all.
+    prefs.put("credentials_enable_service", false);
+    prefs.put("profile.password_manager_enabled", false);
+    // Chrome 116+: the "your password was found in a data breach" interstitial.
+    prefs.put("profile.password_manager_leak_detection", false);
+    // Autofill's own address/card prompts can steal focus on the checkout forms too.
+    prefs.put("autofill.profile_enabled", false);
+    prefs.put("autofill.credit_card_enabled", false);
+    options.setExperimentalOption("prefs", prefs);
+
+    options.addArguments("--disable-save-password-bubble");
+    options.addArguments("--disable-features=PasswordLeakDetection,PasswordChangeSupport,"
+        + "AutofillEnableAccountWalletStorage,PasswordManagerOnboarding,SafeBrowsingEnhancedProtection");
+    // Without this, a fresh profile shows the first-run/"make Chrome default" surfaces,
+    // which are the same class of focus-stealing nuisance.
+    options.addArguments("--no-first-run");
+    options.addArguments("--no-default-browser-check");
+    options.addArguments("--password-store=basic");
   }
 
   /**

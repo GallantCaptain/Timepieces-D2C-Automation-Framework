@@ -75,19 +75,48 @@ public abstract class SharedAccessoryPdp<SELF extends SharedAccessoryPdp<SELF>> 
     private final By wishlistButton = By.cssSelector("button[title='Add to wishlist']"); // ROLLOUT-GAP: aria/title
     private final By wishlistButtonActive = By.cssSelector("button[title='Remove from wishlist']"); // ROLLOUT-GAP: aria/title
 
+    // The gallery is rendered TWICE: a mobile product-media-carousel and a desktop
+    // desktop-image-gallery, with CSS hiding whichever does not apply. Both are kept
+    // here so the suite works at either viewport — BasePage.isDisplayed/getElement now
+    // resolve the first VISIBLE match rather than the first DOM match, which is what
+    // makes this safe. Verified on production 2026-07-17: document order puts the HIDDEN
+    // mobile carousel (~31,940) BEFORE the visible desktop gallery (~36,688), so the old
+    // first-match behaviour reported "gallery not displayed" on all five accessory PDPs
+    // while the gallery was plainly on screen.
     private final By imageGalleryContainer = By
             .cssSelector("div.desktop-image-gallery, div.product-media-carousel"); // ROLLOUT-GAP: structural
 
-    // Color/size card-button switcher. Color cards share a title (differ by
-    // background-color) so are not individually selectable by locator — navigate
-    // by handle via the model carousel instead. Size cards carry visible text.
-    private final By variantSwitcherContainer = By.cssSelector("div.flex.flex-wrap.gap-2"); // ROLLOUT-GAP: semantic-class
+    // Color/size card-button switcher. Color cards share a title (they differ by
+    // background-colour) so are not individually selectable by locator — navigate by
+    // handle via the model carousel instead. Size cards carry visible text.
+    //
+    // Verified on production 2026-07-17 (single-deployment-clasp-rose-gold-20mm):
+    //   colour swatches : <button class="w-6 h-6 rounded-full transition-all"
+    //                             aria-label="Single Deployment Clasp"> x4  @y=352
+    //   size chips      : <button>20mm</button>/<button>22mm</button>       @y=438
+    //                     parent   div.flex.gap-3.mt-2
+    //                     ancestor div.size-selector
+    // The previous locator (div.flex.flex-wrap.gap-2) matched ZERO nodes — there is no
+    // flex-wrap container on the page at all — which is why "colour card-button switcher
+    // should be displayed" failed on both clasp PDPs.
+    private final By variantSwitcherContainer = By.cssSelector(
+            "div.size-selector, button[aria-label][class*='rounded-full'][class*='w-6']");
     private final By sizeButtonTemplate = By.xpath(
-            "//div[contains(@class,'flex-wrap')]//button[normalize-space()='%s']"); // ROLLOUT-GAP: text-anchor
+            "//div[contains(@class,'size-selector')]//button[normalize-space()='%s']");
 
     // Description / Technical-details accordions.
-    private final By accordionContainer = By.cssSelector("div.w-full.border-t"); // ROLLOUT-GAP: semantic-class
-    private final By accordionToggleTemplate = By.xpath("//button[contains(normalize-space(),'%s')]"); // ROLLOUT-GAP: text-anchor
+    //
+    // The old container locator (div.w-full.border-t) matched ZERO nodes. The real
+    // toggles are buttons carrying aria-expanded, which is a far better hook than a
+    // Tailwind class chain: it is the accessibility contract, it states the OPEN/CLOSED
+    // state directly, and it survives restyling. Verified: 12 button[aria-expanded] on a
+    // clasp PDP (Description=true, Technical details=false, plus the footer accordions).
+    //
+    // NOTE for whoever writes the next accordion test: "Description" ships EXPANDED
+    // (aria-expanded="true") by default. A test that clicks it and then asserts expanded
+    // will actually COLLAPSE it and fail. Assert the state, or toggle deliberately.
+    private final By accordionContainer = By.cssSelector("button[aria-expanded]");
+    private final By accordionToggleTemplate = By.xpath("//button[@aria-expanded][contains(normalize-space(),'%s')]");
 
     // Return & Refund / Guarantee side drawers (share the same overlay container).
     private final By guaranteeTrigger = By.cssSelector("button[aria-label='Open guarantee details']"); // ROLLOUT-GAP: aria
@@ -96,9 +125,18 @@ public abstract class SharedAccessoryPdp<SELF extends SharedAccessoryPdp<SELF>> 
     private final By drawerCloseButton = By.cssSelector("button[aria-label='Close']"); // ROLLOUT-GAP: aria
     private final By drawerBackdrop = By.cssSelector("div.absolute.inset-0.bg-black\\/50.backdrop-blur-sm"); // ROLLOUT-GAP: structural
 
-    // Bottom "recommended models" carousel — cards link to /accessories/<type>/<handle>.
-    private final By modelCarouselContainer = By.cssSelector("div.relative.group"); // ROLLOUT-GAP: semantic-class
-    private final By modelCarouselCards = By.cssSelector("div.relative.group a[href*='/accessories/']"); // ROLLOUT-GAP: structural
+    // Bottom recommended-models carousel — cards link to /accessories/<type>/<handle>.
+    //
+    // The site calls this section "Similar Products" (H2) and each card carries the
+    // class similar-product-card. Verified on production 2026-07-17: 6 cards, all
+    // displayed, at y~2314 under the H2 at y~2245.
+    //
+    // The old locator was div.relative.group — a bare Tailwind pair that matched 19
+    // unrelated elements page-wide, the first of which was hidden. That is the whole
+    // story behind "the recommended-models carousel should be displayed = false": the
+    // carousel was there, the locator just resolved to something else entirely.
+    private final By modelCarouselContainer = By.cssSelector("div.similar-product-card");
+    private final By modelCarouselCards = By.cssSelector("div.similar-product-card a[href*='/accessories/']");
 
     // ==========================================
     // PRIVATE HELPERS

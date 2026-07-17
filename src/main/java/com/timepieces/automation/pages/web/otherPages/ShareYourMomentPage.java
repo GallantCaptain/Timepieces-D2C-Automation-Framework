@@ -81,8 +81,23 @@ public class ShareYourMomentPage extends HeaderOnlyBasePage<ShareYourMomentPage>
     // ==========================================
     // LOCATORS
     // ==========================================
-    // The page heading — "Show your Timepieces moment".
-    private final By pageHeading = By.xpath("//h1[contains(normalize-space(),'Show your Timepieces moment')]"); // ROLLOUT-GAP: text-anchor
+    // The page heading — renders as "Show your / Timepieces moment" across a line break.
+    //
+    // THE XPATH-vs-getText TRAP. The markup is:
+    //     <h1>Show your<br><span class="font-[600]">Timepieces moment</span></h1>
+    // A <br> contributes NO character to the DOM text, so the h1's textContent is the
+    // run-together "Show yourTimepieces moment". Selenium's getText() reports the RENDERED
+    // text ("Show your\nTimepieces moment"), but XPath matches DOM text — so
+    // contains(normalize-space(),'Show your Timepieces moment') can never be true. The
+    // space a reader sees is painted by the line break, not present in the string.
+    //
+    // Worse, the old XPath still matched ONE node: a second, hidden mobile h1 variant —
+    // so the test failed with "should be displayed = false" rather than "not found",
+    // which sent the diagnosis in the wrong direction entirely.
+    //
+    // Anchoring on the <span> avoids the break altogether. Verified on production
+    // 2026-07-17: 1 node, displayed=true, getText()="Show your\nTimepieces moment".
+    private final By pageHeading = By.xpath("//h1[.//span[normalize-space()='Timepieces moment']]");
     // The story textarea (visible pre-auth).
     private final By storyTextarea = By.cssSelector("textarea"); // ROLLOUT-GAP: semantic
     // The hidden file/media upload input (visible pre-auth in DOM).
