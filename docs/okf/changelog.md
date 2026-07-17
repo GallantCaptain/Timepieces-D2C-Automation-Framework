@@ -1424,3 +1424,61 @@ This changelog is append-only. New entries must be added chronologically and mus
   blocks audio autoplay) was **disproved** by running it headed — it fails there too. Most
   likely the test assumes music starts muted and inverts when it does not. Left documented
   rather than guessed at.
+
+### A standalone reproduction for the privacy bug (STAT-069)
+
+- **New:** `ProfileDraftRestorePrivacyProbeTest` + `testng-privacy-probe.xml` — an isolated,
+  hand-to-developer reproduction of **ISSUE-013**:
+  `./mvnw test "-Dsurefire.suite=testng-privacy-probe.xml" "-Denv=production"`
+- **It proves rather than asserts.** Fresh Chrome profile → phone/email generated from the
+  clock (`@example.invalid`, so it can never have been used) → **Step 01 of 07 arrives
+  holding `"Test User" / "Mr" / "01/01/1990" / "Professional"`**. It then re-reads
+  localStorage/sessionStorage and shows the restored values are **not there** — so they came
+  from the **server**, to a session whose identity has never existed. Reproduced twice with
+  different identities.
+- **It fails on purpose.** It asserts the CORRECT behaviour (a new visitor's form is empty),
+  so it reproduces today and becomes the regression test the day it is fixed. Both the suite
+  file and the class say so, to stop a well-meaning reader "fixing" it by seeding the form.
+- **It redacts.** Values matching the automation suite's own seeds are printed (they are
+  ours); anything else is reduced to a length + character-shape and flagged. If this bug can
+  serve a real customer's details to a stranger, a probe that dumps them into a CI report,
+  an emailed artifact and a screenshot has made the leak worse. **A privacy probe that leaks
+  is not a privacy probe.**
+- **A lead for the fixer, not just a symptom.** `ds_visitor_id` was **identical across
+  separate fresh Chrome profiles** (`5520b8f06dc744458497225e7c1ee77d`) while
+  `ds_session_id` changed every run. A visitor id that survives a brand-new browser profile
+  is derived — IP and/or fingerprint — which would explain every observation: **the draft
+  follows the machine, not the person.** If that is the key, anyone sharing an IP (office,
+  household, cafe, mobile CGNAT) could be served each other's in-progress details, and it is
+  served **before the phone number is ever verified**, so there is no authentication
+  boundary in front of it. Recorded as unconfirmed: a client-side lead, not a diagnosis.
+- **A false positive I caught in my own evidence, and removed:** an early version reported
+  "profile draft present on the client? YES" because a substring scan for `persona` matched
+  the consent key `ad_personalization`. A privacy report that overstates its evidence is
+  worse than one that claims less — the first thing a developer does is check the claim, and
+  the first false one costs the report its credibility. It now asks the narrower, verifiable
+  question: are the ACTUAL restored values anywhere in client storage?
+
+### OKF traceability repair (STAT-070)
+
+- **I duplicated the STAT id space and had to fix it.** Every status id added on 2026-07-17
+  (`STAT-040`–`STAT-045`) collided with an existing entry: I assigned ids by counting from
+  the top of the table rather than from the highest id in use (`STAT-062`). It surfaced only
+  because a later `sed` silently no-oped against an id that already existed.
+- Renumbered to **STAT-063…STAT-069**, re-pointed every cross-reference in
+  `known-issues.md`, and verified both directions: zero duplicate ids remain, and every
+  `ISSUE-*` → `STAT-*` reference resolves to a real entry.
+- **The lesson, recorded because it is exactly the kind of thing the OKF is for:** an id is
+  only worth anything if it means one thing. A duplicate id is worse than no id, because it
+  looks like traceability. Assign from `max(existing) + 1`, never from the top of the file.
+
+- **Same mistake, second register: the ISSUE id space was duplicated too.** `ISSUE-009`–
+  `ISSUE-014` added on 2026-07-17 collided with existing entries (the real `ISSUE-009` is
+  "Strap/Clasp SKUs never appear", nothing to do with ZAP). Renumbered to
+  **ISSUE-015…ISSUE-020**, with every reference re-pointed in `CurrentStatus.md`, the page
+  objects, the feature files, the probe and its suite:
+  `009→015 (ZAP PII false positive)`, `010→016 (Monarch alt)`, `011→017 (contact validates
+  nothing)`, `012→018 (/checkout redirect)`, `013→019 (privacy draft restore)`,
+  `014→020 (BaseRunner -Denv override)`.
+  Earlier changelog entries are left as written — this log is append-only, and rewriting it
+  to look tidy would destroy the one thing it is for. **This note is the mapping.**

@@ -37,8 +37,8 @@ Feature: Become More Onboarding Journey
   # anonymous visitor's in-progress details are served to another.
   # ############################################################################
   #
-  # ##################### APP BUG — ISSUE-011 (filed, app-side) #################
-  # Tracked in docs/okf/known-issues.md as ISSUE-011.
+  # ##################### APP BUG — ISSUE-017 (filed, app-side) #################
+  # Tracked in docs/okf/known-issues.md as ISSUE-017.
   # The `contact` screen validates NOTHING: "Continue" advances to Step 01 with
   # BOTH the phone and the email field EMPTY, and the button is never disabled
   # (verified 2026-07-17). Its own copy says "How can we reach you? We'll verify

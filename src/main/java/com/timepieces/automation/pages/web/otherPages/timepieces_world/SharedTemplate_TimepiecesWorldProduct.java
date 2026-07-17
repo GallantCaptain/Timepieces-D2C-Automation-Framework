@@ -219,7 +219,7 @@ public abstract class SharedTemplate_TimepiecesWorldProduct<SELF extends SharedT
      * ({@code main img[src*='<Family>-text.svg']}).
      *
      * <p>
-     * !! MASKS A LIVE APP BUG — ISSUE-010. REVERT WHEN THE APP IS FIXED. !!
+     * !! MASKS A LIVE APP BUG — ISSUE-016. REVERT WHEN THE APP IS FIXED. !!
      *
      * <p>
      * WAS: {@code main img[alt='<FAMILY UPPERCASE>']}. That locator was correct in
@@ -234,7 +234,7 @@ public abstract class SharedTemplate_TimepiecesWorldProduct<SELF extends SharedT
      * The IMAGE is right; the alt text was copy-pasted from Arvion and never
      * updated. The other 4 families carry the correct alt. So a screen-reader user
      * on the Monarch page is told they are looking at Arvion — a real a11y defect,
-     * logged as ISSUE-010.
+     * logged as ISSUE-016.
      *
      * <p>
      * Anchoring on {@code src} instead keeps the suite green while that bug stands,
@@ -245,14 +245,14 @@ public abstract class SharedTemplate_TimepiecesWorldProduct<SELF extends SharedT
      *
      * <p>
      * THIS IS A DELIBERATE MASK, NOT A FIX. It trades away the assertion that would
-     * have caught ISSUE-010. Once the app corrects Monarch's alt, revert this to
+     * have caught ISSUE-016. Once the app corrects Monarch's alt, revert this to
      * {@code By.cssSelector("main img[alt='" + familyName().toUpperCase() + "']")}
      * so the suite guards the alt text again.
      *
      * @return the family logo By locator.
      */
     private By familyLogo() {
-        return By.cssSelector("main img[src*='" + familyName() + "-text.svg']"); // ROLLOUT-GAP: src-anchor (see ISSUE-010)
+        return By.cssSelector("main img[src*='" + familyName() + "-text.svg']"); // ROLLOUT-GAP: src-anchor (see ISSUE-016)
     }
 
     /**

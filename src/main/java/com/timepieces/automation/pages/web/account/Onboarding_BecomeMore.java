@@ -33,7 +33,7 @@ import lombok.extern.log4j.Log4j2;
  * direct URL / {@link #openSection(String)} deep-links, which work regardless.
  *
  * <p>
- * TESTABILITY LIMIT (ISSUE-014): no test / ephemeral user accounts exist, so
+ * TESTABILITY LIMIT (ISSUE-020): no test / ephemeral user accounts exist, so
  * the first-time-user states (profile-incomplete gating, post-submit
  * completion) cannot be exercised deterministically — display-level and
  * gate-level assertions only until dev provides test accounts.
@@ -550,9 +550,9 @@ public class Onboarding_BecomeMore extends HeaderOnlyBasePage<Onboarding_BecomeM
      * B.5b Clicks "Continue" on the contact screen (advances to "Step 01 of 07").
      *
      * <p>
-     * ==================== APP BUG (ISSUE-011) — NOT A TEST BUG =======================
+     * ==================== APP BUG (ISSUE-017) — NOT A TEST BUG =======================
      * <br>
-     * Tracked as ISSUE-011 in docs/okf/known-issues.md (Open, app-side).
+     * Tracked as ISSUE-017 in docs/okf/known-issues.md (Open, app-side).
      *
      * <p>
      * The contact screen performs <b>ZERO validation</b>. Verified live on

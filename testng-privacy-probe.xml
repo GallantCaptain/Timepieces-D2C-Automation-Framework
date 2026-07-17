@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    ISSUE-019 privacy reproduction, isolated so it can be handed to a developer.
+
+    Run ONLY this:
+
+        ./mvnw test "-Dsurefire.suite=testng-privacy-probe.xml" "-Denv=production"
+
+    It proves that a brand-new anonymous visitor, identifying with a phone/email that have
+    never been used, is served an existing profile draft on the first onboarding step.
+
+    IT IS EXPECTED TO FAIL while the bug exists. That is the point: it asserts the CORRECT
+    behaviour, so it reproduces today and becomes the regression test the day it is fixed.
+    Please do not "fix" it by seeding the form.
+
+    Output for the bug report:
+        target/privacy/ISSUE-019-draft-restore.txt   (evidence report)
+        Allure                                       (same report + a screenshot)
+
+    Opt-in by design (group "privacy-probe"): it is in NO default suite, in the same spirit
+    as the OtpBruteForce probe. It never clicks "Submit Profile", so no profile is created.
+
+    NOTE: the bug is STATEFUL. A clean run is not proof of a fix - an earlier run may have
+    seeded the draft, and a deploy or cache flush can clear it. Re-run a few times.
+-->
+<suite name="Timepieces Privacy Probe (ISSUE-019)" parallel="none">
+
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
+    </listeners>
+
+    <parameter name="environment" value="production" />
+
+    <test name="ISSUE-019 - profile draft restored into a new anonymous session">
+        <classes>
+            <class name="com.timepieces.automation.tdd.security.ProfileDraftRestorePrivacyProbeTest" />
+        </classes>
+    </test>
+</suite>
