@@ -1278,3 +1278,40 @@ This changelog is append-only. New entries must be added chronologically and mus
   (`zaproxy/zap-stable` ships Firefox ESR, **not** Chrome). Also recorded: ZAP's JSON
   report caps `instances` at 5 per rule, so its totals legitimately disagree with the
   summary (36 vs the authoritative 204).
+
+### OWASP Top 10:2025 upgrade + cheatsheet refresh (STAT-041, STAT-042)
+
+- **Assessed on evidence before building.** ZAP 2.17 tags every alert with BOTH editions
+  (`OWASP_2021_A05` and `OWASP_2025_A02` side by side), and measured tag coverage is
+  **identical: 237/239 = 99.2%** either way. Since classification is tag-driven, the
+  upgrade was a new enum plus a prefix switch, not a rewrite — viable and cheap.
+- **2025 is now the default** (`zap.owasp.edition=2025`); 2021 is retained because audit
+  and compliance paperwork still cites it. An unrecognised value **fails loudly** rather
+  than silently choosing a taxonomy for the whole report.
+- `OwaspCategory` became an interface over `Owasp2021Category` / `Owasp2025Category`,
+  chosen by the new `OwaspEdition`. Titles verified **two independent ways**:
+  owasp.org/Top10/2025 and the reference URLs ZAP ships inside its own alert tags.
+- **CWE fallback without duplication:** each 2025 category declares the 2021 categories it
+  **descends from** and inherits their CWE sets, so there is one copy of the numbers and
+  the lineage reads in code — `A01:2025` taking both `A01` and `A10` **is** the SSRF merge
+  (CWE-918 now sits in Broken Access Control, confirmed on OWASP's own A01:2025 page).
+  `A10:2025` "Mishandling of Exceptional Conditions" is new, has no lineage, and relies on
+  tags alone. These inherited sets are a documented approximation for the ~1% no-tag path,
+  not a transcription of OWASP's published 2025 CWE lists.
+- **Verified on one staging scan, both editions (239 alerts, 2 UNMAPPED in each):** the 10
+  CSP/SRI/anti-clickjacking Mediums move **A05:2021 → A02:2025**, exactly the documented
+  promotion of Security Misconfiguration; the 2021 path stayed green; an invalid edition
+  was rejected with a clear message.
+- **Cheatsheet refreshed to 4 pages, and its generator committed** as
+  `scripts/build_cheatsheet.py` — earlier versions were ad-hoc and the generator was lost,
+  forcing a reverse-engineer from the PDF each time. New **section 11 (OWASP ZAP / DAST)**
+  covers local/Docker/CI commands, the ZAP `-D` key table, the weekly schedule, the
+  "staging is attacked, production is NOT" warning and the BLK-007 false-assurance box;
+  new **section 12** lists every CI workflow. Also added `testng-security.xml` +
+  `testng-search-api.xml`, the compose-services list, `ZAP_API_KEY`/`ZAP_RUNNER`, and the
+  clean/target commands.
+- **Bug caught by rendering the PDF instead of trusting a zero exit code:** a CSS `width`
+  on `td` is not honoured by PyMuPDF's Story layout — it collapsed the key column and drew
+  the value cell **on top of it, mangling every table in the document**, including ones
+  that had been fine for months. Column widths must come from content. Recorded in the
+  generator so it cannot be reintroduced.

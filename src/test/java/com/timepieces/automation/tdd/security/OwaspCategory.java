@@ -1,135 +1,101 @@
 package com.timepieces.automation.tdd.security;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * The ten OWASP Top 10 (2021) risk categories, plus the logic that decides which
- * category a given ZAP alert belongs to.
+ * One OWASP Top 10 risk category, and the logic that decides which category a given ZAP
+ * alert belongs to.
  *
- * <h2>Why this class exists</h2>
- * ZAP does not report findings as "A03: Injection". It reports individual alerts
- * like "SQL Injection" or "Content Security Policy Header Not Set". To assert
- * against the OWASP Top 10 — which is what stakeholders and auditors actually ask
- * about — every alert has to be bucketed into one of the ten categories. That
- * bucketing is this class's only job.
+ * <h2>Why this is an interface</h2>
+ * OWASP publishes a new Top 10 every few years, and the categories genuinely change:
+ * 2025 folded SSRF into Broken Access Control, promoted Security Misconfiguration from
+ * A05 to A02, and added a brand-new "Mishandling of Exceptional Conditions". So an
+ * edition is a set of categories, not a renaming — hence one enum per edition
+ * ({@link Owasp2021Category}, {@link Owasp2025Category}) behind this common type, chosen
+ * at runtime via {@link OwaspEdition}.
+ *
+ * <h2>Why this class exists at all</h2>
+ * ZAP does not report findings as "A05: Security Misconfiguration". It reports individual
+ * alerts like "Content Security Policy Header Not Set". To assert against the OWASP Top 10
+ * — which is what stakeholders and auditors actually ask about — every alert has to be
+ * bucketed into a category. That bucketing is this type's only job.
  *
  * <h2>How an alert is classified (two strategies, in order)</h2>
  * <ol>
- *   <li><b>ZAP alert tags (preferred).</b> Modern ZAP tags its own alerts with keys
- *       like {@code OWASP_2021_A03}. ZAP's own maintainers curate those tags, so when
- *       a tag is present it beats anything we could hand-maintain here. This also
- *       catches alerts whose CWE is not in OWASP's published list at all — the CSP
- *       alerts, for instance, report CWE-693, which appears in no official category
- *       list, yet ZAP correctly tags them A05.</li>
- *   <li><b>CWE ID fallback.</b> If an alert carries no OWASP tag (older ZAP versions,
- *       or custom rules), we fall back to matching its CWE ID against the published
- *       OWASP Top 10 2021 CWE mappings held in {@link #cweIds}.</li>
+ *   <li><b>ZAP alert tags (preferred).</b> ZAP tags its own alerts with keys like
+ *       {@code OWASP_2025_A02}. ZAP's maintainers curate those tags, so when one is
+ *       present it beats anything hand-maintained here. Measured on a real staging scan:
+ *       <b>237 of 239 alert instances (99.2%) carried a tag</b>, for both editions.</li>
+ *   <li><b>CWE ID fallback.</b> For the ~1% with no tag, match the alert's CWE against
+ *       the category's CWE set.</li>
  * </ol>
- * If BOTH strategies miss, the alert becomes {@link #UNMAPPED}. That bucket is
- * deliberate: an alert we cannot classify must stay visible rather than be silently
- * dropped, because "we didn't understand it" is not the same as "it's not a problem".
+ * If both miss, the alert becomes the edition's UNMAPPED bucket. That is deliberate: an
+ * alert we cannot classify must stay visible rather than be silently dropped, because
+ * "we didn't understand it" is not the same as "it's not a problem".
+ *
+ * <p><b>Tag-first is not a stylistic preference — it changes answers.</b> ZAP's "Sub
+ * Resource Integrity Attribute Missing" reports {@code CWE-345}, which OWASP's published
+ * table maps to A08. But ZAP tags it {@code OWASP_2021_A05}. Tag-first files it as A05 —
+ * ZAP's own answer. A CWE-only implementation would have put every Medium finding from
+ * the first staging scan in the wrong category.
  *
  * @since 2026-07-17
- * @version 1.0
+ * @version 2.0
  * @author Avinash Rath
  */
-public enum OwaspCategory {
+public interface OwaspCategory {
 
-    A01("A01:2021", "Broken Access Control",
-            22, 23, 35, 59, 200, 201, 219, 264, 275, 276, 284, 285, 352, 359, 377, 402,
-            425, 441, 497, 538, 540, 548, 552, 566, 601, 639, 651, 668, 706, 862, 863,
-            913, 922, 1275),
+    /** e.g. {@code "A02:2025"}. */
+    String id();
 
-    A02("A02:2021", "Cryptographic Failures",
-            261, 296, 310, 319, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331,
-            335, 336, 337, 338, 340, 347, 523, 720, 757, 759, 760, 780, 818, 916),
+    /** e.g. {@code "Security Misconfiguration"}. */
+    String title();
 
-    A03("A03:2021", "Injection",
-            20, 74, 75, 77, 78, 79, 80, 83, 87, 88, 89, 90, 91, 93, 94, 95, 96, 97, 98,
-            99, 100, 113, 116, 138, 184, 470, 471, 564, 610, 643, 644, 652, 917),
+    /** CWE IDs that fall back to this category when ZAP supplies no OWASP tag. */
+    Set<Integer> cweIds();
 
-    A04("A04:2021", "Insecure Design",
-            73, 183, 209, 213, 235, 256, 257, 266, 269, 280, 311, 312, 313, 316, 419,
-            430, 434, 444, 451, 472, 501, 522, 525, 539, 579, 598, 602, 642, 646, 650,
-            653, 656, 657, 799, 807, 840, 841, 927, 1021, 1173),
+    /** True only for the edition's UNMAPPED escape hatch. */
+    boolean isUnmapped();
 
-    A05("A05:2021", "Security Misconfiguration",
-            2, 11, 13, 15, 16, 260, 315, 520, 526, 537, 541, 547, 611, 614, 756, 776,
-            942, 1004, 1032, 1174,
-            // Not in OWASP's published list, but it is what ZAP stamps on its
-            // CSP / anti-clickjacking / permissions-policy alerts, which are
-            // misconfiguration findings by any reasonable reading.
-            693),
-
-    A06("A06:2021", "Vulnerable and Outdated Components",
-            937, 1035, 1104),
-
-    A07("A07:2021", "Identification and Authentication Failures",
-            255, 259, 287, 288, 290, 294, 295, 297, 300, 302, 304, 306, 307, 346, 384,
-            521, 613, 620, 640, 798, 940, 1216),
-
-    A08("A08:2021", "Software and Data Integrity Failures",
-            345, 353, 426, 494, 502, 565, 784, 829, 830, 915),
-
-    A09("A09:2021", "Security Logging and Monitoring Failures",
-            117, 223, 532, 778),
-
-    A10("A10:2021", "Server-Side Request Forgery (SSRF)",
-            918),
-
-    /**
-     * Escape hatch for alerts that carry neither a recognised OWASP tag nor a CWE we
-     * can map. Reported separately so nothing disappears; see the class javadoc.
-     */
-    UNMAPPED("UNMAPPED", "Not mapped to an OWASP Top 10 2021 category");
-
-    private final String id;
-    private final String title;
-    private final Set<Integer> cweIds;
-
-    OwaspCategory(String id, String title, int... cweIds) {
-        this.id = id;
-        this.title = title;
-        // LinkedHashSet keeps the declaration order, which makes the sets easy to
-        // eyeball against OWASP's published tables during review.
-        this.cweIds = new LinkedHashSet<>(Arrays.stream(cweIds).boxed().toList());
+    /** e.g. {@code "A02:2025 - Security Misconfiguration"}. Used for report headings. */
+    default String label() {
+        return id() + " - " + title();
     }
 
-    public String id() {
-        return id;
+    /** The ten real categories for an edition, excluding UNMAPPED. */
+    static List<OwaspCategory> topTen(OwaspEdition edition) {
+        return edition == OwaspEdition.E2021 ? Owasp2021Category.topTen() : Owasp2025Category.topTen();
     }
 
-    public String title() {
-        return title;
+    /** Every category for an edition, UNMAPPED last. */
+    static List<OwaspCategory> all(OwaspEdition edition) {
+        return edition == OwaspEdition.E2021
+                ? List.of(Owasp2021Category.values()).stream().map(OwaspCategory.class::cast).toList()
+                : List.of(Owasp2025Category.values()).stream().map(OwaspCategory.class::cast).toList();
     }
 
-    /** e.g. {@code "A03:2021 - Injection"}. Used for report headings and test names. */
-    public String label() {
-        return id + " - " + title;
+    /** The edition's escape-hatch bucket. */
+    static OwaspCategory unmapped(OwaspEdition edition) {
+        return edition == OwaspEdition.E2021 ? Owasp2021Category.UNMAPPED : Owasp2025Category.UNMAPPED;
     }
 
     /**
-     * The ten real categories, excluding {@link #UNMAPPED}. Handy for iterating the
-     * Top 10 without special-casing the escape hatch every time.
-     */
-    public static List<OwaspCategory> topTen() {
-        return Arrays.stream(values()).filter(c -> c != UNMAPPED).toList();
-    }
-
-    /**
-     * Classifies a single ZAP alert.
+     * Classifies a single ZAP alert against the given edition.
      *
-     * @param zapTagKeys the keys of the alert's {@code tags} map as ZAP reported them
-     *                   (e.g. {@code OWASP_2021_A03}, {@code WSTG-v42-INPV-05}). May be
-     *                   empty for older ZAP versions or custom rules.
-     * @param cweId      the alert's CWE ID. ZAP uses {@code -1} (and sometimes
-     *                   {@code 0}) to mean "no CWE", so both are treated as absent.
-     * @return the matching category, or {@link #UNMAPPED} if neither strategy matched.
+     * @param zapTagKeys keys of the alert's {@code tags} map as ZAP reported them
+     *                   (e.g. {@code OWASP_2025_A02}, {@code WSTG-v42-INPV-05}). May be
+     *                   empty — older ZAP versions, custom rules, and notably any alert
+     *                   that an alert filter has re-graded, because <b>ZAP strips tags
+     *                   from filtered alerts</b>.
+     * @param cweId      the alert's CWE ID. ZAP uses {@code -1} (sometimes {@code 0}) for
+     *                   "no CWE"; both are treated as absent.
+     * @param edition    which Top 10 to classify against.
+     * @return the matching category, or the edition's UNMAPPED bucket.
      */
-    public static OwaspCategory classify(Set<String> zapTagKeys, int cweId) {
+    static OwaspCategory classify(Set<String> zapTagKeys, int cweId, OwaspEdition edition) {
+        List<OwaspCategory> candidates = topTen(edition);
+
         // Strategy 1: trust ZAP's own OWASP tag when it gives us one.
         if (zapTagKeys != null) {
             for (String tag : zapTagKeys) {
@@ -137,29 +103,29 @@ public enum OwaspCategory {
                     continue;
                 }
                 String normalised = tag.trim().toUpperCase();
-                // Tags look like "OWASP_2021_A03". Match on the prefix so we are not
-                // brittle about any suffix ZAP may append later.
-                if (normalised.startsWith("OWASP_2021_A")) {
-                    for (OwaspCategory candidate : topTen()) {
-                        // candidate.id is "A03:2021" -> we want the "A03" part.
-                        String shortId = candidate.id.substring(0, candidate.id.indexOf(':'));
-                        if (normalised.startsWith("OWASP_2021_" + shortId)) {
-                            return candidate;
-                        }
+                if (!normalised.startsWith(edition.tagPrefix())) {
+                    continue; // e.g. a 2021 tag while we are reporting 2025.
+                }
+                for (OwaspCategory candidate : candidates) {
+                    // candidate.id() is "A02:2025" -> compare on the "A02" part, so we are
+                    // not brittle about any suffix ZAP may append later.
+                    String shortId = candidate.id().substring(0, candidate.id().indexOf(':'));
+                    if (normalised.startsWith("OWASP_" + edition.year() + "_" + shortId)) {
+                        return candidate;
                     }
                 }
             }
         }
 
-        // Strategy 2: fall back to the published CWE -> category mapping.
+        // Strategy 2: fall back to the CWE mapping.
         if (cweId > 0) {
-            for (OwaspCategory candidate : topTen()) {
-                if (candidate.cweIds.contains(cweId)) {
+            for (OwaspCategory candidate : candidates) {
+                if (candidate.cweIds().contains(cweId)) {
                     return candidate;
                 }
             }
         }
 
-        return UNMAPPED;
+        return unmapped(edition);
     }
 }

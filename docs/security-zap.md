@@ -1,7 +1,7 @@
 # OWASP ZAP (DAST) Security Scanning
 
 Dynamic security scanning of the Timepieces storefront with [OWASP ZAP](https://www.zaproxy.org/),
-asserted against the **OWASP Top 10 (2021)**.
+asserted against the **OWASP Top 10 — 2025 by default, 2021 on request**.
 
 Where the rest of the suite asks *"does the feature work?"*, this suite asks *"can the
 feature be abused?"* — and it does it against a running site, not the source code.
@@ -143,11 +143,12 @@ cheap assertions over its in-memory results. That is why the suite is `parallel=
 
 ### How an alert becomes an OWASP category
 
-ZAP reports *"Content Security Policy Header Not Set"*, not *"A05"*. Two strategies, in order:
+ZAP reports *"Content Security Policy Header Not Set"*, not *"A02"*. Two strategies, in order:
 
-1. **ZAP's own tags** (preferred) — modern ZAP stamps alerts with `OWASP_2021_A05`. ZAP's
-   maintainers curate these, so they beat any table we hand-maintain.
-2. **CWE ID fallback** — matched against OWASP's published CWE lists, for alerts with no tag.
+1. **ZAP's own tags** (preferred) — ZAP stamps alerts with `OWASP_2025_A02`. ZAP's
+   maintainers curate these, so they beat any table we hand-maintain. **Measured coverage:
+   237 of 239 alert instances (99.2%)** on a real staging scan.
+2. **CWE ID fallback** — for the ~1% with no tag, matched against the category's CWE set.
 
 If both miss, the alert lands in **UNMAPPED**, which is reported but never fails. An alert
 we cannot classify must stay visible; "we didn't understand it" is not "it's not a problem".
@@ -156,6 +157,53 @@ we cannot classify must stay visible; "we didn't understand it" is not "it's not
 `cweid: 345`, which OWASP's published table maps to **A08**. But ZAP tags it
 `OWASP_2021_A05`. Tag-first files it as A05 — ZAP's own answer. A CWE-only implementation
 would have put all ten Medium findings in the wrong category.
+
+---
+
+## OWASP edition: 2025 (default) or 2021
+
+```properties
+zap.owasp.edition=2025    # or 2021
+```
+
+ZAP 2.17 tags every alert with **both** editions simultaneously — one alert carries
+`OWASP_2021_A05` *and* `OWASP_2025_A02`. Because classification is tag-driven, supporting
+both costs little more than a prefix switch, and **measured tag coverage is identical**
+(237/239 either way), so the choice costs no accuracy. 2021 is kept because audit and
+compliance paperwork still cites it. An unrecognised value fails loudly rather than
+silently picking a default — a typo here would quietly rewrite the taxonomy the whole
+report is built on.
+
+Verified side by side on the same staging scan (239 alerts, 2 UNMAPPED in both):
+
+| Finding | 2021 | 2025 |
+|---|---|---|
+| CSP / SRI / anti-clickjacking (10 Medium) | A05 Security Misconfiguration | **A02** Security Misconfiguration |
+| Cookie / info-disclosure (80 Low) | A01 Broken Access Control | A01 Broken Access Control |
+
+### What actually changed in 2025
+
+Verified against [owasp.org/Top10/2025](https://owasp.org/Top10/2025/) **and** the reference
+URLs ZAP ships inside its own tags:
+
+| 2025 | Title | Came from |
+|---|---|---|
+| A01 | Broken Access Control | A01:2021 **+ SSRF (A10:2021)** — CWE-918 now lives here |
+| A02 | Security Misconfiguration | A05:2021 — the biggest climber |
+| A03 | Software Supply Chain Failures | A06:2021 "Vulnerable and Outdated Components", broadened |
+| A04 | Cryptographic Failures | A02:2021 |
+| A05 | Injection | A03:2021 |
+| A06 | Insecure Design | A04:2021 |
+| A07 | Authentication Failures | A07:2021, renamed |
+| A08 | Software **or** Data Integrity Failures | A08:2021, note the "or" |
+| A09 | Security Logging and Alerting Failures | A09:2021, renamed |
+| A10 | Mishandling of Exceptional Conditions | **new in 2025** |
+
+Rather than hand-copy CWE tables and let them drift, each 2025 category **declares the 2021
+categories it descends from** and inherits their CWE sets — so `A01` taking both `A01` and
+`A10` *is* the SSRF merge, expressed in code. Those inherited sets are a **documented
+approximation used only for the ~1% fallback path**, not a transcription of OWASP's
+published 2025 CWE lists. `A10:2025` has no lineage (it is new), so it relies on tags alone.
 
 ### Pass/fail
 
@@ -232,6 +280,8 @@ usual 3-tier precedence (`-D` → env var → properties file).
 | `zap.fail.on.risk` | `High` | `High` | fail threshold |
 | `zap.exclude.regex` | OTP/Razorpay/payment | + checkout/cart | never crawled or attacked |
 | `zap.alert.filters` | `10062\|0\|` | `10062\|0\|` | re-grade known false positives |
+| `zap.owasp.edition` | `2025` | `2025` | which Top 10 to report against (`2021` or `2025`) |
+| `zap.ajax.spider.browser` | `firefox-headless` | same | must be headless **and** present in the image |
 
 ---
 
@@ -319,7 +369,4 @@ the spider's reach vary — read the rules, not the totals.
   (`-Dzap.proxy=true`) and every authenticated journey seeds ZAP's site tree with traffic
   a spider could never reach. This is the single highest-value addition, and the reason
   hosting ZAP *inside* this framework beats a standalone ZAP job.
-- **OWASP Top 10:2025.** ZAP 2.17 already emits `OWASP_2025_Axx` tags alongside the 2021
-  ones. Because classification is tag-driven, moving to (or adding) the 2025 list is
-  mostly a new enum plus a tag-prefix switch.
 - **Excel export**, matching the search suites' reports, via `ExcelReportUtil`.

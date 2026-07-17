@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +26,7 @@ import io.qameta.allure.SeverityLevel;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * DAST (Dynamic Application Security Testing) coverage of the OWASP Top 10 (2021),
+ * DAST (Dynamic Application Security Testing) coverage of the OWASP Top 10,
  * driven by an OWASP ZAP daemon.
  *
  * <h2>What this suite does</h2>
@@ -63,14 +63,22 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class OwaspTop10ZapScanTest {
 
-    /** Findings grouped by OWASP category. Populated once by {@link #runSecurityScan()}. */
-    private final Map<OwaspCategory, List<ZapAlert>> alertsByCategory = new EnumMap<>(OwaspCategory.class);
+    /**
+     * Findings grouped by OWASP category. Populated once by {@link #runSecurityScan()}.
+     *
+     * <p>A LinkedHashMap rather than an EnumMap: the category type is now the
+     * {@link OwaspCategory} interface (one enum per OWASP edition), so there is no single
+     * enum class to key an EnumMap on. Linked order keeps the summary table in A01..A10
+     * order.
+     */
+    private final Map<OwaspCategory, List<ZapAlert>> alertsByCategory = new LinkedHashMap<>();
 
     /** Minimum risk that fails a category test; anything lower is reported but tolerated. */
     private int failRiskRank;
 
     private String targetUrl;
     private String scanMode;
+    private OwaspEdition edition;
 
     // ---------------------------------------------------------------------------
     // The scan
@@ -83,6 +91,7 @@ public class OwaspTop10ZapScanTest {
         targetUrl = valueOr("zap.target.url", ConfigReader.get("base.url"));
         scanMode = valueOr("zap.scan.mode", "baseline").toLowerCase();
         failRiskRank = ZapAlert.rankOf(valueOr("zap.fail.on.risk", "High"));
+        edition = OwaspEdition.of(valueOr("zap.owasp.edition", "2025"));
 
         String apiUrl = valueOr("zap.api.url", "http://localhost:8090");
         String apiKey = valueOr("zap.api.key", "timepieces-zap-dev-key");
@@ -90,7 +99,7 @@ public class OwaspTop10ZapScanTest {
         // SAFETY GATE. Runs before a single packet is sent.
         assertProductionIsNotBeingAttacked(env, scanMode);
 
-        ZapScanEngine zap = new ZapScanEngine(apiUrl, apiKey);
+        ZapScanEngine zap = new ZapScanEngine(apiUrl, apiKey, edition);
 
         // If ZAP is not running, SKIP rather than FAIL. The daemon is opt-in
         // infrastructure (a compose profile), so a developer running the whole suite
@@ -101,8 +110,8 @@ public class OwaspTop10ZapScanTest {
             throw new SkipException("ZAP daemon unavailable, skipping the security suite. " + e.getMessage(), e);
         }
 
-        log.info("=== ZAP {} scan | env={} | target={} | fail-on={} ===",
-                scanMode, env, targetUrl, valueOr("zap.fail.on.risk", "High"));
+        log.info("=== ZAP {} scan | env={} | target={} | OWASP Top 10 {} | fail-on={} ===",
+                scanMode, env, targetUrl, edition.year(), valueOr("zap.fail.on.risk", "High"));
 
         zap.newSession("timepieces-" + env);
         zap.excludeFromScans(ConfigReader.get("zap.exclude.regex"));
@@ -130,7 +139,7 @@ public class OwaspTop10ZapScanTest {
         }
 
         List<ZapAlert> alerts = zap.alerts(targetUrl);
-        for (OwaspCategory category : OwaspCategory.values()) {
+        for (OwaspCategory category : OwaspCategory.all(edition)) {
             alertsByCategory.put(category, alerts.stream()
                     .filter(a -> a.category() == category)
                     .sorted(Comparator.comparingInt(ZapAlert::riskRank).reversed())
@@ -257,7 +266,8 @@ public class OwaspTop10ZapScanTest {
     /** A plain-text count of findings per category — the thing worth reading first. */
     private String summaryTable(List<ZapAlert> alerts) {
         StringBuilder sb = new StringBuilder();
-        sb.append("OWASP Top 10 (2021) - ZAP ").append(scanMode).append(" scan of ").append(targetUrl).append('\n');
+        sb.append("OWASP Top 10 (").append(edition.year()).append(") - ZAP ").append(scanMode)
+                .append(" scan of ").append(targetUrl).append('\n');
         sb.append("Total alert instances: ").append(alerts.size()).append('\n');
         sb.append("-".repeat(84)).append('\n');
         // Width 56: the longest label ("A07:2021 - Identification and Authentication
@@ -265,9 +275,9 @@ public class OwaspTop10ZapScanTest {
         sb.append(String.format("%-56s %5s %7s %5s %5s%n", "Category", "High", "Medium", "Low", "Info"));
         sb.append("-".repeat(84)).append('\n');
 
-        for (OwaspCategory category : OwaspCategory.values()) {
+        for (OwaspCategory category : OwaspCategory.all(edition)) {
             List<ZapAlert> found = alertsByCategory.getOrDefault(category, List.of());
-            if (category == OwaspCategory.UNMAPPED && found.isEmpty()) {
+            if (category.isUnmapped() && found.isEmpty()) {
                 continue; // Only show the escape hatch when it actually caught something.
             }
             sb.append(String.format("%-56s %5d %7d %5d %5d%n",
@@ -286,14 +296,19 @@ public class OwaspTop10ZapScanTest {
     // ---------------------------------------------------------------------------
 
     /**
-     * Yields the ten OWASP Top 10 2021 categories, one test case each.
+     * Yields the ten OWASP Top 10 categories for the configured edition, one test case each.
      *
-     * <p>A data provider rather than ten near-identical methods: the assertion is the
-     * same for every category, and only the bucket changes.
+     * <p>A data provider rather than ten near-identical methods: the assertion is the same
+     * for every category, and only the bucket changes.
+     *
+     * <p>The edition is resolved from config here rather than read off the {@link #edition}
+     * field, so this does not depend on {@code @BeforeClass} having run first. TestNG does
+     * invoke data providers after {@code @BeforeClass}, but relying on that ordering for a
+     * value we can derive independently would be a needless trap for whoever edits this next.
      */
     @DataProvider(name = "owaspTop10")
     public Object[][] owaspTop10() {
-        return OwaspCategory.topTen().stream()
+        return OwaspCategory.topTen(OwaspEdition.of(valueOr("zap.owasp.edition", "2025"))).stream()
                 .map(category -> new Object[] { category })
                 .toArray(Object[][]::new);
     }
@@ -301,7 +316,7 @@ public class OwaspTop10ZapScanTest {
     @Test(dataProvider = "owaspTop10", groups = { "security" })
     @Severity(SeverityLevel.CRITICAL)
     @Description("Asserts the ZAP scan raised no alert at or above the configured risk "
-            + "threshold for this OWASP Top 10 2021 category.")
+            + "threshold for this OWASP Top 10 category.")
     public void testOwaspCategoryIsClean(OwaspCategory category) {
         Allure.getLifecycle().updateTestCase(t -> t.setName(category.label()));
 
@@ -334,12 +349,12 @@ public class OwaspTop10ZapScanTest {
      */
     @Test(groups = { "security" })
     @Severity(SeverityLevel.MINOR)
-    @Description("Reports ZAP alerts that map to no OWASP Top 10 2021 category, so that "
+    @Description("Reports ZAP alerts that map to no OWASP Top 10 category, so that "
             + "unclassified findings stay visible rather than being silently dropped.")
     public void reportUnmappedFindings() {
-        List<ZapAlert> unmapped = alertsByCategory.getOrDefault(OwaspCategory.UNMAPPED, List.of());
+        List<ZapAlert> unmapped = alertsByCategory.getOrDefault(OwaspCategory.unmapped(edition), List.of());
         if (unmapped.isEmpty()) {
-            log.info("Every ZAP alert mapped cleanly onto an OWASP Top 10 2021 category.");
+            log.info("Every ZAP alert mapped cleanly onto an OWASP Top 10 {} category.", edition.year());
             return;
         }
         String detail = describe(unmapped);

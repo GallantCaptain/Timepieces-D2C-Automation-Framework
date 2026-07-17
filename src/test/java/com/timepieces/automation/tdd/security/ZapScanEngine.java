@@ -59,10 +59,12 @@ public class ZapScanEngine {
 
     private final String apiUrl;
     private final String apiKey;
+    private final OwaspEdition edition;
 
-    public ZapScanEngine(String apiUrl, String apiKey) {
+    public ZapScanEngine(String apiUrl, String apiKey, OwaspEdition edition) {
         this.apiUrl = apiUrl.endsWith("/") ? apiUrl.substring(0, apiUrl.length() - 1) : apiUrl;
         this.apiKey = apiKey;
+        this.edition = edition;
     }
 
     // ---------------------------------------------------------------------------
@@ -412,7 +414,7 @@ public class ZapScanEngine {
         }
 
         // "tags" is a map of tagName -> reference URL, and is absent on older ZAP
-        // versions. We only need the keys (e.g. OWASP_2021_A03).
+        // versions. We only need the keys (e.g. OWASP_2025_A02).
         Set<String> tagKeys = new LinkedHashSet<>();
         Object tags = raw.get("tags");
         if (tags instanceof Map<?, ?> tagMap) {
@@ -429,7 +431,7 @@ public class ZapScanEngine {
                 str(raw, "evidence"),
                 str(raw, "solution"),
                 tagKeys,
-                OwaspCategory.classify(tagKeys, cwe));
+                OwaspCategory.classify(tagKeys, cwe, edition));
     }
 
     private static String str(Map<String, Object> raw, String key) {
@@ -480,7 +482,7 @@ public class ZapScanEngine {
      * @param evidence   the snippet of response that triggered the rule
      * @param solution   ZAP's suggested remediation
      * @param tags       raw ZAP tag keys
-     * @param category   the OWASP Top 10 2021 bucket this alert was classified into
+     * @param category   the OWASP Top 10 bucket this alert was classified into, per the
      */
     public record ZapAlert(
             String name,
@@ -494,18 +496,19 @@ public class ZapScanEngine {
             Set<String> tags,
             OwaspCategory category) {
 
-        /** Ranks risk so we can compare against a configured fail threshold. */
+        /** Ranks this alert's risk so it can be compared against a configured threshold. */
         public int riskRank() {
-            return switch (risk == null ? "" : risk.trim().toLowerCase()) {
+            return rankOf(risk);
+        }
+
+        /** Ranks any ZAP risk label. Used to turn {@code zap.fail.on.risk} into a number. */
+        public static int rankOf(String riskLabel) {
+            return switch (riskLabel == null ? "" : riskLabel.trim().toLowerCase()) {
                 case "high" -> 3;
                 case "medium" -> 2;
                 case "low" -> 1;
                 default -> 0; // Informational, or anything unrecognised.
             };
-        }
-
-        public static int rankOf(String riskLabel) {
-            return new ZapAlert("", riskLabel, "", -1, "", "", "", "", Set.of(), OwaspCategory.UNMAPPED).riskRank();
         }
     }
 }
