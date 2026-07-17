@@ -1216,3 +1216,65 @@ This changelog is append-only. New entries must be added chronologically and mus
   scenarios, 0 failures, ZERO undefined. Added `STAT-062`; TASK-PDP-010
   completed. (Owner also tagged 8 public features `@ProdReady` so the
   production nightly sweeps them.)
+
+## 2026-07-17
+
+### OWASP ZAP (DAST) integration + weekly schedule (STAT-040, TASK-SEC-002)
+
+- **Viability assessed first: viable, and a strong fit.** The framework already
+  solves ZAP's hardest problem (authenticated access to a JS-heavy SPA), already
+  speaks REST, already has Docker/Allure/email/scheduling rails, and ZAP has prior
+  precedent here (`docs/project_context.md:120` — earlier DAST + red-team findings
+  disclosed to devs). Built on **Rest-Assured against ZAP's REST API — no new Maven
+  dependency** — rather than pulling in `zap-clientapi`: one less thing to rot after
+  handover.
+- **New:** `docker-compose.yml` `zap` service behind a **`security` compose profile**
+  (does not start with a plain compose up); `ZapScanEngine` (spider / AJAX spider /
+  passive wait / active scan / alerts / reports / alert filters); `OwaspCategory`
+  (**ZAP tag first → CWE fallback → UNMAPPED escape hatch**); `OwaspTop10ZapScanTest`
+  (**10 category tests + 1 report-only unmapped test**); `testng-security.xml`;
+  `scripts/run-zap-scan.ps1`; `.github/workflows/security-zap-scan.yml`;
+  `docs/security-zap.md`.
+- **Schedule:** Sat `0 18 * * 6` (Sat 23:30 IST) staging = **full ACTIVE**;
+  Sun `0 18 * * 0` (Sun 23:30 IST) production = **baseline PASSIVE**. 18:00 UTC keeps
+  the run on the same day in IST and is off-peak.
+- **Production is passive-only by design**, enforced in **four independent places**
+  (prod properties, `assertProductionIsNotBeingAttacked`, workflow guard, PS1 guard).
+  An active scan on the live store could create junk orders, bill and send **real OTP
+  SMS to real customers** via Twilio, and throw attack traffic at **Razorpay, a third
+  party we have no authorisation to scan**. Override requires a deliberate
+  `-Dzap.allow.prod.active=true`. OTP/Razorpay/payment/logout excluded from the spider
+  **and** the active scanner (ZAP treats them as separate components).
+- **Verified locally from an India IP (genuine results, not Cloudflare pages):**
+  staging baseline 49 URLs → **204 alerts, 0 High** (matched ZAP's own `alertsSummary`
+  exactly: 0/10/178/16); staging + AJAX spider → **295 alerts** (JS routes the plain
+  spider misses); production baseline 285 URLs → ~4.4k alerts, **0 High after
+  filtering**; the prod interlock **hard-fails in 1.5s before any packet is sent**.
+  Remaining findings are configuration-level hardening (CSP, HSTS, anti-clickjacking,
+  `X-Content-Type-Options`, SRI), not exploits.
+- **BLK-007 raised — read before trusting a green CI run.** GitHub-hosted runners are
+  Cloudflare-challenged (same geo cause as BLK-001/ISSUE-001; `cf-bypass-check` proved
+  403 `cf-mitigated: challenge` **even with** the bypass header). ZAP would scan
+  Cloudflare's interstitial and report zero findings — for a security control that is
+  **false assurance, worse than a red build**. Workflow is therefore
+  **runner-agnostic**: `runs-on: ${{ vars.ZAP_RUNNER || 'ubuntu-latest' }}`, so a dev
+  sets one repo variable to a self-hosted India runner and the scans become real with
+  **no code change**. The workflow also probes for a challenge and emits a `::warning::`
+  so the situation is visible rather than inferred.
+- **ISSUE-009 raised + mitigated:** ZAP's "PII Disclosure" rule (10062) flagged 18 High
+  "credit card" leaks on production that were **all Shopify GIDs** (verified:
+  `gid://shopify/MediaImage/36474036551724`, `gid://shopify/Article/574019469356`).
+  Shopify's numeric GIDs are Luhn-valid and land in card-number ranges, and the rule
+  never sees the surrounding `gid://shopify/…`. Demoted to **Informational, not hidden**
+  via the new `zap.alert.filters` — a scan that cries wolf every Sunday gets switched
+  off. Trade-off documented.
+- **Bugs found and fixed by actually running it** (all four documented in
+  `docs/security-zap.md`): ZAP's port **must be identical inside and outside the
+  container** (`8090:8090`) or ZAP proxies its own API and self-inflicts a 502;
+  XML comments **cannot contain `--`** (Surefire died on `--profile` inside
+  `testng-security.xml`); the AJAX spider needs **`inScope=false` + `subtreeOnly=true`**
+  (no ZAP Context is defined, so `inScope=true` makes ZAP reject its own start URL with
+  an opaque `internal_error`); the AJAX spider browser must be **`firefox-headless`**
+  (`zaproxy/zap-stable` ships Firefox ESR, **not** Chrome). Also recorded: ZAP's JSON
+  report caps `instances` at 5 per rule, so its totals legitimately disagree with the
+  summary (36 vs the authoritative 204).

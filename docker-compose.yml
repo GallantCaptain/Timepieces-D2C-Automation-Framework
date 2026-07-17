@@ -60,6 +60,58 @@ services:
       # Must match hlm.server.url in src/test/resources/healenium.properties.
       - "7878:7878"
 
+  # --- OWASP ZAP (DAST) -----------------------------------------------------------
+  # ZAP runs as a long-lived DAEMON (no UI) exposing its REST API on 8080. The
+  # security suite (OwaspTop10ZapScanTest) talks to that API over HTTP via
+  # Rest-Assured — see ZapScanEngine — so no ZAP Java client dependency is needed.
+  #
+  # This service sits behind the "security" COMPOSE PROFILE, which means it does NOT
+  # start with a plain `docker compose up`. You must opt in:
+  #     docker compose --profile security up -d zap
+  # That keeps ZAP (a heavyweight JVM) out of everyday test runs.
+  #
+  # Flags explained (ZAP's defaults are locked down, so a daemon needs all of these):
+  #   -daemon                        : headless; no desktop UI
+  #   -host 0.0.0.0 -port 8090       : listen on all interfaces so the host/CI can reach it
+  #   api.addrs.addr.name=.* + regex : allow API calls from any address (the container is
+  #                                    only exposed to localhost via the port mapping below)
+  #   api.key                        : shared secret every API call must present. Defaults to
+  #                                    a dev value; override with ZAP_API_KEY in the environment.
+  #
+  # THE PORT MUST BE THE SAME INSIDE AND OUT ("8090:8090"), and this is not cosmetic.
+  # ZAP's single port serves BOTH its REST API and its HTTP proxy, and it tells the two
+  # apart by checking whether the request's Host header matches its own listening
+  # address:port. With a rewriting map like "8090:8080" the client sends
+  # "Host: localhost:8090" while ZAP listens on 8080, so ZAP does not recognise itself as
+  # the target, treats the API call as traffic to PROXY, and tries to forward it to
+  # localhost:8090 *inside the container* — where nothing is listening. The symptom is a
+  # baffling HTTP 502 "Connection refused" that is emitted by ZAP itself.
+  zap:
+    image: zaproxy/zap-stable
+    container_name: timepieces-zap
+    profiles: ["security"]
+    # ZAP needs a writable home; the image ships one at /zap/wrk for scan artefacts.
+    volumes:
+      - ./target/zap:/zap/wrk:rw
+    ports:
+      # Identical host:container port — see the note above before changing this.
+      - "8090:8090"
+    command: >
+      zap.sh -daemon
+      -host 0.0.0.0 -port 8090
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config api.key=${ZAP_API_KEY:-timepieces-zap-dev-key}
+      -config database.recoverylog=false
+    # ZAP takes ~20-40s to boot. The suite waits for this healthcheck rather than
+    # sleeping a fixed amount: /JSON/core/view/version/ only answers once the API is up.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf 'http://localhost:8090/JSON/core/view/version/?apikey=${ZAP_API_KEY:-timepieces-zap-dev-key}' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
 volumes:
   pgdata-dev:
   allure-reports:

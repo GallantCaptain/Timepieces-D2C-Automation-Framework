@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    OWASP ZAP (DAST) security suite.
+
+    Isolates OwaspTop10ZapScanTest so a security scan can run on its own weekly
+    schedule without dragging in the BDD browser scenarios or the API suites.
+
+    EASIEST PATH - the helper script starts the ZAP daemon, runs this suite, and opens
+    the report:
+
+        ./scripts/run-zap-scan.ps1 -Environment staging
+        ./scripts/run-zap-scan.ps1 -Environment production
+
+    RUNNING THIS SUITE DIRECTLY - the ZAP daemon must already be up. It sits behind a
+    compose profile named "security", so it does NOT start with a plain compose up; see
+    the "zap" service in docker-compose.yml for the exact command. Then:
+
+        ./mvnw test "-Dsurefire.suite=testng-security.xml" "-Denv=staging"
+        ./mvnw test "-Dsurefire.suite=testng-security.xml" "-Denv=production"
+
+    Staging defaults to a full ACTIVE scan (attack payloads; staging is disposable).
+    Production defaults to a baseline PASSIVE scan (read-only; safe against the live
+    store). The suite refuses to actively scan production - see OwaspTop10ZapScanTest
+    and docs/security-zap.md.
+
+    If ZAP is not running the suite SKIPS rather than fails: the daemon is opt-in
+    infrastructure, so a developer running everything locally does not get a red build
+    for a service they never asked for.
+
+    parallel="none" is deliberate. The scan itself is a single expensive @BeforeClass;
+    the ten category tests are cheap assertions over its in-memory results, so there is
+    nothing to gain from threads and a shared ZAP session to corrupt by trying.
+-->
+<suite name="Timepieces OWASP Top 10 Security Suite" parallel="none">
+
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
+    </listeners>
+
+    <!-- Read by BaseRunner; harmless for a pure TestNG class. OwaspTop10ZapScanTest
+         resolves its real target from the env system property via ConfigReader, not
+         from this suite parameter. -->
+    <parameter name="environment" value="staging" />
+
+    <test name="OWASP Top 10 - ZAP DAST">
+        <classes>
+            <class name="com.timepieces.automation.tdd.security.OwaspTop10ZapScanTest" />
+        </classes>
+    </test>
+</suite>

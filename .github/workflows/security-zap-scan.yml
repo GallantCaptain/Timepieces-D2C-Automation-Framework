@@ -1,0 +1,207 @@
+name: security-zap-scan
+
+# Weekly OWASP ZAP (DAST) scan of the Timepieces storefront, asserted against the
+# OWASP Top 10 (2021) by src/test/java/com/timepieces/automation/tdd/security.
+#
+# SCHEDULE (cron is UTC; times chosen so the run lands on the SAME day in IST):
+#   Saturday 18:00 UTC = Saturday 23:30 IST -> STAGING, full ACTIVE scan
+#   Sunday   18:00 UTC = Sunday   23:30 IST -> PRODUCTION, baseline PASSIVE scan
+#
+# WHY PRODUCTION IS PASSIVE-ONLY
+#   An active scan fires real SQLi/XSS/command-injection payloads at every form and
+#   endpoint it finds. Against the live store that can create junk orders, bill and
+#   send real OTP SMS to real customers via Twilio, throw attack traffic at Razorpay
+#   (a third party we are not authorised to scan), and degrade the site for shoppers.
+#   Staging is disposable, so it gets the full active scan; production gets read-only
+#   passive rules. OwaspTop10ZapScanTest refuses an active prod scan regardless of what
+#   this workflow asks for, unless zap.allow.prod.active=true is set deliberately.
+#
+# ############################################################################
+# # READ THIS BEFORE TRUSTING A GREEN RUN  (ISSUE-001 / BLK-007)             #
+# ############################################################################
+# On GitHub-hosted runners this scan DOES NOT REACH TIMEPIECES. GitHub's runners sit
+# outside India, and Cloudflare challenges them: cf-bypass-check proved that even
+# WITH the x-automation-bypass header the response is HTTP 403 cf-mitigated:challenge
+# (see docs/okf/known-issues.md ISSUE-001). ZAP would dutifully spider and scan
+# Cloudflare's "Just a moment..." interstitial and report zero vulnerabilities.
+#
+# For a functional suite a Cloudflare-blocked run is obvious noise. For a SECURITY
+# scan it is worse than useless: it looks like a clean bill of health. Do not read a
+# green run from ubuntu-latest as "no vulnerabilities" — it means "never got there".
+#
+# THE FIX (one repo variable, no code change):
+#   Provision a self-hosted runner on an India-based IP, then set the repository
+#   variable ZAP_RUNNER to its label (Settings > Secrets and variables > Actions >
+#   Variables). `runs-on` below picks it up and the scans become real.
+# ############################################################################
+
+on:
+  schedule:
+    # Saturday 23:30 IST -> staging, full active scan
+    - cron: "0 18 * * 6"
+    # Sunday 23:30 IST -> production, baseline passive scan
+    - cron: "0 18 * * 0"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      scan_mode:
+        description: "full = active attack payloads (staging only) | baseline = passive, read-only"
+        required: true
+        default: "baseline"
+        type: choice
+        options:
+          - baseline
+          - full
+
+# Never let two scans overlap: they would share the target and, on a self-hosted
+# runner, the same port 8090.
+concurrency:
+  group: security-zap-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  zap-scan:
+    # Defaults to GitHub-hosted (where Cloudflare blocks the scan — see the banner
+    # above). Devs flip the ZAP_RUNNER repo variable to a self-hosted India runner to
+    # make these scans meaningful, with no change to this file.
+    runs-on: ${{ vars.ZAP_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 60
+
+    env:
+      # Resolve env + mode from whichever trigger fired.
+      #   - Sunday cron  ("0 18 * * 0") -> production / baseline
+      #   - Saturday cron ("0 18 * * 6") -> staging / full
+      #   - manual dispatch -> whatever was chosen in the UI
+      TARGET_ENV: ${{ github.event.inputs.environment || (github.event.schedule == '0 18 * * 0' && 'production' || 'staging') }}
+      SCAN_MODE: ${{ github.event.inputs.scan_mode || (github.event.schedule == '0 18 * * 0' && 'baseline' || 'full') }}
+      ZAP_API_KEY: ${{ secrets.ZAP_API_KEY || 'timepieces-zap-ci-key' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "25"
+          cache: "maven"
+
+      # Guard rail #2 (the first lives in the Java). A workflow-level check means a
+      # mistyped manual dispatch is rejected before ZAP even starts.
+      - name: Refuse active scans against production
+        if: env.TARGET_ENV == 'production' && env.SCAN_MODE == 'full'
+        run: |
+          echo "::error::Refusing a full ACTIVE scan against PRODUCTION. Active scans send real"
+          echo "::error::attack payloads and can create orders, send real OTP SMS, and hit Razorpay."
+          echo "::error::Production is baseline/passive by design. See docs/security-zap.md."
+          exit 1
+
+      # ZAP is started with `docker run` rather than as a `services:` container because
+      # a service container cannot override the image CMD, and the daemon needs its
+      # flags (-daemon, api.addrs, api.key).
+      #
+      # The port MUST be identical inside and out ("-p 8090:8090" with "-port 8090").
+      # ZAP serves its REST API and its HTTP proxy on the same port and distinguishes
+      # them by whether the request's Host matches its own listening address:port. A
+      # rewriting map like 8090:8080 makes ZAP treat every API call as traffic to proxy
+      # and answer with a self-inflicted 502 "Connection refused". See docker-compose.yml.
+      - name: Start ZAP daemon
+        run: |
+          docker run -d --name zap -p 8090:8090 zaproxy/zap-stable \
+            zap.sh -daemon \
+              -host 0.0.0.0 -port 8090 \
+              -config api.addrs.addr.name=.* \
+              -config api.addrs.addr.regex=true \
+              -config api.key="${ZAP_API_KEY}" \
+              -config database.recoverylog=false
+          echo "ZAP container started; OwaspTop10ZapScanTest waits for its API to answer."
+
+      # Surfaces the Cloudflare problem as data in the log instead of leaving someone
+      # to infer it from a suspiciously clean report.
+      - name: Probe target reachability (Cloudflare check)
+        continue-on-error: true
+        run: |
+          URL="$([ "${TARGET_ENV}" = "production" ] && echo 'https://www.timepieces-d2c.example' || echo 'https://staging.timepieces-d2c.example')"
+          BODY="$(mktemp)"
+          CODE="$(curl -sS -o "$BODY" -w '%{http_code}' -A 'Mozilla/5.0' "$URL" || echo '000')"
+          echo "GET $URL -> HTTP $CODE"
+          if grep -qiE 'Just a moment|challenge-platform|cf-challenge' "$BODY"; then
+            echo "::warning::Cloudflare is challenging this runner. ZAP will scan the challenge"
+            echo "::warning::page, NOT Timepieces, and will report no findings. See ISSUE-001; set the"
+            echo "::warning::ZAP_RUNNER repo variable to a self-hosted India runner to fix this."
+          fi
+
+      - name: Run OWASP Top 10 ZAP scan
+        env:
+          CF_BYPASS_TOKEN: ${{ secrets.CF_BYPASS_TOKEN }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          mvn -B test \
+            -Dsurefire.suite=testng-security.xml \
+            -Denv="${TARGET_ENV}" \
+            -Dzap.scan.mode="${SCAN_MODE}" \
+            -Dzap.api.url=http://localhost:8090 \
+            -Dzap.api.key="${ZAP_API_KEY}"
+
+      - name: Dump ZAP container logs on failure
+        if: failure()
+        run: docker logs zap --tail 200 || true
+
+      - name: Stop ZAP daemon
+        if: always()
+        run: docker rm -f zap || true
+
+      - name: Generate Allure Report
+        if: always()
+        run: mvn allure:report
+
+      - name: Upload Allure Report as Artifact
+        id: upload_allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-security-${{ env.TARGET_ENV }}-${{ github.run_number }}
+          path: target/site/allure-maven-plugin/
+          retention-days: 30
+
+      # ZAP's own HTML report, uploaded separately: it is the artifact a security
+      # reviewer wants, and it stands alone without the Allure wrapper.
+      - name: Upload ZAP Report as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-${{ env.TARGET_ENV }}-${{ github.run_number }}
+          path: target/zap/
+          retention-days: 30
+
+      # No-op unless the SMTP_* repo secrets are set. Link mode (MAIL_ATTACH=false)
+      # avoids corporate .zip-attachment filters.
+      - name: Email Allure Report
+        if: always()
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_STARTTLS: ${{ secrets.SMTP_STARTTLS }}
+          SMTP_SSL: ${{ secrets.SMTP_SSL }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          RUN_SOURCE: ci
+          MAIL_ATTACH: "false"
+          REPORT_URL: ${{ steps.upload_allure.outputs.artifact-url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: python3 scripts/email_allure_report.py
