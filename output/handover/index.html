@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handover Index — Timepieces Automation Handover</title>
+<style>
+:root {
+  --ink: #1a1d24; --muted: #5a6472; --line: #e2e6ec; --bg: #ffffff;
+  --accent: #7a1f2b; --accent-soft: #f6eced; --code-bg: #f5f7fa; --code-ink: #26303b;
+  --note: #0b6bcb; --note-bg: #eef5fd; --warn: #9a6700; --warn-bg: #fdf6e3;
+  --danger: #a3271f; --danger-bg: #fbeceb; --ok: #216e39; --ok-bg: #eaf5ee;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; color: var(--ink); background: var(--bg);
+  font: 16px/1.62 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.wrap { max-width: 900px; margin: 0 auto; padding: 0 28px 96px; }
+header.doc {
+  border-bottom: 3px solid var(--accent); padding: 40px 0 22px; margin-bottom: 8px;
+}
+header.doc .kicker {
+  text-transform: uppercase; letter-spacing: .14em; font-size: 12px; font-weight: 700;
+  color: var(--accent);
+}
+header.doc h1 { font-size: 30px; line-height: 1.15; margin: 10px 0 6px; }
+header.doc .sub { color: var(--muted); font-size: 16px; margin: 0; }
+header.doc .meta { color: var(--muted); font-size: 13px; margin-top: 14px; }
+header.doc .meta a { color: var(--accent); text-decoration: none; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 26px 0 8px; }
+h4 { font-size: 15px; margin: 20px 0 6px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+p, li { color: var(--ink); }
+a { color: var(--accent); }
+code {
+  font: 13.5px/1.5 "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-ink); padding: 1.5px 5px; border-radius: 4px;
+}
+pre {
+  background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line);
+  border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.55;
+}
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); font-weight: 700; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+blockquote { margin: 14px 0; padding: 2px 16px; border-left: 3px solid var(--line); color: var(--muted); }
+.callout { border-radius: 8px; padding: 12px 16px; margin: 16px 0; border: 1px solid; font-size: 14.5px; }
+.callout p:first-child { margin-top: 0; } .callout p:last-child { margin-bottom: 0; }
+.callout .tag { font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: 12px; }
+.note   { background: var(--note-bg);   border-color: #cfe2f6; } .note .tag { color: var(--note); }
+.warn   { background: var(--warn-bg);   border-color: #f0e2b6; } .warn .tag { color: var(--warn); }
+.danger { background: var(--danger-bg); border-color: #f2cdc9; } .danger .tag { color: var(--danger); }
+.ok     { background: var(--ok-bg);     border-color: #c3e4cd; } .ok .tag { color: var(--ok); }
+.pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+  background: var(--accent-soft); color: var(--accent); }
+.toc { background: #fafbfc; border: 1px solid var(--line); border-radius: 8px; padding: 14px 20px; margin: 18px 0; }
+.toc h4 { margin: 0 0 6px; } .toc ul { margin: 0; padding-left: 18px; } .toc li { margin: 2px 0; }
+footer.doc { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 13px; }
+.crumbs { margin: 22px 0 0; font-size: 13px; }
+.crumbs a { color: var(--accent); text-decoration: none; }
+/* index */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 30px; }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 15px 17px; text-decoration: none; color: var(--ink);
+  display: block; transition: border-color .15s; }
+.card:hover { border-color: var(--accent); }
+.card .n { font-size: 12px; font-weight: 700; color: var(--accent); }
+.card .t { font-size: 16px; font-weight: 700; margin: 3px 0; }
+.card .d { font-size: 13.5px; color: var(--muted); }
+.section-h { margin: 26px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .wrap { padding: 0 16px 60px; } }
+@media print {
+  a { color: var(--ink); } pre, table, .callout { page-break-inside: avoid; }
+  header.doc { padding-top: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="kicker">Timepieces QA Automation · Handover Guide Index</div>
+  <h1>Handover Index</h1>
+  <p class="sub">Start here. Every handover guide, grouped by section.</p>
+  <p class="meta">Framework: Java 25 · Selenium 4.44 · Cucumber 7 · TestNG 7 · Updated 23 Jul 2026</p>
+</header>
+<p class="sub" style="color:var(--muted);margin:0 0 8px">Twenty guides for running, extending and handing over the Timepieces QA automation framework. Each is a standalone HTML file — open any one on its own or convert it to PDF.</p>
+<div class="section-h">Getting started</div>
+<div class="grid">
+<a class="card" href="framework-setup.html"><div class="n">Guide 17</div><div class="t">Automation Framework — Basic Setup Guide</div><div class="d">Everything a new SDET installs and configures before the first test run.</div></a>
+<a class="card" href="framework-how-to-run.html"><div class="n">Guide 18</div><div class="t">Automation Framework — How-To-Run Guide</div><div class="d">The commands that actually run the suite, locally, in Docker and in CI.</div></a>
+</div>
+<div class="section-h">Configuration &amp; data</div>
+<div class="grid">
+<a class="card" href="configuration-properties-reader.html"><div class="n">Guide 08</div><div class="t">Configuration (Properties) Reader</div><div class="d">How ConfigReader resolves every setting across CLI, environment and property files.</div></a>
+<a class="card" href="data-extraction.html"><div class="n">Guide 09</div><div class="t">Data Extraction — Excel, CSV and JSON</div><div class="d">Where test data comes from, how it is read, and how results are written back out.</div></a>
+</div>
+<div class="section-h">Execution &amp; scaling</div>
+<div class="grid">
+<a class="card" href="dataprovider-vs-invocationcount.html"><div class="n">Guide 10</div><div class="t">DataProvider vs Invocation Count — Deterministic vs Probabilistic</div><div class="d">Two different reasons to run a test more than once, and which knob to reach for.</div></a>
+<a class="card" href="cross-browser-testing.html"><div class="n">Guide 11</div><div class="t">Cross-Browser Testing</div><div class="d">Running the same scenarios on Chrome, Firefox and Edge — sequentially or in parallel.</div></a>
+<a class="card" href="selenium-grid.html"><div class="n">Guide 12</div><div class="t">Selenium Grid — and the path to cloud (BrowserStack / LambdaTest)</div><div class="d">The self-hosted Grid, how it scales, and where a cloud provider would slot in.</div></a>
+</div>
+<div class="section-h">Design &amp; comparison</div>
+<div class="grid">
+<a class="card" href="locator-strategies.html"><div class="n">Guide 06</div><div class="t">Locator Strategies</div><div class="d">How elements are found, why data-testid is preferred, and the traps that caused real failures.</div></a>
+<a class="card" href="selenium-vs-playwright.html"><div class="n">Guide 13</div><div class="t">Selenium vs Playwright — in this project</div><div class="d">How the Java/Selenium framework and the Playwright POC differ where it actually matters.</div></a>
+<a class="card" href="java-vs-typescript.html"><div class="n">Guide 14</div><div class="t">Java vs TypeScript — in this project</div><div class="d">The two language implementations of the same framework, and what changes between them.</div></a>
+</div>
+<div class="section-h">Engineering &amp; process</div>
+<div class="grid">
+<a class="card" href="okf-agentic-engineering.html"><div class="n">Guide 01</div><div class="t">OKF — Organizational Knowledge Framework for Agentic Engineering</div><div class="d">The project's durable memory: how it is structured, and how it lets AI agents build the framework across sessions.</div></a>
+<a class="card" href="architecture-decision-records.html"><div class="n">Guide 02</div><div class="t">Architecture Decision Records (ADRs)</div><div class="d">Every accepted architectural decision, its rationale, and where it lives.</div></a>
+<a class="card" href="build-history-release-notes.html"><div class="n">Guide 03</div><div class="t">Build History &amp; Release Notes</div><div class="d">The milestones that got the framework to handover, newest first.</div></a>
+<a class="card" href="cicd-pipelines.html"><div class="n">Guide 04</div><div class="t">CI/CD Pipelines</div><div class="d">The GitHub Actions workflows, what triggers them, and the secrets they need.</div></a>
+<a class="card" href="docker.html"><div class="n">Guide 05</div><div class="t">Docker</div><div class="d">The compose services, the profiles that gate them, and containerised runs.</div></a>
+<a class="card" href="healenium.html"><div class="n">Guide 07</div><div class="t">Healenium — Self-Healing Locators</div><div class="d">What self-healing does, why it is off by default, and how to turn it on safely.</div></a>
+</div>
+<div class="section-h">Dashboard</div>
+<div class="grid">
+<a class="card" href="dashboard-customization.html"><div class="n">Guide 15</div><div class="t">Dashboard — Customization Guide</div><div class="d">How to change the flows, charts, theming and data the dashboard shows.</div></a>
+<a class="card" href="dashboard-setup.html"><div class="n">Guide 16</div><div class="t">Dashboard — Setup Guide</div><div class="d">Standing up the React + Node trends dashboard locally and for deployment.</div></a>
+</div>
+<div class="section-h">Requirements</div>
+<div class="grid">
+<a class="card" href="reverse-requirements.html"><div class="n">Guide 19</div><div class="t">Reverse Requirements &amp; Traceability Matrix</div><div class="d">Requirements recovered from the live product and the test suite, mapped to the tests that verify them.</div></a>
+<a class="card" href="product-requirements.html"><div class="n">Guide 20</div><div class="t">Product Requirements Document (PRD) — to current</div><div class="d">The forward product requirements for identity, homepage and the automation framework.</div></a>
+</div>
+<footer class="doc">
+  Timepieces QA Automation Framework — Handover documentation set. Generated by
+  <code>scripts/build_handover_docs.py</code>; edit the body there and re-run rather than
+  hand-editing this HTML. Updated 23 Jul 2026.
+</footer>
+</div>
+</body>
+</html>

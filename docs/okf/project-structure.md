@@ -95,6 +95,7 @@ timepieces-automation-framework/
 | `output/pdf/Automated Search API Test Results.pdf` | Documentation generation | Generated/exported search relevance test report (2 deterministic + 10 exploratory runs); commit policy TBD unless explicitly requested |
 | `output/search-api-analysis/` | `scripts/run-search-api-analysis.ps1` | Per-run logs/reports and compiled summary/CSV; gitignored, fully regenerable |
 | `output/cheatsheet/` | `scripts/build_cheatsheet.py` | Generated test-execution cheatsheet (pdf + html); tracked |
+| `output/handover/` | `scripts/build_handover_docs.py` | 20 self-contained HTML handover guides + an index; tracked. Edit the body strings in the generator and re-run — do not hand-edit the HTML. |
 | `output/proposals/` | Documentation generation | QA infrastructure proposal (pdf + html); moved from `docs/proposals/` in the 2026-07-23 layout split (generated pdf/html live under `output/`, `.md` source under `docs/`) |
 | `dashboard/web/dist/` | Vite build | Generated artifact |
 | `dashboard/**/node_modules/` | npm install | Do not commit |
