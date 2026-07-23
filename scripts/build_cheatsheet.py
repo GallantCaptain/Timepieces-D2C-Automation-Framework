@@ -30,6 +30,7 @@ except ImportError:
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_PATH = REPO_ROOT / "Timepieces_Test_Execution_Cheatsheet.pdf"
+HTML_PATH = REPO_ROOT / "Timepieces_Test_Execution_Cheatsheet.html"
 
 # Stamped into the footer. Kept explicit rather than date.today() so a rebuild that
 # changes nothing does not churn the PDF's visible date.
@@ -102,7 +103,10 @@ Target profile is chosen with <code>-Denv=</code> (default <code>staging</code>)
 <tr><td class="k">testng-search-api.xml</td><td>Deterministic search API only (repeatable keyword sweep)</td></tr>
 <tr><td class="k">testng-exploratory.xml</td><td>Nightly probabilistic API: SearchApiExploratoryTest</td></tr>
 <tr><td class="k">testng-production.xml</td><td>ProductionRunner (@ProdReady, non-login prod-safe scope)</td></tr>
-<tr><td class="k">testng-security.xml</td><td><b>NEW</b> &mdash; OWASP ZAP DAST: OwaspTop10ZapScanTest (needs the ZAP daemon)</td></tr>
+<tr><td class="k">testng-security.xml</td><td>OWASP ZAP DAST: OwaspTop10ZapScanTest (needs the ZAP daemon &mdash; section 11)</td></tr>
+<tr><td class="k">testng-crossbrowser.xml</td><td>chrome + firefox + edge <b>CONCURRENTLY</b> in one JVM (needs the Grid &mdash; section 8)</td></tr>
+<tr><td class="k">testng-privacy-probe.xml</td><td>ISSUE-019 reproduction. <b>Expected to FAIL</b> while the bug exists &mdash; that is the point</td></tr>
+<tr><td class="k">testng-*-smoke.xml</td><td>Per-area TDD UI smoke: accessory, homepage, becomemore, timepieces-world, phase3</td></tr>
 </table>
 <p>Because <code>&lt;suiteXmlFiles&gt;</code> is configured, <code>-Dtest=ClassName</code> is
 <b>ignored</b>. Select scope with <code>-Dsurefire.suite=</code> or the Maven profiles below.</p>
@@ -155,8 +159,22 @@ Target profile is chosen with <code>-Denv=</code> (default <code>staging</code>)
 <tr><td class="k">(@Smoke or @Regression) and @Authentication</td><td>Auth scenarios that are smoke or regression</td></tr>
 </table>
 <p class="small">Live tags: @Smoke, @Regression, @Authentication, @Login, @Checkout, @Payment,
-@Wishlist, @Account, @ProdReady, @IntlPayments, @AuthGated.
+@Wishlist, @Account, @ProdReady, @IntlPayments, @AuthGated, @Accessories, @ContentPages,
+@FriendsPartners, @TimepiecesWorld, @BecomeMore.
 Opt-in: @OtpE2E (real Twilio SMS), @OtpBruteForce (security probe).</p>
+
+<h3>Environment-scope tags &mdash; use these or you WILL get false failures</h3>
+<table>
+<tr><th>Tag</th><th>Meaning &amp; why</th></tr>
+<tr><td class="k">@StagOnly</td><td><b>Cannot pass on production.</b> The staging password wall does not exist there, and production login sits behind a HUMAN-solved Cloudflare Turnstile &mdash; impossible, not flaky</td></tr>
+<tr><td class="k">@ProdOnly</td><td><b>Always hits production regardless of -Denv.</b> Timepieces World overrides getBaseUrl() to the fixed world.timepieces-d2c.example, so a staging run silently drives PROD while the report says staging</td></tr>
+<tr><td class="k">@ProdReady</td><td>NOT the same thing: a <i>permission</i> ("safe against production"), not a restriction. A scenario can carry @ProdReady AND @ProdOnly</td></tr>
+</table>
+<pre># Production run - exclude the staging-only scenarios
+./mvnw test -Denv=production "-Dcucumber.filter.tags=not @StagOnly"
+
+# Staging run - exclude the ones pinned to the production microsite
+./mvnw test -Denv=staging "-Dcucumber.filter.tags=not @ProdOnly"</pre>
 
 <h2>6 &middot; Parallelism &amp; Concurrency</h2>
 <pre># Scale up to 4 concurrent browser threads
@@ -221,6 +239,19 @@ docker compose down                            # stop everything</pre>
 
 docker compose --profile grid up -d --scale selenium-node-chrome=3   # scale by REPLICAS
 docker compose --profile grid down</pre>
+
+<h3>All three browsers AT ONCE (one JVM)</h3>
+<pre>./mvnw test -Dsurefire.suite=testng-crossbrowser.xml -Dexecution.mode=GRID \
+            -Denv=production "-Dcucumber.filter.tags=not @StagOnly"</pre>
+<p class="small"><b>Do not trust a green run</b> &mdash; the failure mode is a SILENT WRONG
+ANSWER (all three blocks running the same browser). Ask the Grid instead; each node serves
+only its own browser, so all three must report sessions:</p>
+<pre>docker compose --profile grid logs selenium-node-firefox | grep -c "Session created"</pre>
+<p class="small">A zero means that browser never ran, whatever the report says. Thread
+budget: 3 blocks x 2 threads = 6 concurrent = exactly the Grid's 6 slots. Asking for more
+makes sessions queue and time out &mdash; <b>add node replicas, not threads</b>. Expect
+Firefox to fail slightly more than Chrome: that is cross-browser testing working, not a
+broken runner. Rollback = delete the suite file.</p>
 <p class="small">Watch a live session at <b>http://localhost:4444/ui</b> (VNC password:
 <code>secret</code>). Verified 4/4 on all three browsers. <b>execution.mode</b> = local
 (default) | GRID | CLOUD. Note <b>CLOUD is a POC and ignores -Dbrowser</b> (it always runs
@@ -334,7 +365,20 @@ Variables). The workflow uses
 <code>runs-on: ${{ vars.ZAP_RUNNER || 'ubuntu-latest' }}</code>, so no code change is needed.
 Local/Docker runs from India are unaffected and give genuine results today.</div>
 
-<h2>12 &middot; Other CI Workflows</h2>
+<h2>12 &middot; Handy Scripts</h2>
+<table>
+<tr><th>Script</th><th>What it does</th></tr>
+<tr><td class="k">scripts/run-zap-scan.ps1</td><td>Starts ZAP, runs the OWASP Top 10 scan, opens the report</td></tr>
+<tr><td class="k">scripts/check_zephyr_token.py</td><td>Is a Zephyr token LIVE or revoked? Prints only an HTTP status &mdash; never the token</td></tr>
+<tr><td class="k">scripts/email_allure_report.py</td><td>Emails the Allure report (no-ops safely if SMTP is unset)</td></tr>
+<tr><td class="k">scripts/build_cheatsheet.py</td><td>Rebuilds THIS document (PDF + HTML). Edit the HTML in it, re-run, commit both</td></tr>
+<tr><td class="k">scripts/run-local-headed.ps1</td><td>One-shot headed run + report + email</td></tr>
+<tr><td class="k">scripts/run-docker-headed.ps1</td><td>CI-mirror single-browser run via Docker, headed over VNC</td></tr>
+</table>
+<pre># Verify a credential rotation actually took (the step people skip)
+ZEPHYR_TOKEN=&lt;new-token&gt; py scripts/check_zephyr_token.py    # want: HTTP 200, LIVE</pre>
+
+<h2>13 &middot; Other CI Workflows</h2>
 <table>
 <tr><th>Workflow</th><th>Trigger</th></tr>
 <tr><td class="k">staging-tests</td><td>PRs to main + nightly 20:30 UTC + manual</td></tr>
@@ -393,8 +437,76 @@ def build() -> int:
     return pages
 
 
+def build_html() -> None:
+    """
+    Writes a standalone HTML twin of the PDF, from the SAME `HTML` source string.
+
+    <p>Why bother when a PDF exists: the HTML is <b>searchable with Ctrl-F, copy-pasteable
+    without PDF line-break damage, readable on a phone, and viewable with no PDF reader</b>
+    — which matters for a document whose entire purpose is copying commands out of it.
+
+    <p>Sharing the one `HTML` constant is the point. Two hand-maintained copies would drift
+    within a week, and the stale one would be the one somebody trusted.
+
+    <p>Self-contained on purpose: the CSS is inlined and there are no external assets, so it
+    survives being emailed, dropped on a share, or opened offline.
+    """
+    # Screen-friendly overrides. The PDF CSS is tuned for print (8pt type, tight leading);
+    # the same values on a monitor are a squint. Layout/structure stay identical.
+    screen_css = """
+    body { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px;
+           font-size: 15px; line-height: 1.55;
+           font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+           color: #1a1a1a; background: #fff; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; margin-top: 30px; padding-bottom: 4px; }
+    h3 { font-size: 15px; margin-top: 16px; }
+    pre { font-size: 13px; padding: 12px; border-radius: 6px; overflow-x: auto;
+          border: 1px solid #e3e8ee; }
+    code { font-size: 13px; }
+    table { border-collapse: collapse; margin: 10px 0 16px; }
+    th, td { font-size: 13.5px; padding: 7px 10px; border-bottom: 1px solid #e3e8ee;
+             vertical-align: top; }
+    td.k { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+           white-space: nowrap; }
+    .warn, .note { border-radius: 6px; padding: 12px 14px; }
+    .small { font-size: 12.5px; }
+    /* Wide tables must scroll inside themselves rather than shoving the page sideways. */
+    table { display: block; overflow-x: auto; max-width: 100%; }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #14171a; color: #e6e6e6; }
+      h1, h2, h3 { color: #cfe3f5; }
+      h2 { border-bottom-color: #33404d; }
+      pre { background: #1c2126; color: #d7e3d9; border-color: #2b333b; }
+      code { color: #86c9a4; }
+      th { background: #1e242a; color: #cfe3f5; }
+      th, td { border-bottom-color: #2b333b; }
+      .warn { background: #2a1c1e; color: #f0b3ba; }
+      .note { background: #16241a; color: #a9dfb8; }
+      .small, p.sub { color: #9fb0c0; }
+    }
+    """
+    page = (
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n"
+        "<meta charset=\"utf-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        "<title>Timepieces Test Execution Cheatsheet</title>\n"
+        f"<style>{CSS}\n{screen_css}</style>\n"
+        "</head>\n<body>\n"
+        f"{HTML}\n"
+        "<hr style=\"margin-top:40px;border:none;border-top:1px solid #ccc\">\n"
+        f"<p class=\"small\">Timepieces Test Execution Cheatsheet &middot; updated {UPDATED} &middot; "
+        "generated by <code>scripts/build_cheatsheet.py</code> "
+        "(edit the HTML in that script and re-run &mdash; do not hand-edit this file).</p>\n"
+        "</body>\n</html>\n"
+    )
+    HTML_PATH.write_text(page, encoding="utf-8")
+
+
 if __name__ == "__main__":
     n = build()
-    size_kb = OUT_PATH.stat().st_size / 1024
-    print(f"Wrote {OUT_PATH.name}: {n} pages, {size_kb:.1f} KB (updated {UPDATED})")
-    print(f"Built {datetime.date.today().isoformat()}")
+    build_html()
+    print(f"Wrote {OUT_PATH.name}: {n} pages, {OUT_PATH.stat().st_size / 1024:.1f} KB")
+    print(f"Wrote {HTML_PATH.name}: {HTML_PATH.stat().st_size / 1024:.1f} KB")
+    print(f"(updated {UPDATED}; built {datetime.date.today().isoformat()})")
