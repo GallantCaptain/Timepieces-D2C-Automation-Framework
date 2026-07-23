@@ -1697,3 +1697,25 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Repeated a known trap while writing the suite file: XML comments cannot contain `--`, and
   Surefire reports it as a bare `SAXParseException` with a line number and no reason. It had
   already bitten `testng-security.xml`. The new file now says so explicitly in its header.
+
+### Repo root tidied: cheatsheet and keyword spreadsheet relocated
+
+- `Timepieces_Search_Keywords.xlsx` → **`src/test/resources/testdata/`**, beside
+  `search_keywords.json`, which is *derived from it*. Keeping the source-of-truth
+  spreadsheet next to its generated output is the point: the next person to wonder where
+  that JSON came from now finds the answer in the same folder.
+- `Timepieces_Test_Execution_Cheatsheet.pdf` and `.html` → **`docs/`**.
+- All three moved with `git mv`, so git records them as **renames** and the file history
+  survives.
+- **`scripts/build_cheatsheet.py` was updated in the same commit.** This was the one thing
+  that could actually bite: the generator writes to hard-coded paths, so moving the outputs
+  without moving the paths would have silently recreated a second copy at the repo root on
+  the next rebuild — and which of the two a reader opened would be a coin flip. Verified
+  after the change: outputs land in `docs/` and nothing reappears at the root.
+- **Checked the binary was not at risk.** An `.xlsx` under `src/test/resources` gets copied
+  into `target/test-classes` on every build, and Maven resource *filtering* would corrupt a
+  binary while appearing to succeed. Filtering is not enabled here, and the copy was
+  confirmed **byte-identical by md5** rather than assumed.
+- No Java, POM, workflow or script reads the spreadsheet (0 references) — the tests read the
+  derived JSON — so the move cannot affect a run. `project-structure.md` now documents both
+  new locations, including the warning not to hand-edit the generated cheatsheet.

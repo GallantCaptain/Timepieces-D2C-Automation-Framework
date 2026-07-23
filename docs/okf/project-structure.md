@@ -48,6 +48,8 @@ timepieces-automation-framework/
 | `src/test/resources/testdata/search_keywords.json` | Structured keyword matrix for storefront search API tests; derived from `Timepieces_Search_Keywords.xlsx` |
 | `testng-search-api.xml` | Committed convenience suite isolating `SearchApiTest` (deterministic search API suite) for repeated/standalone runs |
 | `scripts/run-search-api-analysis.ps1` | Runs the deterministic + exploratory search API suites a configurable number of times each and compiles a combined per-keyword pass/fail analysis |
+| `src/test/resources/testdata/Timepieces_Search_Keywords.xlsx` | **Source-of-truth** keyword spreadsheet (moved from the repo root 2026-07-23 to sit beside the JSON derived from it). Maintained monthly by the business; regenerate `search_keywords.json` from it rather than editing that JSON by hand. |
+| `docs/Timepieces_Test_Execution_Cheatsheet.pdf` / `.html` | Printable + searchable command reference (moved from the repo root 2026-07-23). **Generated** by `scripts/build_cheatsheet.py` — edit the HTML in that script and re-run; do not hand-edit either output. |
 | `src/test/resources/config/staging.properties` | Staging configuration |
 | `src/test/resources/config/production.properties` | Production configuration |
 | `src/test/resources/healenium.properties` | Healenium self-healing engine config (backend URL, recovery tries, score cap); read directly by `SelfHealingDriver`, not via `ConfigReader` |

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rebuilds Timepieces_Test_Execution_Cheatsheet.pdf from the HTML below.
+Rebuilds docs/Timepieces_Test_Execution_Cheatsheet.pdf AND .html from the HTML below.
 
 WHY THIS SCRIPT EXISTS
 ----------------------
@@ -29,8 +29,14 @@ except ImportError:
     sys.exit("PyMuPDF is required:  py -m pip install pymupdf")
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT_PATH = REPO_ROOT / "Timepieces_Test_Execution_Cheatsheet.pdf"
-HTML_PATH = REPO_ROOT / "Timepieces_Test_Execution_Cheatsheet.html"
+
+# Both outputs live in docs/ (moved there 2026-07-23 to keep the repo root clean).
+# These paths MUST stay in step with the real files: point them back at the root and the
+# next rebuild silently recreates a second, competing copy there, and whichever one a
+# reader happens to open is a coin flip.
+DOCS_DIR = REPO_ROOT / "docs"
+OUT_PATH = DOCS_DIR / "Timepieces_Test_Execution_Cheatsheet.pdf"
+HTML_PATH = DOCS_DIR / "Timepieces_Test_Execution_Cheatsheet.html"
 
 # Stamped into the footer. Kept explicit rather than date.today() so a rebuild that
 # changes nothing does not churn the PDF's visible date.
