@@ -65,12 +65,68 @@ public final class ScreenRecorderUtil {
     }
 
     /**
-     * Begins recording the primary display into an AVI keyed by
-     * {@code fileName}.
+     * Decides whether a recording would actually show the test, and says so out loud when
+     * it would not.
+     *
+     * <h2>Why this guard exists — the thing to understand about this recorder</h2>
+     * Monte records the <b>physical desktop</b>, not the browser:
+     *
+     * <pre>
+     * Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+     * Rectangle captureArea = new Rectangle(0, 0, screen.width, screen.height);
+     * </pre>
+     *
+     * A <b>headless</b> browser never paints to that desktop. So "record video" and "run
+     * headless" are not two settings that combine — turning both on gives you a video of
+     * your wallpaper while the test runs invisibly. On a 476-test suite that is hundreds of
+     * large, identical, useless files, and it is not obvious from the filenames that they
+     * are junk. Failing loudly here is much kinder than shipping that.
+     *
+     * <h2>Why {@code GraphicsEnvironment.isHeadless()} alone was not enough</h2>
+     * That flag describes the <b>JVM</b>, not the browser. On Windows or macOS with a
+     * desktop session it is {@code false} even when Chrome is running
+     * {@code --headless=new} — so the old check passed and recording proceeded anyway,
+     * capturing an empty screen. The browser's own headless flag has to be consulted too.
+     *
+     * <h2>Where video DOES work</h2>
+     * <ul>
+     *   <li><b>Headed locally</b> — {@code -Dheadless=false}. Best for debugging one test.</li>
+     *   <li><b>Docker</b> — the image ships <b>Xvfb</b>, a virtual display. Chrome runs
+     *       headed <i>inside</i> it, paints to that virtual desktop, and Monte records it
+     *       properly. This is the supported way to get video for a whole run.</li>
+     * </ul>
+     * Screenshots are unaffected either way: Selenium's {@code TakesScreenshot} asks the
+     * <i>browser</i> for its pixels, so failure screenshots keep working in headless.
+     *
+     * @param fileName the recording that was requested, for the log message
+     * @return true only if a recording would genuinely capture the browser
+     */
+    private static boolean canRecordMeaningfully(String fileName) {
+        if (GraphicsEnvironment.isHeadless()) {
+            log.warn("Headless JVM (no display available); skipping screen recording for [{}].", fileName);
+            return false;
+        }
+
+        // The browser's own headless setting — the case the old guard missed entirely.
+        if (Boolean.parseBoolean(ConfigReader.get("headless"))) {
+            log.warn("Screen recording SKIPPED for [{}]: the browser is running headless, and this "
+                    + "recorder captures the DESKTOP, not the browser — it would record an empty "
+                    + "screen. Re-run with -Dheadless=false for video locally, or use Docker, whose "
+                    + "Xvfb virtual display lets the browser paint somewhere Monte can see it. "
+                    + "Failure SCREENSHOTS are unaffected and still captured.", fileName);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Begins recording the primary display into an AVI keyed by {@code fileName}.
+     *
+     * <p>Silently does nothing when recording could not produce anything useful — see
+     * {@link #canRecordMeaningfully()}, which is the important method to read here.
      */
     public static void start(String fileName) {
-        if (GraphicsEnvironment.isHeadless()) {
-            log.warn("Headless JVM detected; skipping screen recording for [{}].", fileName);
+        if (!canRecordMeaningfully(fileName)) {
             return;
         }
         try {

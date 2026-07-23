@@ -1526,3 +1526,32 @@ This changelog is append-only. New entries must be added chronologically and mus
   the double-quit path (homepage smoke) still **4/4**, and the previously-leaking path
   (privacy probe) still reproduces the bug — **0 chromedriver processes left behind by
   either**.
+
+### Headless by default + honest video recording (STAT-073, closes ISSUE-005)
+
+- **Headless is now the DEFAULT** for both staging and production. Override with
+  `-Dheadless=false`.
+- **ISSUE-005 closed on the way.** `staging.properties` defined only `is.headless`, but
+  `DriverFactory` reads `headless` — so `ConfigReader.get("headless")` returned null,
+  `Boolean.parseBoolean(null)` was false, and **every staging run silently went HEADED**
+  regardless of what the file said. Both keys are now present, in agreement, and
+  documented as to which one actually takes effect.
+- **`recordVideo=true` in production too** — video is on for every test.
+- **The guard is the important half.** Monte records the **physical desktop**
+  (`Toolkit.getDefaultToolkit().getScreenSize()`), not the browser. A headless browser
+  never paints there, so "record video" + "run headless" do not combine: together they
+  produce a video of your wallpaper. On a 476-test suite that is hundreds of large,
+  identical, useless files whose names give no hint they are junk.
+- **Why the old check missed it:** `GraphicsEnvironment.isHeadless()` describes the **JVM**,
+  not the browser. On Windows/macOS with a desktop session it is `false` even when Chrome
+  runs `--headless=new` — so recording proceeded and captured an empty screen.
+  `canRecordMeaningfully()` now consults the browser's own headless flag as well and skips
+  with a loud, actionable warning naming both ways to get real video.
+- **Where video DOES work:** headed locally (`-Dheadless=false`), and **Docker**, whose
+  **Xvfb** virtual display gives the browser somewhere to paint that Monte can see. That
+  path already exists in the image — no new code needed.
+- **Screenshots are unaffected.** Selenium's `TakesScreenshot` asks the BROWSER for its
+  pixels, so failure screenshots keep working headless — evidenced by an earlier headless
+  run (48 headless drivers) that attached 11 screenshots.
+- **VERIFIED 2026-07-23** on a 10-scenario headless run: driver reported `headless=true`,
+  the guard fired 10/10, and `target/screen-recordings/` contained **0 files**.
