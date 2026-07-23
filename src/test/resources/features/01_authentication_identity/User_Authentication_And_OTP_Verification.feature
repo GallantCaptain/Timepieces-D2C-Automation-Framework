@@ -4,7 +4,22 @@ Feature: User Authentication and OTP Flow
   I want to securely log into the platform using my mobile number and OTP
   So that I can access my wishlist, order history, and exclusive drops
 
-  @Smoke @Login
+  # ---------------------------------------------------------------------------------
+  # KNOWN BROKEN — the developers reworked the login/OTP page on 2026-07-23 without
+  # prior notice, and this scenario has NOT been re-aligned to the new page. It is left
+  # failing ON PURPOSE, tagged @KnownBroken, for the next SDET to re-map once the new
+  # login markup settles. Do not spend time "fixing" the framework here first: confirm
+  # against the live page what changed (region dropdown, phone input, Send OTP control,
+  # and whether an OTP screen still follows) before touching the step definitions.
+  #
+  # It is deliberately NOT deleted and NOT silently excluded from runs — a visible red
+  # that names its own cause is more honest at handover than a green suite that quietly
+  # stopped testing login. See ISSUE-023.
+  #
+  # Note: the India example number here is a throwaway (7428730894), NOT anyone's real
+  # number — keep it that way.
+  # ---------------------------------------------------------------------------------
+  @Smoke @Login @KnownBroken
   Scenario Outline: Successful initialization of the Login and OTP prompt — <country>
     Given a user navigates to the Timepieces login page
     When the user selects the country "<country>" from the region dropdown

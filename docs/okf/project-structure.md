@@ -49,7 +49,7 @@ timepieces-automation-framework/
 | `testng-search-api.xml` | Committed convenience suite isolating `SearchApiTest` (deterministic search API suite) for repeated/standalone runs |
 | `scripts/run-search-api-analysis.ps1` | Runs the deterministic + exploratory search API suites a configurable number of times each and compiles a combined per-keyword pass/fail analysis |
 | `src/test/resources/testdata/Timepieces_Search_Keywords.xlsx` | **Source-of-truth** keyword spreadsheet (moved from the repo root 2026-07-23 to sit beside the JSON derived from it). Maintained monthly by the business; regenerate `search_keywords.json` from it rather than editing that JSON by hand. |
-| `docs/Timepieces_Test_Execution_Cheatsheet.pdf` / `.html` | Printable + searchable command reference (moved from the repo root 2026-07-23). **Generated** by `scripts/build_cheatsheet.py` — edit the HTML in that script and re-run; do not hand-edit either output. |
+| `output/cheatsheet/Timepieces_Test_Execution_Cheatsheet.pdf` / `.html` | Printable + searchable command reference. **Generated** by `scripts/build_cheatsheet.py` — edit the HTML in that script and re-run; do not hand-edit either output. Lives under `output/` (all generated pdf/html) not `docs/` (all `.md` source) since the 2026-07-23 layout split. |
 | `src/test/resources/config/staging.properties` | Staging configuration |
 | `src/test/resources/config/production.properties` | Production configuration |
 | `src/test/resources/healenium.properties` | Healenium self-healing engine config (backend URL, recovery tries, score cap); read directly by `SelfHealingDriver`, not via `ConfigReader` |
@@ -94,6 +94,8 @@ timepieces-automation-framework/
 | `output/pdf/cicd-pipelines-guide.pdf` | Documentation generation | Generated/exported guide: this repo's actual GitHub Actions pipelines (5 workflows) plus illustrative Jenkins/GitLab CI/CD/Azure DevOps equivalents for comparison — only GitHub Actions is implemented; commit policy TBD unless explicitly requested |
 | `output/pdf/Automated Search API Test Results.pdf` | Documentation generation | Generated/exported search relevance test report (2 deterministic + 10 exploratory runs); commit policy TBD unless explicitly requested |
 | `output/search-api-analysis/` | `scripts/run-search-api-analysis.ps1` | Per-run logs/reports and compiled summary/CSV; gitignored, fully regenerable |
+| `output/cheatsheet/` | `scripts/build_cheatsheet.py` | Generated test-execution cheatsheet (pdf + html); tracked |
+| `output/proposals/` | Documentation generation | QA infrastructure proposal (pdf + html); moved from `docs/proposals/` in the 2026-07-23 layout split (generated pdf/html live under `output/`, `.md` source under `docs/`) |
 | `dashboard/web/dist/` | Vite build | Generated artifact |
 | `dashboard/**/node_modules/` | npm install | Do not commit |
 

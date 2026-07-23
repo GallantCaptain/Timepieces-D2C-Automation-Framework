@@ -14,7 +14,7 @@ Verified sources:
 
 - `README.md`
 - `DriverFactory.java`
-- `docs/proposals/Timepieces-QA-Infrastructure-Proposal.html`
+- `output/proposals/Timepieces-QA-Infrastructure-Proposal.html`
 - `.github/workflows/test-pipeline.yml`
 
 ## Alternatives Considered

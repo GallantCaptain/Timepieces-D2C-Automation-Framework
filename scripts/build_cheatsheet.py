@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rebuilds docs/Timepieces_Test_Execution_Cheatsheet.pdf AND .html from the HTML below.
+Rebuilds output/cheatsheet/Timepieces_Test_Execution_Cheatsheet.pdf AND .html from the HTML below.
 
 WHY THIS SCRIPT EXISTS
 ----------------------
@@ -30,13 +30,15 @@ except ImportError:
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# Both outputs live in docs/ (moved there 2026-07-23 to keep the repo root clean).
-# These paths MUST stay in step with the real files: point them back at the root and the
-# next rebuild silently recreates a second, competing copy there, and whichever one a
-# reader happens to open is a coin flip.
-DOCS_DIR = REPO_ROOT / "docs"
-OUT_PATH = DOCS_DIR / "Timepieces_Test_Execution_Cheatsheet.pdf"
-HTML_PATH = DOCS_DIR / "Timepieces_Test_Execution_Cheatsheet.html"
+# Both outputs live in output/cheatsheet/ (moved 2026-07-23: docs/ holds .md SOURCE, and
+# output/ holds every GENERATED binary — pdf/html — so the two never mix). These paths MUST
+# stay in step with the real files: point them somewhere else and the next rebuild silently
+# recreates a second, competing copy, and whichever one a reader opens is a coin flip.
+# mkdir(parents, exist_ok) so a fresh clone that has not run this yet still builds.
+OUT_DIR = REPO_ROOT / "output" / "cheatsheet"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+OUT_PATH = OUT_DIR / "Timepieces_Test_Execution_Cheatsheet.pdf"
+HTML_PATH = OUT_DIR / "Timepieces_Test_Execution_Cheatsheet.html"
 
 # Stamped into the footer. Kept explicit rather than date.today() so a rebuild that
 # changes nothing does not churn the PDF's visible date.
