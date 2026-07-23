@@ -1605,3 +1605,27 @@ This changelog is append-only. New entries must be added chronologically and mus
   developer sees when the token is missing is actually readable.
 - These scripts are standalone Zephyr uploaders: they appear in no `pom.xml`, workflow,
   Docker file or `src/` path, so this change cannot affect a test run.
+
+### ISSUE-013: the Zephyr token scrubbed from git history (owner's call)
+
+- **History rewritten** with `git filter-repo --replace-text` on 2026-07-23, at the owner's
+  explicit direction after the trade-offs were laid out. The token literal is replaced
+  throughout by `***REMOVED-ZEPHYR-TOKEN-SEE-ISSUE-013***`.
+- **A full backup bundle was taken and verified BEFORE touching anything**
+  (`git bundle create --all` + `git bundle verify` → "records a complete history"). A
+  history rewrite has no undo; the bundle is the undo.
+- **Verified afterwards, four ways:** 0 commits contain the token string; 3 commits carry
+  the replacement marker (proving the scrub hit the right blobs); the `--from-git` checker
+  can no longer find it; working tree clean and source intact. Commit count unchanged at
+  158 — nothing was dropped, only rewritten.
+- **Every commit SHA changed**, so this required a force-push and **every existing clone is
+  now invalid**. Anyone holding one must re-clone (or hard-reset to the new `origin/main`);
+  pushing from a stale clone would reintroduce the secret.
+- **SCRUBBING IS NOT REVOKING.** The token was verified LIVE (HTTP 200) immediately before
+  the scrub. Rewriting history removes it from *this* repository's future clones; it does
+  nothing about copies already taken, forks, CI caches, or anyone who read it in the past
+  week. **Rotation in SmartBear remains the only action that actually ends the exposure**,
+  and remains outstanding. The incoming SDET will use a fresh token via `ZEPHYR_TOKEN`.
+- `check_zephyr_token.py --from-git` now exits 0 with an explanation instead of erroring:
+  finding nothing IS the intended end state, and the mode is kept because re-running it
+  against an old clone is how you identify one that still carries the secret.

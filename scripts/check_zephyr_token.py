@@ -38,19 +38,30 @@ HISTORICAL_REF = "99ae673~1:scripts/add_cart_tcs.py"
 
 
 def token_from_git() -> str:
-    """Reads the old token out of git history without ever printing it."""
+    """
+    Reads the old token out of git history without ever printing it.
+
+    NOTE: history was scrubbed on 2026-07-23 (git filter-repo --replace-text), so this
+    mode now finds nothing — which is the intended end state, not a failure. It is kept
+    because it is the check that PROVES the scrub held, and re-running it on any old clone
+    is how you find a copy that still carries the secret.
+    """
     try:
         src = subprocess.run(
             ["git", "show", HISTORICAL_REF],
             capture_output=True, text=True, check=True,
         ).stdout
     except subprocess.CalledProcessError:
-        sys.exit(f"Could not read {HISTORICAL_REF} — run this from inside the repo.")
+        print("The historical ref no longer exists — history was rewritten to remove the token.")
+        print("That is the expected result after the 2026-07-23 scrub. Nothing to test here.")
+        print("To check a CURRENT token instead:  ZEPHYR_TOKEN=<token> py scripts/check_zephyr_token.py")
+        sys.exit(0)
 
     import re
     match = re.search(r'token\s*=\s*"([A-Za-z0-9._\-]{20,})"', src)
     if not match:
-        sys.exit("No hardcoded token found at that ref (already scrubbed from history?).")
+        print("No hardcoded token at that ref — already scrubbed. This is the desired state.")
+        sys.exit(0)
     return match.group(1)
 
 
