@@ -1,5 +1,6 @@
 import urllib.request
 import json
+import os
 import sys
 
 def create_testcase(token, payload):
@@ -62,7 +63,10 @@ def add_testscript(token, key, bdd_text):
         return False
 
 def main():
-    token = "***REMOVED-ZEPHYR-TOKEN-SEE-ISSUE-013***"
+    token = os.environ.get("ZEPHYR_TOKEN")
+    if not token:
+        print("ZEPHYR_TOKEN env var not set - aborting (no push).", file=sys.stderr)
+        sys.exit(2)
     
     testcases_to_add = [
         {

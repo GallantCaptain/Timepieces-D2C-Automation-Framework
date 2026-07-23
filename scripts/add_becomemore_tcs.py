@@ -197,7 +197,7 @@ TESTCASES = [
 def main():
     token = os.environ.get("ZEPHYR_TOKEN")
     if not token:
-        print("ZEPHYR_TOKEN env var not set — aborting (no push).", file=sys.stderr)
+        print("ZEPHYR_TOKEN env var not set - aborting (no push).", file=sys.stderr)
         sys.exit(2)
 
     only = os.environ.get("ONLY")

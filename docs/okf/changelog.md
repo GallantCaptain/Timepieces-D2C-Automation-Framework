@@ -1582,3 +1582,26 @@ This changelog is append-only. New entries must be added chronologically and mus
   the ISSUE-020 failure mode fixed the same week. The safe pattern is already in use in
   `docker/entrypoint.sh:34` (`for browser in $BROWSERS`). Deferring a refactor whose
   failure mode is a *plausible-looking wrong answer* is the right call days before handover.
+
+### ISSUE-013 — Zephyr token removed from HEAD (rotation still required)
+
+- The hardcoded Zephyr Scale API bearer token is gone from `scripts/add_cart_tcs.py`,
+  `add_checkout_tcs.py`, `add_payment_tcs.py`, `add_retention_tcs.py`. All ten
+  `add_*_tcs.py` scripts now read `os.environ.get("ZEPHYR_TOKEN")` and abort with exit 2
+  when it is unset — the pattern the newer scripts already used, copied verbatim rather
+  than reinvented so all ten behave identically.
+- **Verified:** all ten compile; **zero** literal token assignments remain anywhere in
+  `scripts/`; running one without the env var aborts cleanly (exit 2) **without making a
+  network call**.
+- **THE TOKEN IS STILL IN GIT HISTORY AND STILL LIVE. Rotating it in SmartBear remains
+  REQUIRED and is the only action that actually ends the exposure.** Removing it from HEAD
+  narrows future copying; it does not un-leak a credential that is already public.
+- **History was deliberately NOT rewritten.** Force-pushing a `filter-repo` rewrite breaks
+  every existing clone of a shared repo, and it buys nothing once the credential is known
+  to have leaked — rotation is the fix, not archaeology.
+- Fixed a cosmetic defect while there: the abort message used an **em-dash**, which renders
+  as `?` on a Windows cp1252 console — the same mojibake already fixed once in
+  `email_allure_report.py`. Replaced with a hyphen in all ten scripts, so the one message a
+  developer sees when the token is missing is actually readable.
+- These scripts are standalone Zephyr uploaders: they appear in no `pom.xml`, workflow,
+  Docker file or `src/` path, so this change cannot affect a test run.
