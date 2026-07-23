@@ -97,11 +97,17 @@ public class IntlPaymentSteps {
     public void the_razorpay_payment_options_offer_only_cards_and_apple_pay() {
         RazorpayModalComponent razorpay = new RazorpayModalComponent(driver);
         razorpay.waitForModalOpen().switchToCheckoutFrame().selectPaymentMethod("Cards");
-        boolean intlMode = razorpay.isInternationalPaymentOptionsMode();
+        // Collect WHICH conditions failed while we are still inside the iframe — once we
+        // switch back to the storefront the modal's DOM is unreachable, so a bare boolean
+        // would leave nothing to diagnose from.
+        java.util.List<String> problems = razorpay.describeInternationalPaymentOptionsMode();
+        boolean intlMode = problems.isEmpty();
         razorpay.switchBackToStorefront();
         assertThat(intlMode)
                 .as("International Payment Options must offer ONLY cards + Apple Pay "
-                        + "(no UPI/EMI/Netbanking/Wallet)").isTrue();
+                        + "(no UPI/EMI/Netbanking/Wallet). What was actually wrong:%n  - %s",
+                        String.join(String.format("%n  - "), problems))
+                .isTrue();
     }
 
     @When("the user exits the Razorpay modal via the exit confirmation")

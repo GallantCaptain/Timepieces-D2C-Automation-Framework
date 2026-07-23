@@ -46,8 +46,11 @@ import lombok.extern.log4j.Log4j2;
  * <li><b>INTERNATIONAL:</b> "Slide to Pay" routes to the Timepieces
  * {@code /checkout} Delivery Information page; "Proceed to Payment" opens
  * this modal in a streamlined "Payment Options" mode whose rail holds ONLY
- * Recommended + Cards (UPI/EMI/Netbanking/Wallet are absent — verified);
- * the Cards pane offers Saved Cards, <b>Apple Pay</b> and "Add a new card"
+ * <b>Cards</b> (UPI/EMI/Netbanking/Wallet are absent — verified 2026-07-23;
+ * an earlier revision of this spec also claimed "Recommended", which is NOT
+ * shown internationally and made the check fail against a perfectly correct
+ * modal); the Cards pane offers Saved Cards, <b>Apple Pay</b> and an
+ * "Add a new card" SECTION — a heading above the card fields, not a button
  * (card form inputs carry {@code name="card.*"} attributes, no testids).</li>
  * <li><b>CLOSE SEMANTICS (verified):</b> esc/cancel do not close it; the X
  * ({@code checkout-close}) opens an EXIT-CONFIRMATION dialog — "Yes, exit"
@@ -180,6 +183,14 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     // --- International Cards pane: Apple Pay + add-a-new-card ---
     private final By applePayButton = By.xpath("//button[contains(normalize-space(),'Apple Pay')]"); // text-anchor (no testid)
     private final By addNewCardButton = By.xpath("//button[contains(normalize-space(),'Add a new card')]"); // text-anchor (no testid)
+    // "Add a new card" as it actually renders in the INTERNATIONAL pane: a section heading
+    // above the card-entry fields, NOT a button. Verified 2026-07-23 — the button locator
+    // above matched 0 nodes there while Apple Pay matched fine (so the pane had loaded and
+    // we were in the right frame; only the control type was wrong). The card-number field
+    // is the meaningful proof that cards are actually payable, so it is accepted too.
+    private final By addNewCardSection = By.xpath(
+            "//*[contains(normalize-space(),'Add a new card')]"
+                    + " | //input[contains(@placeholder,'Card Number') or contains(@placeholder,'Card number')]");
     private final By cardNumberInput = By.cssSelector("input[name='card.number']"); // name attr (no testid)
     private final By cardExpiryInput = By.cssSelector("input[name='card.expiry']"); // name attr (no testid)
     private final By cardCvvInput = By.cssSelector("input[name='card.cvv']"); // name attr (no testid)
@@ -606,16 +617,78 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
      * @return true if the international mode renders correctly.
      */
     public boolean isInternationalPaymentOptionsMode() {
-        boolean railLimited = !driver.findElements(methodsRail).isEmpty()
-                && isPaymentMethodOffered("Recommended")
-                && isPaymentMethodOffered("Cards")
-                && driver.findElements(railUpi).isEmpty()
-                && driver.findElements(railEmi).isEmpty()
-                && driver.findElements(railNetbanking).isEmpty()
-                && driver.findElements(railWallet).isEmpty();
-        boolean cardsPane = !driver.findElements(applePayButton).isEmpty()
-                && !driver.findElements(addNewCardButton).isEmpty();
-        return railLimited && cardsPane;
+        return describeInternationalPaymentOptionsMode().isEmpty();
+    }
+
+    /**
+     * V.12a The same check as {@link #isInternationalPaymentOptionsMode()}, but it reports
+     * WHICH parts are wrong instead of collapsing everything to a single boolean.
+     *
+     * <p>Worth the extra method. This assertion has seven independent conditions and a bare
+     * "expected true but was false" tells you nothing about which one fired — you cannot
+     * tell "the modal never opened" from "UPI is unexpectedly present" from "the rail is
+     * fine but Apple Pay is missing", and those need completely different fixes. It also
+     * runs inside a cross-origin iframe you cannot inspect after the fact, so the failure
+     * message is the only evidence you get.
+     *
+     * <p>Call it only while switched INTO the Razorpay checkout frame.
+     *
+     * @return an empty list when the modal is in international mode; otherwise one entry
+     *         per condition that failed, ready to paste into an assertion message.
+     */
+    public java.util.List<String> describeInternationalPaymentOptionsMode() {
+        java.util.List<String> problems = new java.util.ArrayList<>();
+
+        if (driver.findElements(methodsRail).isEmpty()) {
+            // Everything below is meaningless without the rail, so say so and stop —
+            // seven cascading "missing" lines would just bury the real cause.
+            problems.add("the payment-method rail (div[data-testid='nav-sidebar']) is not present at all — "
+                    + "the modal may not have finished loading, or we are not inside the Razorpay iframe");
+            return problems;
+        }
+
+        // Expected PRESENT.
+        if (!isPaymentMethodOffered("Cards")) {
+            problems.add("'Cards' is missing from the rail");
+        }
+        // NOTE: 'Recommended' is deliberately NOT required here.
+        //
+        // The class spec used to claim the international rail holds "Recommended + Cards".
+        // It does not: verified against production on 2026-07-23, the rail shows CARDS
+        // ONLY. Everything else in this check passed at the same time — Cards present,
+        // UPI/EMI/Netbanking/Wallet all absent, Apple Pay found — so the modal was in
+        // international mode exactly as the owner's rule describes, and the test was
+        // failing purely because it demanded a rail entry the product does not show.
+        //
+        // Requiring it also made the assertion WEAKER in spirit, not stronger: the rule is
+        // "ONLY cards + Apple Pay", and Cards-only satisfies that more strictly than
+        // Recommended + Cards would.
+
+        // Expected ABSENT — these are the domestic-only methods.
+        if (!driver.findElements(railUpi).isEmpty()) {
+            problems.add("UPI is offered but must not be");
+        }
+        if (!driver.findElements(railEmi).isEmpty()) {
+            problems.add("EMI is offered but must not be");
+        }
+        if (!driver.findElements(railNetbanking).isEmpty()) {
+            problems.add("Netbanking is offered but must not be");
+        }
+        if (!driver.findElements(railWallet).isEmpty()) {
+            problems.add("Wallet is offered but must not be");
+        }
+
+        // The Cards pane itself.
+        if (driver.findElements(applePayButton).isEmpty()) {
+            problems.add("the Apple Pay button is missing from the Cards pane");
+        }
+        // Matched as a SECTION, not a button — see addNewCardSection. In the international
+        // pane "Add a new card" is a heading above the Card Number / MM-YY / CVV fields,
+        // so the button locator found nothing even though the card form was right there.
+        if (driver.findElements(addNewCardSection).isEmpty()) {
+            problems.add("the 'add a new card' card-entry block is missing from the Cards pane");
+        }
+        return problems;
     }
 
     /**
