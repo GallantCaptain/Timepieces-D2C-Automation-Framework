@@ -1719,3 +1719,47 @@ This changelog is append-only. New entries must be added chronologically and mus
 - No Java, POM, workflow or script reads the spreadsheet (0 references) — the tests read the
   derived JSON — so the move cannot affect a run. `project-structure.md` now documents both
   new locations, including the warning not to hand-edit the generated cheatsheet.
+
+### The Grid command could not start the Grid (ISSUE-021, later same day)
+
+- **Reported as "cross-browser is not working, please roll it back". It was not the
+  cross-browser code.** A run of the documented cross-browser command failed **15/15**, every
+  one of them `SessionNotCreatedException` — "GRID driver initialization failed. Is the hub
+  up?". `docker ps` showed **zero containers**: the hub genuinely was not there.
+- **Root cause is one missing line in `docker-compose.yml`.** `healenium-postgres` and
+  `hlm-backend` carried **no `profiles:` key**, and in Compose *no profile means start with
+  everything* — so `docker compose --profile grid up -d` tried to pull them alongside the
+  Grid. `healenium/hlm-backend:latest` **no longer resolves on Docker Hub**, and a failed pull
+  **aborts the entire `up`**, so not one Grid container started. The operator was shown a pull
+  error naming a self-healing library they had never enabled, and then a wall of red from a
+  feature that had nothing to do with it.
+- The file's own comment claimed neither container "starts unless you explicitly bring this
+  compose file up AND set `healenium.enabled=true`". The second half was true; the first half
+  was **not**, and had not been true since the services were added. DEC-0010 intended these to
+  be opt-in — the intent was documented, the profile was never written.
+- **Fix:** `profiles: ["healenium"]` on both services, matching `zap` (`security`) and the
+  Grid (`grid`). Opting in is now `docker compose --profile healenium up -d` **plus**
+  `-Dhealenium.enabled=true`. Verified: `docker compose --profile grid up -d` exits **0**, and
+  `--profile grid config --services` lists the hub and three nodes and no Healenium.
+- **DEC-0014 was NOT rolled back, because the evidence says it works.** The rollback was
+  requested on the reasonable reading that the new cross-browser feature had broken the run.
+  Two independent checks contradict that, and both come from the failed run itself rather than
+  from re-running until it looked better:
+  - The 15 dead sessions requested **5 chrome, 5 firefox, 5 MicrosoftEdge**. The thread-local
+    browser pin had already done its job; the caps are built *before* the session is
+    requested, so they record what each thread asked for even though the hub refused. Had the
+    pin been racing on a JVM-global value — the exact failure this design exists to prevent —
+    all 15 would have named the same browser.
+  - With the hub up, the same command re-run gave **10 sessions on each of the three nodes**
+    (5 scenarios + 5 retries per browser), and each node serves only its own browser. That is
+    the oracle the DEC-0014 entry demands: not a green report, but the Grid's own account of
+    what it ran.
+- Remaining reds are pre-existing and unrelated to browser or Grid: a deliberate
+  `PendingException` (bag pre-seeding), `InvalidCookieDomain` on the API-token injection
+  scenario, the known-flaky footer new-tab test, and Cloudflare on the OTP scenarios
+  (ISSUE-001).
+- **Lesson worth keeping.** A rollback request is a report of a *symptom*. The symptom was
+  real and the reasoning was sound; the cause was two containers away from the thing being
+  blamed. Reverting would have deleted a working feature, left the actual defect in place, and
+  the very next `--profile grid up` would have failed exactly the same way — with the evidence
+  that pointed at the real cause now gone from the tree.

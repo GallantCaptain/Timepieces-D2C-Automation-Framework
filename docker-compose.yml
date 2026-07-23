@@ -32,11 +32,24 @@ services:
   # Two services below are the minimum Healenium stack: hlm-backend (the REST
   # service SelfHealingDriver talks to — see healenium.properties' hlm.server.url)
   # and its own dedicated Postgres database (kept separate from postgres-dev above,
-  # which stores unrelated test-run metrics, not locator-healing data). Neither
-  # container starts unless you explicitly bring this compose file up AND set
-  # healenium.enabled=true in the framework config — see DriverFactory.java.
+  # which stores unrelated test-run metrics, not locator-healing data).
+  #
+  # BOTH SIT BEHIND THE "healenium" PROFILE, and that is load-bearing rather than
+  # tidiness. They previously had no profile, which in Compose means "start with
+  # everything" — so `docker compose --profile grid up -d` tried to pull them too.
+  # `healenium/hlm-backend:latest` no longer resolves upstream ("not found"), and a
+  # failed pull aborts the WHOLE command, so the documented Grid command died before
+  # a single Grid container started. The operator saw a pull error about a
+  # self-healing library they had never enabled, no hub, and then 15/15 tests failing
+  # with SessionNotCreatedException — a chain that reads like "cross-browser is
+  # broken" when nothing about cross-browser was wrong. Found 2026-07-23.
+  #
+  # Healenium is opt-in twice over, and both opt-ins are required:
+  #     docker compose --profile healenium up -d      (start the backend)
+  #     ./mvnw test -Dhealenium.enabled=true          (make DriverFactory use it)
   healenium-postgres:
     image: postgres:13
+    profiles: ["healenium"]
     container_name: timepieces-healenium-postgres
     environment:
       POSTGRES_DB: healenium
@@ -46,7 +59,11 @@ services:
       - healenium-pgdata:/var/lib/postgresql/data
 
   hlm-backend:
+    # NOTE: the ":latest" tag does not currently resolve on Docker Hub. Healenium is
+    # disabled by default (DEC-0010), so this is inert until someone opts in — but
+    # whoever does will need to pin a tag that exists before this service will start.
     image: healenium/hlm-backend:latest
+    profiles: ["healenium"]
     container_name: timepieces-healenium-backend
     depends_on:
       - healenium-postgres

@@ -161,6 +161,22 @@ it reported success while running Chrome every time.
 **"GRID driver initialization failed. Is the hub up?"** — the hub is not running or is not
 reachable. `docker compose --profile grid up -d`, then open http://localhost:4444/ui.
 
+**The `up` command itself fails with `healenium/hlm-backend:latest: not found`** — fixed on
+2026-07-23; if you see it, you are on an older checkout. The two Healenium services carried
+no Compose profile, and *no profile means start with everything*, so the Grid command tried
+to pull them as well. That tag no longer resolves upstream, and **one failed pull aborts the
+entire `up`** — so no hub started, and the run that followed failed every scenario with
+`SessionNotCreatedException`. Worth recognising as a shape: a missing image for a feature you
+never enabled, surfacing as "cross-browser is broken". Both services now sit behind
+`--profile healenium`.
+
+**Sanity-check what a command will actually start** before blaming the framework:
+
+```powershell
+docker compose --profile grid config --services   # expect: hub + 3 nodes (+ allure, postgres-dev)
+curl http://localhost:4444/status                 # expect: "ready": true and 3 nodes
+```
+
 **Hub is up but sessions queue forever** — no node matches the requested browser. Check the
 UI: the requested `browserName` must appear in the registered stereotypes.
 
