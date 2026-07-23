@@ -12,6 +12,13 @@ The repo has two parts:
    trends/history and trigger predefined flows on demand. See
    [dashboard/README.md](dashboard/README.md).
 
+> **New here? Start with the handover guides.** Twenty self-contained HTML guides —
+> setup, how-to-run, configuration, locator strategy, cross-browser, the Selenium Grid,
+> the OKF, the dashboard, requirements and more — live in
+> [`output/handover/`](output/handover/index.html) (open `index.html`). They are generated
+> by [`scripts/build_handover_docs.py`](scripts/build_handover_docs.py); edit the body
+> strings there and re-run rather than hand-editing the HTML.
+
 ---
 
 ## Tech stack
