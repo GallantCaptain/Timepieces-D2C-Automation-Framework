@@ -33,7 +33,7 @@ OUT_PATH = REPO_ROOT / "Timepieces_Test_Execution_Cheatsheet.pdf"
 
 # Stamped into the footer. Kept explicit rather than date.today() so a rebuild that
 # changes nothing does not churn the PDF's visible date.
-UPDATED = "17 Jul 2026"
+UPDATED = "23 Jul 2026"
 
 CSS = """
 * { font-family: sans-serif; }
@@ -206,7 +206,26 @@ automatically.</p>
 docker compose up -d allure                    # live report browser at http://localhost:5252
 docker compose up -d healenium-postgres hlm-backend   # self-healing locators (healenium.enabled=true)
 docker compose --profile security up -d zap    # ZAP daemon on :8090 (profile = does NOT autostart)
+docker compose --profile grid up -d            # Selenium Grid hub + chrome/firefox/edge nodes
 docker compose down                            # stop everything</pre>
+
+<h3>Selenium Grid &mdash; real cross-browser, no local browsers needed</h3>
+<pre>docker compose --profile grid up -d            # hub :4444 + chrome/firefox/edge nodes
+./mvnw test -Dexecution.mode=GRID -Dbrowser=firefox -Denv=production
+
+# Cross-browser: clean ONLY on the first, so Allure merges all three into one report
+./mvnw clean test -Dexecution.mode=GRID -Dbrowser=chrome  -Denv=production
+./mvnw test       -Dexecution.mode=GRID -Dbrowser=firefox -Denv=production
+./mvnw test       -Dexecution.mode=GRID -Dbrowser=edge    -Denv=production
+./mvnw allure:report
+
+docker compose --profile grid up -d --scale selenium-node-chrome=3   # scale by REPLICAS
+docker compose --profile grid down</pre>
+<p class="small">Watch a live session at <b>http://localhost:4444/ui</b> (VNC password:
+<code>secret</code>). Verified 4/4 on all three browsers. <b>execution.mode</b> = local
+(default) | GRID | CLOUD. Note <b>CLOUD is a POC and ignores -Dbrowser</b> (it always runs
+Chrome) &mdash; use GRID for cross-browser. The old <code>execution.target</code> key was
+dead config and has been removed. Full guide: <code>docs/selenium-grid.md</code>.</p>
 
 <h2>9 &middot; Reports: View, Host &amp; Email</h2>
 <p>Runs write raw results to <code>target/allure-results/</code>; failure screenshots and inline

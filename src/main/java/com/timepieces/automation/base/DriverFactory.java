@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -77,6 +78,74 @@ public class DriverFactory {
     }
     if (executionMode == null) {
       executionMode = "local";
+    }
+
+    // --- SELF-HOSTED SELENIUM GRID -------------------------------------------------
+    // Opt in with -Dexecution.mode=GRID against the hub from docker-compose
+    // (`docker compose --profile grid up -d`).
+    //
+    // Deliberately a SEPARATE branch from CLOUD rather than a flag on it. The CLOUD path
+    // is LambdaTest-shaped: it attaches an LT:Options capability block and hardcodes
+    // platform/version/build-name, none of which a self-hosted hub wants. Bolting a
+    // second provider onto that branch would have produced a method that serves two
+    // masters badly.
+    //
+    // It also HONOURS -Dbrowser, which the CLOUD branch does not — that one always builds
+    // ChromeOptions, so "cross-browser in the cloud" silently ran Chrome three times.
+    // Cross-browser is the whole reason to stand up a Grid, so it had to work here.
+    if (executionMode.equalsIgnoreCase("GRID")) {
+      String hubUrl = firstNonBlank(
+          System.getProperty("grid.hub.url"),
+          System.getenv("GRID_HUB_URL"),
+          ConfigReader.get("grid.hub.url"),
+          "http://localhost:4444/wd/hub");
+      try {
+        // Same options objects as a local run, so flags stay consistent across modes:
+        // the anti-bot flags, the window size and the password-manager suppression all
+        // apply on the node exactly as they do locally.
+        String target = resolveGridBrowser(browser);
+        MutableCapabilities options = switch (target) {
+          case "firefox" -> {
+            FirefoxOptions firefoxOptions = new FirefoxOptions();
+            firefoxOptions.addPreference("dom.webdriver.enabled", false);
+            firefoxOptions.addPreference("useAutomationExtension", false);
+            if (isHeadless) {
+              firefoxOptions.addArguments("--headless");
+            }
+            yield firefoxOptions;
+          }
+          case "edge" -> {
+            EdgeOptions edgeOptions = new EdgeOptions();
+            applyChromiumStabilityFlags(edgeOptions, true);
+            if (isHeadless) {
+              edgeOptions.addArguments("--headless=new");
+            }
+            yield edgeOptions;
+          }
+          default -> {
+            ChromeOptions chromeOptions = new ChromeOptions();
+            // --no-sandbox is REQUIRED on the grid nodes: they run as a non-root user in
+            // a container, where Chrome's sandbox cannot initialise.
+            applyChromiumStabilityFlags(chromeOptions, true);
+            if (isHeadless) {
+              chromeOptions.addArguments("--headless=new");
+            }
+            yield chromeOptions;
+          }
+        };
+
+        log.info("Initializing RemoteWebDriver (GRID mode) browser={} against hub {}", target, hubUrl);
+        WebDriver driver = new RemoteWebDriver(new java.net.URL(hubUrl), options);
+        applyCloudflareBypassHeader(driver);
+        driver = wrapWithHealenium(driver);
+        tlDriver.set(driver);
+        return getDriver();
+      } catch (Exception e) {
+        log.error("Failed to initialize RemoteWebDriver for GRID mode against {}: {}", hubUrl, e.getMessage(), e);
+        throw new RuntimeException(
+            "GRID driver initialization failed. Is the hub up? Start it with:"
+                + " docker compose --profile grid up -d   (then check http://localhost:4444/ui)", e);
+      }
     }
 
     if (executionMode.equalsIgnoreCase("CLOUD")) {
@@ -301,6 +370,65 @@ public class DriverFactory {
   // Not a CAPTCHA bypass — a hostile challenge still blocks — but it gives
   // managed
   // challenges a fighting chance of auto-passing.
+  /**
+   * Returns the first argument that is neither null nor blank.
+   *
+   * <p>Exists to collapse the four-step null ladder the CLOUD branch above repeats three
+   * times (system property → env var → config file → default). Same precedence, one line.
+   *
+   * @param candidates values in priority order
+   * @return the first usable value, or null if every candidate was blank
+   */
+  private static String firstNonBlank(String... candidates) {
+    for (String candidate : candidates) {
+      if (candidate != null && !candidate.isBlank()) {
+        return candidate.trim();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Maps the configured browser onto one the Grid can actually serve.
+   *
+   * <p>The compose file registers chrome, firefox and edge nodes. Two values need
+   * translating rather than passing straight through:
+   * <ul>
+   *   <li><b>brave</b> — a real local browser here, but there is no Brave grid node, so it
+   *       runs as Chrome (Brave IS Chromium; the difference is shields and branding, which
+   *       these tests do not exercise).</li>
+   *   <li><b>safari</b> — no WebKit node exists either. It falls back the same way the
+   *       local path does, via {@code safari.fallback.browser}, so behaviour is consistent
+   *       across modes rather than silently different on the Grid.</li>
+   * </ul>
+   * Both substitutions are LOGGED. A report that quietly claims Safari coverage it does not
+   * have is worse than one that admits the gap — the same reasoning as the local Safari
+   * fallback this mirrors.
+   *
+   * @param browser the configured browser name, possibly null
+   * @return one of chrome | firefox | edge
+   */
+  private static String resolveGridBrowser(String browser) {
+    String requested = (browser == null || browser.isBlank()) ? "chrome" : browser.trim().toLowerCase();
+    switch (requested) {
+      case "firefox":
+      case "edge":
+      case "chrome":
+        return requested;
+      case "brave":
+        log.info("GRID: 'brave' has no grid node; running as chrome (Brave is Chromium-based).");
+        return "chrome";
+      case "safari":
+        String fallback = resolveSafariFallbackBrowser();
+        log.warn("GRID: 'safari' has no WebKit node; SUBSTITUTING '{}'. This is NOT real Safari "
+            + "coverage — see the Playwright/WebKit plan in the OKF.", fallback);
+        return "brave".equals(fallback) ? "chrome" : fallback;
+      default:
+        log.warn("GRID: unrecognised browser '{}'; defaulting to chrome.", requested);
+        return "chrome";
+    }
+  }
+
   private static void applyChromiumStabilityFlags(ChromiumOptions<?> options, boolean disableSandbox) {
     options.addArguments("--disable-dev-shm-usage");
     options.addArguments("--window-size=1920,1080");

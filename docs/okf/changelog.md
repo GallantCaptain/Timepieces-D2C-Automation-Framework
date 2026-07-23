@@ -1629,3 +1629,32 @@ This changelog is append-only. New entries must be added chronologically and mus
 - `check_zephyr_token.py --from-git` now exits 0 with an explanation instead of erroring:
   finding nothing IS the intended end state, and the mode is kept because re-running it
   against an old clone is how you identify one that still carries the secret.
+
+### Self-hosted Selenium Grid, wired and verified (STAT-075)
+
+- **Assessment first, and it was worse than "missing".** There was **no Grid at all** —
+  nothing in `docker-compose.yml`. And `execution.target=local|grid|browserstack`, present
+  in both property files, was **read by nothing**: setting `grid` silently did nothing.
+  Dead config that documents a capability is worse than no config, because a new engineer
+  sets it, sees tests run locally, and cannot tell what went wrong.
+- **The pre-existing CLOUD path had a quieter bug:** `execution.mode=CLOUD` always built
+  `ChromeOptions`, so "cross-browser in the cloud" ran **Chrome three times** and reported
+  success. That is the failure mode this work had to avoid repeating.
+- **Added:** `selenium-hub` + chrome/firefox/edge nodes behind a **`grid` compose profile**
+  (never autostarts — same convention as the ZAP service), and a **separate `GRID` branch**
+  in `DriverFactory` that reuses the same options objects as a local run and **honours
+  `-Dbrowser`**. Kept separate from CLOUD on purpose: that branch is LambdaTest-shaped
+  (`LT:Options`, hardcoded platform/version/build), and bolting a second provider onto it
+  would have produced a method serving two masters badly.
+- **`shm_size: 2gb` per node is load-bearing.** Docker's default 64MB `/dev/shm` is
+  exhausted by Chrome, which then dies with tab crashes indistinguishable from flaky tests.
+- **Config repaired:** dead `execution.target` removed (with a comment saying why, so nobody
+  re-adds it); `execution.mode` and `grid.hub.url` added to both env files.
+- **VERIFIED against production** — `testng-homepage-smoke.xml`: **4/4 on chrome, 4/4 on
+  firefox, 4/4 on edge**. And because the CLOUD bug failed by *claiming* success, the
+  cross-browser claim was checked independently: each node serves ONLY its own browser, and
+  all three reported sessions (8 each). Chrome-only would have left two nodes at zero.
+- **Substitutions stay honest:** brave→chrome (Brave is Chromium) and safari→fallback are
+  both logged, Safari at WARN, so no report implies WebKit coverage that does not exist.
+- **CLOUD deliberately left as a POC.** Fixing it properly means a provider abstraction —
+  not a change to make days before handover. GRID is the supported cross-browser path.

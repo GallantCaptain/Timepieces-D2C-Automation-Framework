@@ -112,6 +112,85 @@ services:
       retries: 12
       start_period: 30s
 
+  # --- Selenium Grid (opt-in, profile: grid) ---------------------------------------
+  # A real self-hosted Grid, so cross-browser runs need no browsers installed on the host
+  # and can be scaled by adding nodes (or `--scale`) rather than by buying cloud minutes.
+  #
+  # Behind the "grid" COMPOSE PROFILE, so it does NOT start with a plain `docker compose
+  # up` — same convention as the zap service. Start it explicitly:
+  #     docker compose --profile grid up -d
+  # then point the suite at it:
+  #     ./mvnw test -Dexecution.mode=GRID -Dbrowser=firefox -Denv=production
+  #
+  # Watch a session live at http://localhost:4444/ui  (VNC password: secret)
+  #
+  # NOTE ON SCALING: each node advertises how many sessions it will accept
+  # (SE_NODE_MAX_SESSIONS). Raising that beyond the container's CPU/RAM makes tests
+  # slower and flakier, not faster — a starved browser looks exactly like a flaky app.
+  # Scale by adding node REPLICAS, e.g.
+  #     docker compose --profile grid up -d --scale selenium-node-chrome=3
+  selenium-hub:
+    image: selenium/hub:4.44
+    container_name: timepieces-selenium-hub
+    profiles: ["grid"]
+    ports:
+      # 4442/4443 are the node<->hub event bus; 4444 is the WebDriver endpoint + the UI.
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    healthcheck:
+      # The suite waits for this rather than sleeping: /wd/hub/status only reports ready
+      # once the hub is up AND at least one node has registered.
+      test: ["CMD-SHELL", "curl -sf http://localhost:4444/wd/hub/status | grep -q '\"ready\": true' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  selenium-node-chrome:
+    image: selenium/node-chrome:4.44
+    profiles: ["grid"]
+    depends_on: [selenium-hub]
+    # /dev/shm is 64MB by default in Docker, which Chrome exhausts and then crashes with
+    # tab-death that reads like a random test failure. 2gb is the documented remedy.
+    shm_size: 2gb
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 2
+      SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
+      SE_SCREEN_WIDTH: 1920
+      SE_SCREEN_HEIGHT: 1080
+
+  selenium-node-firefox:
+    image: selenium/node-firefox:4.44
+    profiles: ["grid"]
+    depends_on: [selenium-hub]
+    shm_size: 2gb
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 2
+      SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
+      SE_SCREEN_WIDTH: 1920
+      SE_SCREEN_HEIGHT: 1080
+
+  selenium-node-edge:
+    image: selenium/node-edge:4.44
+    profiles: ["grid"]
+    depends_on: [selenium-hub]
+    shm_size: 2gb
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 2
+      SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
+      SE_SCREEN_WIDTH: 1920
+      SE_SCREEN_HEIGHT: 1080
+
 volumes:
   pgdata-dev:
   allure-reports:

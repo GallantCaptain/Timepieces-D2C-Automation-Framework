@@ -47,7 +47,8 @@ Verified source references:
 | Production customer analytics/admin console at `dashboard.timepieces-world.example` | Out of scope for this QA dashboard, per `dashboard/README.md` |
 | Confirmed mobile device automation coverage | TBD; Appium dependency exists, but no verified mobile tests were found |
 | API automation coverage | TBD; Rest-Assured dependency exists, but no verified API tests were found |
-| BrowserStack/Grid execution | TBD; configuration keys exist, but no verified execution wiring was confirmed |
+| Selenium Grid execution | **Wired and verified 2026-07-23 (STAT-075).** Self-hosted hub + chrome/firefox/edge nodes in `docker-compose.yml` behind the `grid` profile; `-Dexecution.mode=GRID` honours `-Dbrowser`. Verified 4/4 on all three browsers against production, with per-node session counts proving it was genuinely cross-browser. See `docs/selenium-grid.md`. |
+| BrowserStack / LambdaTest CLOUD execution | Still a POC and knowingly left so: `execution.mode=CLOUD` is LambdaTest-shaped and **ignores `-Dbrowser`** (always Chrome); BrowserStack has config keys but no code. Use GRID for cross-browser. |
 | Real Safari coverage on non-macOS hosts | Out of scope; current implementation substitutes a Chromium browser and records this in Allure |
 
 ## Traceability
