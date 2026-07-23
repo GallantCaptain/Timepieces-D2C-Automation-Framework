@@ -1,12 +1,16 @@
 package com.timepieces.automation.bdd.runners;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
+
+import com.timepieces.automation.base.DriverFactory;
 
 import io.cucumber.testng.AbstractTestNGCucumberTests;
 import lombok.extern.log4j.Log4j2;
@@ -59,6 +63,44 @@ public abstract class BaseRunner extends AbstractTestNGCucumberTests {
         System.setProperty("test.environment", effectiveEnv);
         System.setProperty("env", effectiveEnv);
         log.info("=== BEFORE TEST: Starting test execution for environment: {} ===", effectiveEnv);
+    }
+
+    /**
+     * Pins this thread's browser from the suite XML's optional {@code browser} parameter.
+     *
+     * <p>Only the parallel cross-browser suite (`testng-crossbrowser.xml`) supplies it.
+     * Every other suite omits it, so this resolves to blank, clears the override, and the
+     * run behaves exactly as before — {@code DriverFactory} falls through to the normal
+     * JVM-wide {@code -Dbrowser}.
+     *
+     * <p>It must be {@code @BeforeMethod} and not {@code @BeforeTest}: with a parallel
+     * DataProvider the scenarios execute on pool threads, NOT on the thread that ran
+     * {@code @BeforeTest}, so a value set there would never be seen. Verified before
+     * building this: TestNG runs {@code @BeforeMethod} on the same thread as its
+     * {@code @Test}, even when the pool reuses threads.
+     *
+     * @param browser browser for this {@code <test>} block; absent on every other suite
+     */
+    @BeforeMethod(alwaysRun = true)
+    @Parameters({ "browser" })
+    public void pinBrowserForThread(@Optional("") String browser) {
+        DriverFactory.setBrowserForThread(browser);
+        if (browser != null && !browser.isBlank()) {
+            log.debug("Thread {} pinned to browser '{}'.", Thread.currentThread().getName(), browser);
+        }
+    }
+
+    /**
+     * Releases this thread's browser pin.
+     *
+     * <p>Not optional housekeeping: TestNG REUSES pool threads, so a stale value would leak
+     * one {@code <test>} block's browser into another block's scenario that happens to land
+     * on the same thread — and it would do so silently, which is the exact failure mode
+     * this design exists to avoid.
+     */
+    @AfterMethod(alwaysRun = true)
+    public void releaseBrowserPin() {
+        DriverFactory.clearBrowserForThread();
     }
 
     @AfterTest(alwaysRun = true)

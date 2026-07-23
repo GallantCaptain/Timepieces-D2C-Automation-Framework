@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    PARALLEL CROSS-BROWSER suite (DEC-0014 / TASK-FWK-010).
+
+    Runs the same scenarios on chrome, firefox and edge CONCURRENTLY, in one JVM, instead
+    of three sequential Maven invocations.
+
+        docker compose (profile grid) up -d
+        ./mvnw test "-Dsurefire.suite=testng-crossbrowser.xml" "-Dexecution.mode=GRID" "-Denv=production"
+
+    Intended for the GRID, where each browser gets its own container. It works locally too,
+    but that needs all three browsers installed AND three real windows fighting for the
+    desktop, so GRID is strongly preferred.
+
+    NOTE ON THIS COMMENT: no double hyphen appears anywhere inside it. XML forbids that
+    sequence in comments, and Surefire reports it as a bare SAXParseException naming a line
+    number but not the reason. It has now bitten this repo twice (see testng-security.xml),
+    which is why the docker flags above are written in words.
+
+    HOW THE BROWSER REACHES THE DRIVER
+    ==================================
+    parallel="tests" gives each <test> block its own thread, and each passes a `browser`
+    parameter. BaseRunner.pinBrowserForThread() reads it in @BeforeMethod and stores it in
+    a THREAD-LOCAL that DriverFactory prefers over the JVM-wide -Dbrowser.
+
+    That indirection is the whole point. The browser normally comes from a JVM-GLOBAL
+    system property, so three <test> blocks writing it would race: last writer wins and all
+    three would quietly run the SAME browser while this file claimed otherwise. Verified
+    before building it that TestNG runs @BeforeMethod on the same thread as its @Test even
+    under a parallel DataProvider and even when the pool reuses threads, which is what
+    makes the thread-local correct rather than merely plausible.
+
+    HOW TO CHECK IT ACTUALLY WORKED
+    ===============================
+    Do not trust a green run. The failure mode here is a SILENT WRONG ANSWER. Ask the Grid
+    instead: each node serves only its own browser, so all three must report sessions.
+
+        docker compose (profile grid) logs selenium-node-chrome  | grep -c "Session created"
+        docker compose (profile grid) logs selenium-node-firefox | grep -c "Session created"
+        docker compose (profile grid) logs selenium-node-edge    | grep -c "Session created"
+
+    A zero on any of them means that browser never ran, whatever the report says. The
+    Allure environment page should likewise list Browser.CHROME, Browser.FIREFOX and
+    Browser.EDGE.
+
+    THREAD BUDGET
+    =============
+    3 test blocks x data-provider-thread-count=2 gives up to 6 concurrent browsers, which
+    exactly matches the Grid capacity (3 nodes x SE_NODE_MAX_SESSIONS=2 = 6 slots). Asking
+    for more than the Grid can serve makes sessions queue and time out. Raise node REPLICAS
+    if you want more throughput, not this number:
+    a starved browser looks exactly like a flaky app.
+
+    ROLLBACK
+    ========
+    Deleting this file fully disables the feature. The thread-local in DriverFactory goes
+    inert because nothing sets it, and every other suite behaves exactly as it did before.
+-->
+<suite name="Timepieces Cross-Browser Suite" parallel="tests" data-provider-thread-count="2">
+
+    <listeners>
+        <listener class-name="com.timepieces.automation.listeners.MetricsListener" />
+    </listeners>
+
+    <test name="Chrome">
+        <parameter name="environment" value="production" />
+        <parameter name="browser" value="chrome" />
+        <classes>
+            <class name="com.timepieces.automation.bdd.runners.SmokeRunner" />
+        </classes>
+    </test>
+
+    <test name="Firefox">
+        <parameter name="environment" value="production" />
+        <parameter name="browser" value="firefox" />
+        <classes>
+            <class name="com.timepieces.automation.bdd.runners.SmokeRunner" />
+        </classes>
+    </test>
+
+    <test name="Edge">
+        <parameter name="environment" value="production" />
+        <parameter name="browser" value="edge" />
+        <classes>
+            <class name="com.timepieces.automation.bdd.runners.SmokeRunner" />
+        </classes>
+    </test>
+</suite>

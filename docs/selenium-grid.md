@@ -105,11 +105,14 @@ docker compose --profile grid up -d
 **`clean` only on the first line** — Allure results accumulate in `target/allure-results/`,
 so all three browsers merge into one report.
 
-One JVM per browser is deliberate, and it is the same reasoning recorded in **DEC-0014**:
-`DriverFactory` resolves the browser from a **JVM-global system property**, so running two
-browsers concurrently inside one JVM would race on that value and both would quietly run
-the same browser while the report claimed otherwise. The Grid makes each run *cheaper and
-isolated*; it does not change that constraint.
+This sequential form is the **simplest** option and still perfectly valid — three isolated
+JVMs, no shared state at all.
+
+If you want the three browsers running **concurrently in one JVM**, that now works too —
+see [Parallel cross-browser in ONE JVM](#parallel-cross-browser-in-one-jvm-dec-0014) at the
+end of this document. It needed a per-thread browser override because `DriverFactory`
+otherwise resolves the browser from a JVM-global system property, which three concurrent
+`<test>` blocks would race on.
 
 ---
 
@@ -167,3 +170,63 @@ the node service.
 **Everything is slower than local** — expected for a handful of tests: you are paying
 container startup and a network hop. The Grid wins on *breadth* (three browsers, no local
 installs) and *scale* (add replicas), not on latency for a single small run.
+
+---
+
+## Parallel cross-browser in ONE JVM (DEC-0014)
+
+`testng-crossbrowser.xml` runs chrome, firefox and edge **concurrently** instead of three
+sequential Maven invocations:
+
+```powershell
+docker compose --profile grid up -d
+.\mvnw.cmd test "-Dsurefire.suite=testng-crossbrowser.xml" "-Dexecution.mode=GRID" `
+                "-Denv=production" "-Dcucumber.filter.tags=not @StagOnly"
+```
+
+### How the browser reaches the driver
+
+`parallel="tests"` gives each `<test>` block its own thread and a `browser` parameter.
+`BaseRunner.pinBrowserForThread()` reads it in `@BeforeMethod` and stores it in a
+**ThreadLocal** that `DriverFactory` prefers over the JVM-wide `-Dbrowser`.
+
+That indirection is the entire point. The browser normally comes from a **JVM-global**
+system property, so three blocks writing it would race — last writer wins and all three
+would quietly run the same browser while the suite file claimed otherwise. This was
+deferred once for exactly that reason, and it is the failure the CLOUD branch already had.
+
+It is safe because TestNG runs `@BeforeMethod` on the **same thread** as its `@Test`, even
+under a parallel DataProvider and even when the pool reuses threads — verified empirically
+before the code was written, not assumed.
+
+### Thread budget
+
+3 blocks × `data-provider-thread-count=2` = **6 concurrent browsers**, which exactly matches
+Grid capacity (3 nodes × `SE_NODE_MAX_SESSIONS=2`). Asking for more makes sessions queue and
+time out: an early run at 3 threads/block (9 concurrent) produced extra failures that
+vanished at 2. **Add node replicas, not threads.**
+
+### Verified
+
+Do not trust a green run — the failure mode is a silent wrong answer. Two checks:
+
+1. **Grid node sessions** (each node serves only its own browser):
+   `chrome 12 · firefox 12 · edge 12` — all three genuinely ran.
+2. **Parity against sequential.** Same scenarios run one browser at a time produced the
+   *same* failures:
+
+   | | Sequential | Parallel |
+   |---|---|---|
+   | Firefox failures | 3 | 3–4 |
+   | Reasons | Pending scaffold · InvalidCookieDomain · new-tab `[Legal]` | identical |
+
+   All three are **pre-existing** — the first is a deliberate TODO, the other two were in
+   the original failure list before any of this work. Parallelism introduced none of them.
+
+**Expect Firefox to fail slightly more than Chrome.** That is cross-browser testing doing
+its job, not a defect in the runner.
+
+### Rollback
+
+Delete `testng-crossbrowser.xml`. The ThreadLocal in `DriverFactory` goes inert because
+nothing sets it, and every other suite behaves exactly as before.

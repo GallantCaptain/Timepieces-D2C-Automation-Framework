@@ -48,6 +48,64 @@ public class DriverFactory {
   private static final ThreadLocal<WebDriver> tlDriver = new ThreadLocal<>();
 
   /**
+   * Per-thread browser override, used ONLY by the parallel cross-browser suite
+   * (testng-crossbrowser.xml). Null on every other run.
+   *
+   * <h2>Why a ThreadLocal and not just the system property</h2>
+   * {@code browser} normally comes from {@code ConfigReader.get("browser")}, which resolves
+   * a <b>JVM-global</b> system property. That is fine when one JVM runs one browser, but it
+   * makes "run three browsers at once in this JVM" impossible: two threads writing that
+   * global would race, last writer wins, and BOTH would quietly run the same browser while
+   * the report claimed otherwise. That silent-wrong-answer failure mode is exactly why this
+   * was deferred once (DEC-0014) and exactly what the CLOUD branch already did.
+   *
+   * <h2>Why this is safe</h2>
+   * Verified empirically before writing it: TestNG runs {@code @BeforeMethod} on the SAME
+   * thread as its {@code @Test}, even under a parallel DataProvider and even when the pool
+   * reuses threads. The before/test/after triple executes as a unit on one thread, so a
+   * value set in {@code @BeforeMethod} is visible to {@code initDriver()} and cannot be
+   * clobbered by a sibling test mid-scenario.
+   *
+   * <h2>Default behaviour is unchanged</h2>
+   * When nothing sets this — every existing suite — {@link #resolveBrowser()} falls straight
+   * through to ConfigReader, so those runs behave byte-identically to before.
+   */
+  private static final ThreadLocal<String> tlBrowserOverride = new ThreadLocal<>();
+
+  /**
+   * Pins the browser for the CURRENT THREAD only. Call from {@code @BeforeMethod}.
+   *
+   * @param browser chrome | firefox | edge | brave | safari; null or blank clears it
+   */
+  public static void setBrowserForThread(String browser) {
+    if (browser == null || browser.isBlank()) {
+      tlBrowserOverride.remove();
+    } else {
+      tlBrowserOverride.set(browser.trim());
+    }
+  }
+
+  /**
+   * Clears the per-thread browser override. Call from {@code @AfterMethod}.
+   *
+   * <p>Clearing matters: TestNG REUSES pool threads (observed: rows 1 and 5 both landing on
+   * TestNG-PoolService-1). Leaving a stale value behind would let one {@code <test>} block's
+   * browser leak into another's scenario on the same thread.
+   */
+  public static void clearBrowserForThread() {
+    tlBrowserOverride.remove();
+  }
+
+  /**
+   * The browser this thread should use: the per-thread override if one is set, otherwise
+   * the normal JVM-wide configuration.
+   */
+  private static String resolveBrowser() {
+    String override = tlBrowserOverride.get();
+    return (override == null || override.isBlank()) ? ConfigReader.get("browser") : override;
+  }
+
+  /**
    * ChromeOptions for Chrome & Brave: Utilized --headless=new instead of the
    * legacy --headless,
    * which is the modern standard for Chromium-based browsers starting from
@@ -67,7 +125,9 @@ public class DriverFactory {
    * a real Safari run.
    */
   public static WebDriver initDriver() {
-    String browser = ConfigReader.get("browser");
+    // Per-thread override when the parallel cross-browser suite is driving; otherwise this
+    // is exactly ConfigReader.get("browser") as before. See tlBrowserOverride.
+    String browser = resolveBrowser();
     boolean isHeadless = Boolean.parseBoolean(ConfigReader.get("headless"));
     boolean disableChromeSandbox = Boolean.parseBoolean(ConfigReader.get("chrome.no.sandbox"));
     writeAllureEnvironmentInfo(browser, System.getProperty("env", "staging"));
@@ -637,7 +697,14 @@ public class DriverFactory {
     }
   }
 
-  private static void writeAllureEnvironmentInfo(String browser, String env) {
+  // SYNCHRONIZED because this is a read-modify-write on ONE shared file.
+  //
+  // It merges rather than overwrites (each browser adds its own "Browser.X" key), which is
+  // exactly what the parallel cross-browser suite needs — the report should list all three.
+  // But two threads doing load-then-store concurrently can interleave and silently drop an
+  // entry, so a run that genuinely exercised three browsers could report two. Serialising
+  // it is cheap: this happens once per driver creation, not per interaction.
+  private static synchronized void writeAllureEnvironmentInfo(String browser, String env) {
     try {
       File resultsDir = new File("target/allure-results");
       if (!resultsDir.exists()) {

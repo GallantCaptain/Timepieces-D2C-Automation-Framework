@@ -1658,3 +1658,42 @@ This changelog is append-only. New entries must be added chronologically and mus
   both logged, Safari at WARN, so no report implies WebKit coverage that does not exist.
 - **CLOUD deliberately left as a POC.** Fixing it properly means a provider abstraction —
   not a change to make days before handover. GRID is the supported cross-browser path.
+
+### DEC-0014 reversed and delivered: parallel cross-browser in one JVM (STAT-076)
+
+- **Why the reversal was legitimate, not a change of nerve.** The deferral rested on one
+  thing: the failure mode is a *plausible-looking wrong answer* (all three blocks quietly
+  running the same browser while the report claims otherwise), and there was **no way to
+  disprove it**. Building the Grid supplied the missing **oracle** — each node serves only
+  its own browser, so per-node session counts settle it. Verifiability, not optimism, is
+  what changed.
+- **The enabling fact was checked BEFORE writing any code.** A throwaway TestNG probe
+  confirmed `@BeforeMethod` runs on the SAME thread as its `@Test` under a parallel
+  DataProvider, including when the pool reuses threads (rows 1 and 5 both landed on
+  `TestNG-PoolService-1` and both saw the correct value). Had that come back false, the
+  whole design was dead and nothing would have been built.
+- **Additive by construction:** a per-thread browser override in `DriverFactory` — unset
+  means byte-identical behaviour, which is every existing suite — set from a suite
+  `browser` parameter in `BaseRunner.@BeforeMethod` and **cleared in `@AfterMethod`**,
+  because TestNG reuses pool threads and a stale value would leak one block's browser into
+  another block's scenario. Silently.
+- `writeAllureEnvironmentInfo` is now **synchronized**: it is a read-modify-write on a
+  single file, and concurrent browsers could interleave and drop an entry — under-reporting
+  exactly the coverage this feature adds.
+- **VERIFIED, twice over:**
+  - Grid oracle: **chrome 12 · firefox 12 · edge 12** sessions. All three genuinely ran.
+  - **Parity against a sequential control:** same scenarios, one browser at a time, produced
+    the *same* failures — a deliberate `PendingException`, `InvalidCookieDomain`, and the
+    already-flaky footer new-tab test. All three pre-date this work. Parallelism introduced
+    none of them.
+- **A real finding along the way:** an early configuration used 3 blocks x 3 threads = 9
+  concurrent browsers against 6 Grid slots. The extra failures disappeared at 2 threads
+  (6 concurrent, exactly matching capacity). Documented as **"add node replicas, not
+  threads"** — a starved browser is indistinguishable from a flaky app.
+- **Expect Firefox to fail slightly more than Chrome.** That is cross-browser testing doing
+  its job, not a defect in the runner.
+- **Rollback: delete `testng-crossbrowser.xml`.** The ThreadLocal goes inert and every other
+  suite is untouched.
+- Repeated a known trap while writing the suite file: XML comments cannot contain `--`, and
+  Surefire reports it as a bare `SAXParseException` with a line number and no reason. It had
+  already bitten `testng-security.xml`. The new file now says so explicitly in its header.
