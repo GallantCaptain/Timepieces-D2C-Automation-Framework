@@ -1,4 +1,9 @@
-@Staging @Smoke @Authentication
+@Staging @StagOnly @Smoke @Authentication
+# @StagOnly — real login is only automatable on staging.
+# Production's login is gated by a Cloudflare Turnstile that requires a HUMAN to solve it
+# (see ISSUE-001 / the AccountOrders scenarios), so this flow cannot complete there — it is
+# not a flaky test on production, it is an impossible one.
+# Exclude it from production runs with:  -Dcucumber.filter.tags="not @StagOnly"
 Feature: Valid User Login via Global Responsive Sidebar
 As a premium user of Timepieces
 I want to log in successfully using the global responsive sidebar

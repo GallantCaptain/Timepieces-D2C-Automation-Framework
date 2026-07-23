@@ -4,6 +4,7 @@ Last reviewed: 2026-07-15
 
 | ID | Priority | Description | Dependencies | Status |
 | --- | --- | --- | --- | --- |
+| TASK-FWK-010 | Low | **Cross-browser via in-suite parallelism (deferred, see DEC-0014).** Give DriverFactory a ThreadLocal browser so a TestNG `parallel="tests"` suite can run chrome/firefox/edge concurrently in ONE JVM. Today the browser comes from a JVM-global system property, so parallel `<test>` blocks would race and both silently run the same browser. Until then, use separate Maven invocations per browser (already the Docker pattern). | DriverFactory ThreadLocal refactor | Deferred to owner personal repo |
 | TASK-OKF-001 | P0 | Create initial OKF, OKF index, topic files, ADR records, and README navigation. | Repository inspection | Completed |
 | TASK-CI-001 | P0 | Unblock CI staging access. Browser-side fix completed (CDP Network.enable added in fix/cloudflare-bypass-header); Cloudflare-side configuration (Skip rule/Bot Fight Mode) remains open. | Cloudflare admin access, `CF_BYPASS_TOKEN` secret | Open |
 | TASK-SEC-001 | P0 | Add server-side OTP verification attempt cap/lockout, then invert/update `@OtpBruteForce` expectations to assert the fix. | Product/app backend change | Open |

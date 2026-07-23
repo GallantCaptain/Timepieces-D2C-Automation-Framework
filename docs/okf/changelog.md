@@ -1555,3 +1555,30 @@ This changelog is append-only. New entries must be added chronologically and mus
   run (48 headless drivers) that attached 11 screenshots.
 - **VERIFIED 2026-07-23** on a 10-scenario headless run: driver reported `headless=true`,
   the guard fired 10/10, and `target/screen-recordings/` contained **0 files**.
+
+### Environment-scope tags + the cross-browser deferral (STAT-074, DEC-0014)
+
+- **`@StagOnly` / `@ProdOnly` added.** Metadata only — no runner or behaviour change, so
+  they cannot destabilise the comprehensive run they were added ahead of.
+- **`@StagOnly` (2 scenarios):** `Staging_Password_Bypass` (production has no password wall,
+  so the scenario is *meaningless* there, not flaky) and `Valid_User_Login_Sidebar`
+  (production login sits behind a **human-solved** Cloudflare Turnstile — impossible to
+  automate, not merely failing).
+- **`@ProdOnly` (13 scenarios):** both Timepieces World features. The reason is the
+  interesting part: `TimepiecesWorld_ExperiencePage` and `SharedTemplate_TimepiecesWorldProduct`
+  **override `getBaseUrl()`** to a hardcoded `https://world.timepieces-d2c.example`, so **`-Denv` is
+  ignored** — a `-Denv=staging` run silently drives PRODUCTION while the report says
+  staging. That is the same class of lie as ISSUE-020, and the tag is what makes it visible.
+- **`@ProdReady` is NOT `@ProdOnly`.** The first is a permission ("safe to run against
+  production"); the second a restriction ("only meaningful on production"). A scenario can
+  hold both — these do.
+- Verified by dry-run: `@StagOnly`→2, `@ProdOnly`→13, `not @StagOnly and not @ProdOnly`→95.
+  110 total, consistent.
+- **DEC-0014 — cross-browser stays as separate Maven invocations; the in-suite parallel
+  refactor is DEFERRED to the owner's personal repo.** `DriverFactory` reads the browser
+  from a **JVM-global system property** with no ThreadLocal, so a TestNG `parallel="tests"`
+  suite passing `browserName` per block would race on one global value: last writer wins,
+  **both suites quietly run the same browser while the report claims otherwise** — exactly
+  the ISSUE-020 failure mode fixed the same week. The safe pattern is already in use in
+  `docker/entrypoint.sh:34` (`for browser in $BROWSERS`). Deferring a refactor whose
+  failure mode is a *plausible-looking wrong answer* is the right call days before handover.

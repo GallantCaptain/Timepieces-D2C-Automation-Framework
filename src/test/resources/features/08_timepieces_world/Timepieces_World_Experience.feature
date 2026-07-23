@@ -1,4 +1,17 @@
-@Regression @TimepiecesWorld @ProdReady
+@Regression @TimepiecesWorld @ProdReady @ProdOnly
+# @ProdOnly — these ALWAYS hit production, whatever -Denv says.
+# TimepiecesWorld_ExperiencePage overrides getBaseUrl() to the hardcoded constant
+# WORLD_BASE_URL = "https://world.timepieces-d2c.example", so the configured base.url is ignored
+# entirely and there is no staging equivalent of the microsite.
+#
+# That is exactly why the tag is worth having: run the suite with -Denv=staging and these
+# scenarios still drive PRODUCTION, while the report says "staging". Nobody should read a
+# staging run as covering Timepieces World. Keep them out of a staging run with:
+#     -Dcucumber.filter.tags="not @ProdOnly"
+#
+# NOTE the distinction: @ProdReady means "SAFE to run against production" (a permission);
+# @ProdOnly means "ONLY meaningful on production" (a restriction). They are not synonyms,
+# and a scenario can legitimately carry both — as these do.
 Feature: Timepieces World Experience
   As a customer
   I want to journey through the Timepieces World scroll-canvas experience

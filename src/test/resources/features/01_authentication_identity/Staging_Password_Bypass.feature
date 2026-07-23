@@ -1,4 +1,8 @@
-@Staging @PasswordBypass
+@Staging @StagOnly @PasswordBypass
+# @StagOnly — this feature CANNOT pass on production, by design.
+# It exercises the staging gatekeeper password wall, and production has no such wall:
+# there is no password field to fill, so the whole scenario is meaningless there.
+# Exclude it from production runs with:  -Dcucumber.filter.tags="not @StagOnly"
 Feature: Staging Password Bypass
 As a premium test user of Timepieces
   I want to bypass the staging gatekeeper password

@@ -1,4 +1,9 @@
-@Regression @TimepiecesWorld @ProdReady
+@Regression @TimepiecesWorld @ProdReady @ProdOnly
+# @ProdOnly — same reason as Timepieces_World_Experience.feature:
+# SharedTemplate_TimepiecesWorldProduct overrides getBaseUrl() to the hardcoded
+# WORLD_BASE_URL = "https://world.timepieces-d2c.example", so -Denv is ignored and these scenarios
+# drive PRODUCTION even during a staging run. There is no staging microsite to point at.
+# Keep them out of a staging run with:  -Dcucumber.filter.tags="not @ProdOnly"
 Feature: Timepieces World Product Showcases
   As a customer
   I want to explore a timepiece family's Timepieces World showcase
