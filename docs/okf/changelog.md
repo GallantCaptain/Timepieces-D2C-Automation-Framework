@@ -1503,3 +1503,26 @@ This changelog is append-only. New entries must be added chronologically and mus
   headed: it failed there too. Recording that because a plausible-but-wrong theory that
   goes unchecked is how a test gets a `@Disabled` instead of a fix.
 - `@ContentPages` now **10/10 on production**.
+
+### removeDriver() was leaking browsers (STAT-072)
+
+- **`DriverFactory.removeDriver()` was a bare `tlDriver.remove()`** — it cleared the
+  ThreadLocal and left the Chrome + chromedriver processes **alive**.
+- **Why it stayed hidden:** every caller reads that name as "release the driver", and the
+  BDD `Hooks` plus the five TDD UI smoke classes all happened to call `driver.quit()`
+  themselves first. So the method's own omission was invisible — until a caller forgot,
+  which is precisely what the new `ProfileDraftRestorePrivacyProbeTest` did
+  (`@AfterClass` → `removeDriver()` only). Over a long run that orphans one browser per
+  invocation.
+- **Fixed at the source rather than in the callers:** `removeDriver()` now quits
+  defensively and drops the ThreadLocal in a `finally`, so even a `quit()` that throws
+  cannot strand a dead driver for the next test on that thread. Double-quit is harmless —
+  callers that already quit hit an already-closed session, which is caught and ignored.
+  **Better a duplicate quit than a leaked process.**
+- **A method whose name promises cleanup must actually clean up.** Relying on every future
+  caller to remember the second half is how a machine ends up with forty orphaned
+  chromedrivers after an overnight run.
+- **VERIFIED 2026-07-23**, both paths, with process counts either side:
+  the double-quit path (homepage smoke) still **4/4**, and the previously-leaking path
+  (privacy probe) still reproduces the bug — **0 chromedriver processes left behind by
+  either**.

@@ -481,7 +481,32 @@ public class DriverFactory {
    * not interfere with each other.
    */
   public static void removeDriver() {
-    tlDriver.remove();
+    // QUIT THE BROWSER, THEN drop the reference.
+    //
+    // This used to be a bare tlDriver.remove(), which only cleared the ThreadLocal and
+    // left the Chrome + chromedriver processes ALIVE. Every caller already assumed the
+    // name meant "release the driver", and most of them worked only because they happened
+    // to call driver.quit() themselves first — so the leak was invisible until a caller
+    // forgot. A method whose name promises cleanup must actually clean up; relying on
+    // every future caller to remember the second half is how a machine ends up with forty
+    // orphaned chromedrivers after a long run.
+    //
+    // Double-quit is safe: callers that already quit (Hooks, the TDD UI smoke classes)
+    // will hit a NoSuchSessionException here, which is caught and ignored. Better a
+    // harmless duplicate than a leaked process.
+    try {
+      WebDriver driver = tlDriver.get();
+      if (driver != null) {
+        driver.quit();
+      }
+    } catch (Exception e) {
+      // Already quit, or the session died with the browser. Nothing to release.
+      log.debug("removeDriver(): driver was already gone ({}).", e.getClass().getSimpleName());
+    } finally {
+      // ALWAYS drop the ThreadLocal, even if quit() threw. Leaving a dead driver in the
+      // ThreadLocal would hand the next test on this thread a stale, unusable session.
+      tlDriver.remove();
+    }
   }
 
   private static void writeAllureEnvironmentInfo(String browser, String env) {
