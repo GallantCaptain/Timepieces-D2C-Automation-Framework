@@ -8,8 +8,12 @@ Feature: Brand Content Pages
     Given the user navigates to the Timepieces Wall page
     Then the wall canvas container is displayed
     And the background music toggle is displayed
+    # Asserts the toggle FLIPS, not that music ends up playing. The wall AUTOPLAYS
+    # (verified 2026-07-17: the control starts at "Mute background music"), so one click
+    # MUTES it — the old "Then the background music is playing" could never pass. Checking
+    # the flip is both the honest assertion and the one that survives autoplay changing.
     When the user toggles the background music
-    Then the background music is playing
+    Then the background music state is flipped
 
   Scenario: Verify Share Your Moment gates guest submissions behind sign-in
     Given the user navigates to the Share Your Moment page

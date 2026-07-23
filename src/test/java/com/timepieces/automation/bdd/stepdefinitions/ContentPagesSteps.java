@@ -200,15 +200,44 @@ public class ContentPagesSteps {
         assertThat(wallPage.isMusicToggleDisplayed()).as("The music toggle should be displayed").isTrue();
     }
 
+    /**
+     * Remembers the play/mute state from BEFORE the toggle click, so the assertion that
+     * follows can check the control actually flipped. See the @Then below for why.
+     */
+    private boolean musicWasPlayingBeforeToggle;
+
     @When("the user toggles the background music")
     public void the_user_toggles_the_background_music() {
+        musicWasPlayingBeforeToggle = wallPage.isMusicPlaying();
+        log.info("Music state before the toggle: {}", musicWasPlayingBeforeToggle ? "PLAYING" : "MUTED");
         wallPage.toggleMusic();
     }
 
-    @Then("the background music is playing")
-    public void the_background_music_is_playing() {
-        assertThat(wallPage.isMusicPlaying())
-                .as("The music toggle should be in the PLAYING (Mute background music) state").isTrue();
+    @Then("the background music state is flipped")
+    public void the_background_music_state_is_flipped() {
+        // ASSERT THE FLIP, NOT AN ABSOLUTE STATE.
+        //
+        // This step used to be "the background music is playing" and asserted
+        // isMusicPlaying() == true after a single click. That is only correct if the page
+        // starts MUTED — and it does not. Measured on production 2026-07-17:
+        //     initial       -> aria-label "Mute background music"  (i.e. already PLAYING)
+        //     after 1 click -> aria-label "Play background music"  (i.e. now MUTED)
+        //     after 2 clicks-> "Mute background music"             (playing again)
+        // The music AUTOPLAYS, so one click mutes it and the old assertion could never
+        // pass. It was asserting an ABSOLUTE state after a RELATIVE action.
+        //
+        // The invariant that is actually true — and that genuinely tests the control — is
+        // that clicking the toggle CHANGES the state. That holds whichever way the page
+        // starts, so it also survives the day someone turns autoplay off.
+        boolean nowPlaying = wallPage.isMusicPlaying();
+        assertThat(nowPlaying)
+                .as("Toggling the music control must FLIP its state. It was %s before the click, "
+                        + "so it should be %s after — the toggle is a relative action, so asserting "
+                        + "an absolute state here would depend on how the page happens to start "
+                        + "(it autoplays).",
+                        musicWasPlayingBeforeToggle ? "PLAYING" : "MUTED",
+                        musicWasPlayingBeforeToggle ? "MUTED" : "PLAYING")
+                .isNotEqualTo(musicWasPlayingBeforeToggle);
     }
 
     // ==========================================

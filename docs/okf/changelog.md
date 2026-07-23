@@ -1482,3 +1482,24 @@ This changelog is append-only. New entries must be added chronologically and mus
   `014→020 (BaseRunner -Denv override)`.
   Earlier changelog entries are left as written — this log is append-only, and rewriting it
   to look tidy would destroy the one thing it is for. **This note is the mapping.**
+
+### The last false failure: the Timepieces Wall music toggle (STAT-071)
+
+- **The bug was in the assertion's shape, not its locator.** The scenario clicked the music
+  toggle ONCE and then asserted `isMusicPlaying()` — an **absolute** state after a
+  **relative** action. That is only correct if the page starts muted.
+- **Measured on production 2026-07-23** — it starts the other way round:
+  ```
+  initial        -> aria-label "Mute background music"   (i.e. already PLAYING)
+  after 1 click  -> aria-label "Play background music"   (i.e. now MUTED)
+  after 2 clicks -> "Mute background music"              (playing again)
+  ```
+  The wall **autoplays**, so one click mutes it and the old assertion **could never pass**.
+- **Fixed by asserting the invariant that is actually true:** capture the state before the
+  click, then assert it **flipped**. That holds whichever way the page starts, so it keeps
+  testing the control rather than the page's default — and it survives the day someone
+  turns autoplay off.
+- The earlier hypothesis (headless blocking audio autoplay) was **disproved** by running it
+  headed: it failed there too. Recording that because a plausible-but-wrong theory that
+  goes unchecked is how a test gets a `@Disabled` instead of a fix.
+- `@ContentPages` now **10/10 on production**.
