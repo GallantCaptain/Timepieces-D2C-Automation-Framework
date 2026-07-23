@@ -160,7 +160,20 @@ public abstract class SharedAccessoryPdp<SELF extends SharedAccessoryPdp<SELF>> 
      * @return a By locator for that model card anchor.
      */
     private By modelCardByHandle(String handle) {
-        return By.cssSelector("a[href*='" + handle + "']");
+        // SCOPED to the Similar Products carousel on purpose.
+        //
+        // The old form was a bare a[href*='<handle>'], which matches that href ANYWHERE on
+        // the page — and the PDP renders the carousel twice (a desktop track and a mobile
+        // one). Selenium's isDisplayed() only asks whether an element has CSS visibility
+        // and a non-zero box; it does NOT ask whether the element is inside the viewport.
+        // So a card sitting far off to the right in the inactive track still counts as
+        // "displayed", gets picked, and then cannot be clicked — the 2026-07-23 run failed
+        // here with "not clickable at point (2324, 492)" on a 1904px-wide window.
+        //
+        // Scoping to div.similar-product-card resolves to the real card in the active
+        // track, which scrollIntoView can then bring into view normally (verified: the
+        // scoped selector moved from x=2161 to x=721 and became clickable).
+        return By.cssSelector("div.similar-product-card a[href*='" + handle + "']");
     }
 
     // ==========================================

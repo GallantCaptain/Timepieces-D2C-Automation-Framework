@@ -199,6 +199,15 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
     public CartDrawerComponent clickCloseButton() {
         log.info("Clicking cart drawer close button.");
         clickElement(closeCartButton);
+        // Wait for the drawer to finish sliding out before handing control back.
+        //
+        // The drawer covers the right-hand side of the viewport (it opens automatically
+        // on Add to cart), so anything the next step wants to click over there is behind
+        // it until the animation completes. Verified on production 2026-07-23: after
+        // adding a strap, the "+ Add" clasp-upgrade button sits at x=1736 OUTSIDE the
+        // drawer and elementFromPoint at its centre returned the drawer, not the button —
+        // which is the ElementClickInterceptedException the strap+clasp scenario hit.
+        isEventuallyHidden(cartDrawerContainer);
         return this;
     }
 

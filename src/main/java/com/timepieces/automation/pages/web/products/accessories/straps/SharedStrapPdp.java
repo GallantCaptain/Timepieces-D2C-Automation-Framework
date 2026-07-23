@@ -52,6 +52,10 @@ public abstract class SharedStrapPdp<SELF extends SharedStrapPdp<SELF>> extends 
     private final By dialTryHeading = By.xpath("//*[contains(normalize-space(),'A new look for your watch')]"); // ROLLOUT-GAP: text-anchor
     private final By dialPreviousButton = By.cssSelector("button.strap-nav.strap-prev"); // ROLLOUT-GAP: semantic-class/aria
     private final By dialNextButton = By.cssSelector("button.strap-nav.strap-next"); // ROLLOUT-GAP: semantic-class/aria
+    // The container the arrows live in. Hovering it is what makes them appear (see
+    // nextDialPreview) — the arrows themselves are present in the DOM from the start.
+    private final By dialTryCarousel = By.xpath(
+            "//button[contains(@class,'strap-nav')]/ancestor::*[self::div or self::section][1]"); // ROLLOUT-GAP: structural
 
     // Clasp-upgrade cross-sell card ("Upgrade your strap" + "+ Add").
     private final By claspUpgradeHeading = By.xpath("//*[contains(normalize-space(),'Upgrade your strap')]"); // ROLLOUT-GAP: text-anchor
@@ -67,7 +71,14 @@ public abstract class SharedStrapPdp<SELF extends SharedStrapPdp<SELF>> extends 
      */
     public SELF nextDialPreview() {
         log.info("Dial-try carousel: next watch.");
-        clickElement(dialNextButton);
+        // Hover the carousel first — the arrows are hover-revealed.
+        //
+        // Verified on production 2026-07-23: button.strap-nav.strap-next IS present
+        // (1 node), so the locator was never wrong; it is simply not VISIBLE until the
+        // pointer is over the carousel (the Tailwind group/group-hover pattern). Clicking
+        // it cold waited the full timeout and failed with "element was not visible",
+        // which looks exactly like a stale selector and sent the diagnosis the wrong way.
+        hoverAndClick(dialTryCarousel, dialNextButton);
         return self();
     }
 
@@ -78,7 +89,8 @@ public abstract class SharedStrapPdp<SELF extends SharedStrapPdp<SELF>> extends 
      */
     public SELF previousDialPreview() {
         log.info("Dial-try carousel: previous watch.");
-        clickElement(dialPreviousButton);
+        // Hover-revealed, same as nextDialPreview above.
+        hoverAndClick(dialTryCarousel, dialPreviousButton);
         return self();
     }
 

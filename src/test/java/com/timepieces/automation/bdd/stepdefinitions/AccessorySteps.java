@@ -311,6 +311,17 @@ public class AccessorySteps {
                 .as("The '%s' clasp-upgrade card should be displayed", heading).isTrue();
     }
 
+    @When("the user closes the cart drawer")
+    public void the_user_closes_the_cart_drawer() {
+        // A real step, not a workaround. Adding to cart opens the drawer automatically,
+        // and it covers the right-hand side of the page — including the clasp-upgrade
+        // card, which sits OUTSIDE the drawer at around x=1736 (verified on production
+        // 2026-07-23). A shopper has to dismiss the drawer before they can carry on
+        // shopping the page behind it, so the scenario should say so out loud rather
+        // than having some other step quietly dismiss it.
+        new com.timepieces.automation.pages.components.CartDrawerComponent(driver).clickCloseButton();
+    }
+
     @When("the user clicks the {string} button on the clasp-upgrade card")
     public void the_user_clicks_the_button_on_the_clasp_upgrade_card(String label) {
         pdp.addRecommendedClasp();

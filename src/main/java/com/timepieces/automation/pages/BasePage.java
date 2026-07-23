@@ -201,18 +201,57 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
      */
     protected WebElement waitForFirstVisible(By locator) {
         return wait.until(driver -> {
+            WebElement offScreenFallback = null;
             for (WebElement candidate : driver.findElements(locator)) {
                 try {
-                    if (candidate.isDisplayed()) {
+                    if (!candidate.isDisplayed()) {
+                        continue;
+                    }
+                    // PREFER a candidate that is actually within the page's horizontal
+                    // bounds. isDisplayed() only asks about CSS visibility and box size —
+                    // it does NOT ask whether the element is anywhere near the viewport.
+                    // This storefront renders carousels twice (desktop + mobile tracks),
+                    // and a card parked far off to the right in the inactive track still
+                    // reports displayed=true. Picking it produces the puzzling
+                    // "not clickable at point (2324, 492)" on a 1904px window.
+                    if (isWithinHorizontalBounds(candidate)) {
                         return candidate;
+                    }
+                    // Remember it, but keep looking for a better one.
+                    if (offScreenFallback == null) {
+                        offScreenFallback = candidate;
                     }
                 } catch (org.openqa.selenium.StaleElementReferenceException ignored) {
                     // Re-rendered between find and check (React does this constantly).
                     // Skip it; the next poll re-finds a fresh reference.
                 }
             }
-            return null; // Nothing visible yet -> keep polling.
+            // Fall back to an off-screen-but-displayed match rather than failing outright:
+            // scrollIntoView can often still bring it in, and a wrong-looking element beats
+            // a timeout when no better candidate exists.
+            return offScreenFallback;
         });
+    }
+
+    /**
+     * Is the element within the document's horizontal bounds, i.e. not parked far off to
+     * the side in an inactive carousel track?
+     *
+     * <p>Deliberately generous — it only rejects elements clearly outside the page width,
+     * so a normally-positioned element below the fold is never rejected. Returns true on
+     * any error: this is a preference, not a gate, and it must never be the reason a valid
+     * element is skipped.
+     */
+    private boolean isWithinHorizontalBounds(WebElement element) {
+        try {
+            Object result = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                    "var r = arguments[0].getBoundingClientRect();"
+                            + "return r.left < window.innerWidth && r.right > 0;",
+                    element);
+            return !Boolean.FALSE.equals(result);
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     /**
@@ -272,11 +311,66 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
             // pressing it — so it makes the automation more faithful, not less.
             scrollElementToCentre(visible);
 
-            wait.until(ExpectedConditions.elementToBeClickable(visible)).click();
+            try {
+                wait.until(ExpectedConditions.elementToBeClickable(visible)).click();
+            } catch (org.openqa.selenium.ElementClickInterceptedException intercepted) {
+                // LAST RESORT, and it announces itself.
+                //
+                // Some carousels here use scroll-snap: we scroll the card to the centre,
+                // the track snaps back while elementToBeClickable is still waiting, and the
+                // click lands on whatever is now in that spot. Retrying a native click is
+                // the honest first move; only if that fails too do we dispatch the click
+                // via JS, which ignores what is painted on top.
+                //
+                // Deliberately WARN rather than debug: a JS click bypasses the very check
+                // that catches real blocking-overlay bugs, so if this starts appearing in
+                // the logs for a control that ought to be plainly clickable, that is a
+                // finding — not something to be quietly grateful for.
+                log.warn("Native click on [{}] was intercepted; re-scrolling and retrying.", locator);
+                scrollElementToCentre(visible);
+                try {
+                    visible.click();
+                } catch (org.openqa.selenium.ElementClickInterceptedException stillIntercepted) {
+                    log.warn("Still intercepted after re-scroll; falling back to a JS click on [{}]. "
+                            + "If this element is not inside a snap-scrolling carousel, investigate "
+                            + "what is covering it rather than accepting this.", locator);
+                    ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", visible);
+                }
+            }
         } catch (Exception e) {
             log.error("Click transaction aborted. Element was un-interactable: [{}]", locator, e);
             throw e;
         }
+    }
+
+    /**
+     * B.15 Hovers the mouse over an element, then clicks it.
+     *
+     * <p>For controls that only EXIST visually on hover — the Tailwind
+     * {@code group}/{@code group-hover:opacity-100} pattern this storefront uses for its
+     * carousel arrows. Such a button is present in the DOM but reports
+     * {@code isDisplayed() == false} (or zero opacity) until the pointer is over its
+     * container, so a plain click waits the full timeout and then fails with "element not
+     * visible" — which reads like a broken locator when the locator is perfectly correct.
+     *
+     * <p>Hovering first is also simply what a user does: the arrows are meant to appear
+     * when you move onto the carousel.
+     *
+     * @param hoverTarget the container that reveals the control (e.g. the carousel)
+     * @param clickTarget the control to click once it appears
+     * @return this page instance, typed as the concrete subclass, for chaining
+     */
+    @SuppressWarnings("unchecked")
+    protected SELF hoverAndClick(By hoverTarget, By clickTarget) {
+        try {
+            WebElement hover = getElementPresence(hoverTarget);
+            scrollElementToCentre(hover);
+            new org.openqa.selenium.interactions.Actions(driver).moveToElement(hover).perform();
+        } catch (Exception e) {
+            log.debug("Could not hover [{}] before clicking [{}]: {}", hoverTarget, clickTarget, e.getMessage());
+        }
+        clickElement(clickTarget);
+        return (SELF) this;
     }
 
     /**

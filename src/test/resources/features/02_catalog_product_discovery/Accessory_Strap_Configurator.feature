@@ -37,5 +37,10 @@ Feature: Accessory Strap Configurator
   Scenario: Verify a strap and its recommended clasp can be purchased together
     Given the user navigates to the accessory PDP of "fkm-rubber-strap-black"
     When the user clicks the "Add to cart" button on the accessory PDP
+    # Adding to cart opens the drawer automatically, and it covers the right-hand side of
+    # the page — including the clasp-upgrade card behind it (verified 2026-07-23: the
+    # "+ Add" button sits at x=1736, outside the drawer, and was being intercepted by it).
+    # A shopper has to dismiss the drawer to keep shopping, so the scenario says so.
+    And the user closes the cart drawer
     And the user clicks the "+ Add" button on the clasp-upgrade card
     Then the cart drawer contains both the strap and the recommended clasp
