@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
+import com.timepieces.automation.pages.components.SiteOverlayHandler;
 import com.timepieces.automation.pages.web.StagingGatePage;
 import com.timepieces.automation.pages.web.HomePage;
 import com.timepieces.automation.utils.BrowserUtils;
@@ -44,6 +45,20 @@ public class StagingBypassSteps {
         log.info("Bypassing staging gate for storefront: {}", baseUrl);
         driver.get(baseUrl);
         new StagingGatePage(driver).unlockIfPresent();
+        // CLEAR THE CONSENT BAR HERE TOO.
+        //
+        // This step navigates with driver.get() directly rather than through
+        // BasePage.open(), so it never reaches the SiteOverlayHandler sweep that open()
+        // performs — and this step is the Background for NINE feature files. Every
+        // scenario in them therefore started on a page with the cookie bar still up,
+        // which is why ElementClickInterceptedException kept appearing on controls low in
+        // the viewport (footer links, the guarantee/returns tiles, the cart drawer's
+        // checkout button) long after the bar was supposedly handled globally.
+        //
+        // NOTE the step name is historical and a little misleading: unlockIfPresent() is
+        // environment-agnostic and simply no-ops after a 4s probe when no gate exists, so
+        // this Background is SAFE on production — it is not what breaks prod runs.
+        SiteOverlayHandler.dismissBlockingOverlays(driver);
     }
 
     @Given("the user is on the storefront homepage")
@@ -55,6 +70,11 @@ public class StagingBypassSteps {
         }
         log.info("Navigating to storefront homepage: {}", baseUrl);
         driver.get(baseUrl);
+        // Same reason as the gate-bypass step above: this navigates with driver.get()
+        // rather than BasePage.open(), so it misses the global overlay sweep. Without
+        // this, the consent bar survives into the scenario and eats clicks near the
+        // bottom of the page.
+        SiteOverlayHandler.dismissBlockingOverlays(driver);
         new HomePage(driver).waitUntilLoaded();
     }
 

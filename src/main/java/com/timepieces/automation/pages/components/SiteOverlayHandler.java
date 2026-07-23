@@ -67,6 +67,9 @@ public final class SiteOverlayHandler {
      * column); only one is displayed at a time, so these must always be resolved through
      * {@link #firstDisplayed} rather than findElement's blind first-match.
      */
+    /** The site's own receipt that the consent choice was recorded. Verified on production. */
+    private static final String CONSENT_COOKIE = "timepieces_cookie_consent";
+
     private static final By REJECT_COOKIES = By.xpath("//button[normalize-space()='Reject Cookies']");
     private static final By ACCEPT_COOKIES = By.xpath("//button[normalize-space()='Accept Cookies']");
 
@@ -123,6 +126,19 @@ public final class SiteOverlayHandler {
         }
         try {
             button.click();
+            // Confirm the site actually RECORDED the choice, rather than assuming the
+            // click took. The bar re-renders while React hydrates, so a click that lands
+            // mid-hydration can be discarded and the bar comes straight back — which is
+            // how it was still intercepting footer clicks long after "being dismissed".
+            // The timepieces_cookie_consent cookie is the site's own receipt, so wait for it.
+            if (!awaitConsentCookie(driver)) {
+                log.debug("Consent click landed but the cookie never appeared; re-trying once.");
+                WebElement retry = firstDisplayed(driver, target);
+                if (retry != null) {
+                    retry.click();
+                    awaitConsentCookie(driver);
+                }
+            }
             log.debug("Cookie consent: chose '{}'. This persists for the session "
                     + "(cookie timepieces_cookie_consent).", mode);
         } catch (Exception e) {
@@ -171,6 +187,34 @@ public final class SiteOverlayHandler {
         } catch (Exception e) {
             log.debug("Drop-card close click failed ({}); continuing.", e.getClass().getSimpleName());
         }
+    }
+
+    /**
+     * Waits briefly for the site's own consent receipt cookie to appear.
+     *
+     * <p>{@code timepieces_cookie_consent} is what the site writes when the choice is
+     * accepted, so it — not the click returning without an exception — is the real proof
+     * the bar is gone for the rest of the session.
+     *
+     * @return true if the cookie appeared within the short window
+     */
+    private static boolean awaitConsentCookie(WebDriver driver) {
+        for (int attempt = 0; attempt < 8; attempt++) {
+            try {
+                if (driver.manage().getCookieNamed(CONSENT_COOKIE) != null) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+                // Cookie store briefly unavailable mid-navigation; just poll again.
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
     }
 
     /** Cheap presence check that never throws and never waits the global implicit timeout. */

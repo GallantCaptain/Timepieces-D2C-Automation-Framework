@@ -252,10 +252,43 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
             // elementToBeClickable would re-introduce the first-match trap and time out
             // on a node CSS will never show.
             WebElement visible = waitForFirstVisible(locator);
+
+            // SCROLL THE TARGET TO THE MIDDLE OF THE VIEWPORT BEFORE CLICKING.
+            //
+            // The storefront pins a cookie-consent bar to the BOTTOM of the window
+            // (z-index 9999, roughly y=896..986 at 1920x1080). Anything the test clicks
+            // low on the page — footer links, the guarantee/returns tiles, the cart
+            // drawer's checkout button — lands underneath it and Selenium reports
+            // ElementClickInterceptedException. Six such failures in the 2026-07-23 run
+            // were all in that band; the partner-profile one was a footer link at
+            // y=974 intercepted by the bar's inner card.
+            //
+            // SiteOverlayHandler already dismisses that bar on open(), but a page reached
+            // by CLICKING a link never goes through open(), and the bar can also re-render
+            // as React hydrates. Centring the element removes the dependency on the bar
+            // being gone at all: a centred element cannot be under a bottom-pinned overlay.
+            //
+            // This is also just how a human clicks — you scroll to a control before
+            // pressing it — so it makes the automation more faithful, not less.
+            scrollElementToCentre(visible);
+
             wait.until(ExpectedConditions.elementToBeClickable(visible)).click();
         } catch (Exception e) {
             log.error("Click transaction aborted. Element was un-interactable: [{}]", locator, e);
             throw e;
+        }
+    }
+
+    /**
+     * Centres an already-resolved element in the viewport. Never throws — a failed scroll
+     * must not fail the click that follows, because the click may well have worked anyway.
+     */
+    private void scrollElementToCentre(WebElement element) {
+        try {
+            ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView({block:'center', inline:'center'});", element);
+        } catch (Exception e) {
+            log.debug("Could not centre the element before clicking: {}", e.getMessage());
         }
     }
 
@@ -427,13 +460,41 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
      */
     protected Boolean isDisplayed(By locator) {
         log.debug("Verifying display status of target element: [{}]", locator);
+        // WAITS, and checks EVERY match — both halves matter, for different reasons.
+        //
+        // The original implementation was getElement(locator).isDisplayed(), which waited
+        // up to the explicit timeout but only ever considered the FIRST DOM match. On this
+        // storefront that is frequently the hidden mobile twin of a responsive pair, so it
+        // burned the whole timeout and then reported false about a section plainly on
+        // screen — the reason all five accessory PDP tests claimed the image gallery was
+        // missing.
+        //
+        // The first fix for that checked every match but dropped the WAIT, and that broke a
+        // different set of tests: any assertion made straight after a click or navigation
+        // now raced the render and reported false before the page had settled (caught on
+        // the Friends & Partners directory, whose h1 is present and visible but not
+        // instantly). Losing the wait was a regression, not a simplification.
+        //
+        // waitForFirstVisible does both: poll until ANY match is visible, so it neither
+        // fixates on the hidden twin nor returns before the page is ready. It still costs
+        // the full timeout when the answer is genuinely "no" — same as the original — which
+        // is the right trade for an assertion helper.
+        return isEventuallyDisplayed(locator);
+    }
+
+    /**
+     * V.2c "Is anything matching this visible RIGHT NOW?" — no waiting.
+     *
+     * <p>Use this only where the page is already known to be settled and the expected
+     * answer may legitimately be false, so paying the full timeout would be pure delay
+     * (e.g. polling for a transient state, or asserting absence). Everywhere else prefer
+     * {@link #isDisplayed(By)}, which waits.
+     *
+     * @param locator the By locator, which may match several nodes
+     * @return true if any match is visible at this instant
+     */
+    protected boolean isDisplayedNow(By locator) {
         try {
-            // "Is anything matching this visible?" — check EVERY match, not just the
-            // first. The old form asked getElement(...).isDisplayed(), which waited on
-            // the first DOM match; when that was the hidden mobile twin it burned the
-            // full timeout and reported false about a section the user can plainly see.
-            // That single line is why all five accessory PDP tests claimed the image
-            // gallery was missing while it was on screen the whole time.
             for (WebElement candidate : driver.findElements(locator)) {
                 try {
                     if (candidate.isDisplayed()) {
@@ -443,12 +504,10 @@ public abstract class BasePage<SELF extends BasePage<SELF>> {
                     // Re-rendered mid-check; the remaining candidates still get a look.
                 }
             }
-            return false;
         } catch (Exception e) {
-            log.warn("Display verification failed for target element: [{}]. Element may not be present or visible.",
-                    locator, e);
-            return false;
+            log.debug("Instant display check failed for [{}]: {}", locator, e.getMessage());
         }
+        return false;
     }
 
     /**

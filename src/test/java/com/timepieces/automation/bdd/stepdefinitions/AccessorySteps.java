@@ -164,7 +164,26 @@ public class AccessorySteps {
 
     @Then("the browser navigates to the accessory PDP {string}")
     public void the_browser_navigates_to_the_accessory_pdp(String handle) {
-        assertThat(driver.getCurrentUrl())
+        // WAIT for the URL, do not sample it once.
+        //
+        // Clicking a size/colour chip triggers a client-side route change, so reading
+        // getCurrentUrl() on the very next statement usually still returns the OUTGOING
+        // page — the browser has not swapped the URL yet. That is the whole reason
+        // "Rose Gold clasp size switcher navigates between 20mm and 22mm" failed: the
+        // click is fine and the navigation does happen (verified against production on
+        // 2026-07-23: clicking 22mm lands on .../single-deployment-clasp-rose-gold-22mm),
+        // the assertion just looked before the browser moved.
+        String actual;
+        try {
+            new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(15))
+                    .until(org.openqa.selenium.support.ui.ExpectedConditions.urlContains(handle));
+        } catch (org.openqa.selenium.TimeoutException ignored) {
+            // Fall through and let the assertion below report the URL we actually landed
+            // on — a bare "timed out" is far less useful than "expected X, got Y".
+        }
+        actual = driver.getCurrentUrl();
+
+        assertThat(actual)
                 .as("The browser should have navigated to the accessory PDP for '%s'", handle)
                 .contains(handle);
         pdp = new GenericAccessoryPdp(driver);

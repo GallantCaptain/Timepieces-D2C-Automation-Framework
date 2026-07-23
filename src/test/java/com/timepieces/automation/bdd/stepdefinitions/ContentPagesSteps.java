@@ -116,14 +116,29 @@ public class ContentPagesSteps {
         //     diagnosis in completely the wrong direction.
         //
         // Both verified against production, 2026-07-17.
+        // AND IT WAITS. The original checked findElements(...) once, with no wait, which is
+        // fine when the page was reached via open() (that blocks until load) but wrong when
+        // it was reached by CLICKING a link: the browser is still navigating, so the check
+        // inspects the OUTGOING page and reports false. That is exactly how "Verify a
+        // partner profile navigates back to the directory" failed — the click and the
+        // heading were both fine (proven: clicking the visible back link lands on
+        // /friends-and-partners with h1 "Friends & Partners"); the assertion simply looked
+        // too early.
         String expected = normalise(headingText);
-        boolean found = driver.findElements(By.tagName("h1")).stream().anyMatch(h1 -> {
-            try {
-                return h1.isDisplayed() && normalise(h1.getText()).contains(expected);
-            } catch (org.openqa.selenium.StaleElementReferenceException e) {
-                return false; // Re-rendered mid-check; the other candidates still get a look.
-            }
-        });
+        boolean found;
+        try {
+            found = Boolean.TRUE.equals(new org.openqa.selenium.support.ui.WebDriverWait(
+                    driver, java.time.Duration.ofSeconds(15))
+                    .until(d -> d.findElements(By.tagName("h1")).stream().anyMatch(h1 -> {
+                        try {
+                            return h1.isDisplayed() && normalise(h1.getText()).contains(expected);
+                        } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                            return false; // Re-rendered mid-check; other candidates still get a look.
+                        }
+                    }) ? Boolean.TRUE : null));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            found = false;
+        }
         assertThat(found)
                 .as("An h1 heading containing '%s' should be displayed", headingText).isTrue();
     }
