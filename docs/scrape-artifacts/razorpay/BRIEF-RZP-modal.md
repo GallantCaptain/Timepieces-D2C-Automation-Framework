@@ -44,7 +44,7 @@ iframe, with Razorpay's real `data-testid` wherever one exists:
   Continue button (+ its disabled/enabled encoding).
 
 ### 1.3 Magic-link OTP prompt
-Use the pilot number (9000000001) so the prompt appears. Capture:
+Use the pilot number (<pilot-phone-redacted>) so the prompt appears. Capture:
 - The "N addresses found" banner, "Enter OTP sent to +91…" heading, the 4 OTP
   digit boxes (selectors + auto-advance behavior), **Skip OTP**, "Resend OTP in
   Ns" (+ post-timer state), Continue.

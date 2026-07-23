@@ -7,6 +7,7 @@ import org.openqa.selenium.WebDriver;
 import com.timepieces.automation.base.DriverFactory;
 import com.timepieces.automation.context.TestContext;
 import com.timepieces.automation.pages.components.CartDrawerComponent;
+import com.timepieces.automation.pages.components.HeaderComponent;
 import com.timepieces.automation.pages.web.StagingGatePage;
 import com.timepieces.automation.pages.web.products.accessories.GenericAccessoryPdp;
 import com.timepieces.automation.utils.ConfigReader;
@@ -329,13 +330,42 @@ public class AccessorySteps {
 
     @Then("the recommended clasp is added to the cart")
     public void the_recommended_clasp_is_added_to_the_cart() {
-        // TODO: assert the recommended clasp line item appears in the cart drawer.
-        throw new PendingException("Implement recommended-clasp cart-membership assertion.");
+        // "Clasp" is the reliable common fragment — the upgrade card is always a clasp
+        // ("Single Deployment Clasp", "Butterfly Clasp"), whatever the colour/material.
+        CartDrawerComponent cart = openBagDrawer();
+        assertThat(cart.containsLineItem("clasp"))
+                .as("The recommended clasp should appear as a line item in the bag. Bag held: %s",
+                        cart.getLineItemTitles())
+                .isTrue();
     }
 
     @Then("the cart drawer contains both the strap and the recommended clasp")
     public void the_cart_drawer_contains_both_the_strap_and_the_recommended_clasp() {
-        // TODO: assert the cart drawer contains two line items (strap + clasp).
-        throw new PendingException("Implement combined strap+clasp cart-membership assertion.");
+        // Asserts the identities, not just the count: a bag of two clasps, or two straps,
+        // would satisfy "2 line items" while failing the actual claim that a strap and its
+        // upsold clasp are in the bag together.
+        CartDrawerComponent cart = openBagDrawer();
+        java.util.List<String> titles = cart.getLineItemTitles();
+        assertThat(cart.containsLineItem("strap"))
+                .as("The bag should contain the strap. Bag held: %s", titles).isTrue();
+        assertThat(cart.containsLineItem("clasp"))
+                .as("The bag should contain the recommended clasp. Bag held: %s", titles).isTrue();
+    }
+
+    /**
+     * Returns a cart drawer that is guaranteed OPEN.
+     *
+     * <p>The clasp-upgrade "+ Add" lives on the PDP, not inside the drawer, and clicking it
+     * adds the clasp WITHOUT re-opening the bag — and the scenario has usually just closed
+     * the drawer to reach that card. So reading line items straight afterwards found an
+     * empty, hidden drawer and timed out. This opens it via the header bag toggle first
+     * when it is not already showing, which is exactly what a shopper does to check the bag.
+     */
+    private CartDrawerComponent openBagDrawer() {
+        CartDrawerComponent cart = new CartDrawerComponent(driver);
+        if (!cart.isCartDrawerDisplayed()) {
+            new HeaderComponent(driver).clickCartToggle();
+        }
+        return cart;
     }
 }

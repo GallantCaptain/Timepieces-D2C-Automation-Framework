@@ -362,7 +362,45 @@ public class SidebarMenuComponent extends BasePage<SidebarMenuComponent> {
          *
          * @return this SidebarMenuComponent for method chaining.
          */
-        public SidebarMenuComponent backToSidebarMenuFromSubMenu() {
+        /**
+     * B.6b Opens the Accessories sub-menu and follows it through to the All Accessories
+     * collection page — the shopper's route into the catalogue from the hamburger menu.
+     *
+     * <p>Two clicks, because that is genuinely how the menu works: Accessories opens a
+     * sub-menu overlay, and the collection itself is the header link inside it. The
+     * Accessories entry in the sidebar is a {@code <button>} with no href, so there is no
+     * single control to click.
+     *
+     * @return this component instance for method chaining.
+     */
+    public SidebarMenuComponent openAccessoriesCollection() {
+        log.info("Opening the Accessories sub-menu, then the All Accessories collection.");
+        openAccessoriesSubMenu();
+
+        // Wait for the sub-menu overlay to actually mount before reaching into it. The
+        // Accessories button and the link inside the overlay it opens are two separate
+        // clicks with an animation between them.
+        waitForVisibility(productsSubMenu_In_SidebarMenu_Desktop);
+
+        // waitForFirstVisible, NOT clickElement. The desktop and mobile variants of this
+        // link share one selector (both are 'nav-submenu-parent-desktop' — see the field
+        // declarations), so the page can hold more than one match with only one of them
+        // on screen. clickElement takes the FIRST match in DOM order, which on 2026-07-23
+        // was the off-screen twin: the click "succeeded", nothing navigated, and the
+        // assertion reported the homepage URL with no hint as to why. Same family of bug
+        // as the hidden responsive twins found across the accessory PDPs.
+        waitForFirstVisible(accessoriesCollection_HeaderLogo_PageLinkDesktop).click();
+
+        // Wait for the navigation this method just triggered, rather than handing back a
+        // half-navigated page. Without this the method returned in about half a second and
+        // the caller asserted against the homepage URL it had not left yet — a race the
+        // caller cannot see and would reasonably read as "the click did nothing".
+        // A fluent method that triggers navigation owes the caller the finished navigation.
+        wait.until(org.openqa.selenium.support.ui.ExpectedConditions.urlContains("/accessories/all"));
+        return this;
+    }
+
+    public SidebarMenuComponent backToSidebarMenuFromSubMenu() {
                 log.info("Returning from products sub-menu to the sidebar menu.");
                 clickElement(backButtonProductsSubMenu_To_SidebarMenu_Desktop);
                 return this;

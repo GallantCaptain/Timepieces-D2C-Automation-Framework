@@ -67,9 +67,28 @@ public class AccountOrdersSteps {
             driver.get(baseUrl + "/404");
             new com.timepieces.automation.pages.web.StagingGatePage(driver).unlockIfPresent();
 
+            // The pilot phone number is NOT in source control. It used to be hardcoded here
+            // as a real personal mobile belonging to the framework's first owner, which meant
+            // every clone of this repo — and every future one — carried a real person's
+            // contact details, and every run of this test sent an OTP to a phone that person
+            // may no longer own. It was removed when they offboarded (2026-07-23).
+            //
+            // Supply your own. Either is fine:
+            // src/test/resources/config/<env>.local.properties (gitignored)  ->  pilot.phone=NNNNNNNNNN
+            // or on the command line                                         ->  -Dpilot.phone=NNNNNNNNNN
+            String pilotPhone = com.timepieces.automation.utils.ConfigReader.get("pilot.phone");
+            if (pilotPhone == null || pilotPhone.isBlank()) {
+                throw new IllegalStateException(
+                        "pilot.phone is not configured, so this @AuthGated scenario cannot log in. "
+                                + "Set it in config/" + com.timepieces.automation.utils.ConfigReader.get("env")
+                                + ".local.properties (gitignored) or pass -Dpilot.phone=<10-digit-number>. "
+                                + "There is deliberately no default: the previous value was a real personal "
+                                + "mobile number and was removed at offboarding.");
+            }
+
             com.timepieces.automation.tdd.api.AuthenticationEngine authEngine = new com.timepieces.automation.tdd.api.AuthenticationEngine(
                     testContext);
-            authEngine.loginViaBackendApi("9000000001"); // Use the pilot phone number
+            authEngine.loginViaBackendApi(pilotPhone);
             String token = (String) testContext.getContextData("AUTH_TOKEN");
 
             if (token != null && !token.isEmpty()) {

@@ -105,8 +105,12 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
     // Addons Item Container
     private final By addonItemContainer = By.cssSelector("div[data-testid='cart-upsell-item']");
 
-    // Helpful Comment
-    private final By addonItemTitle = By.cssSelector("h4[data-testid='cart-upsell-item-title']]");
+    // Title of a recommended add-on card.
+    // NOTE: this selector carried a stray trailing "]" ("...-title']]") until 2026-07-23.
+    // It had never been used, so it never threw — but the first caller would have got an
+    // InvalidSelectorException rather than "no such element", which reads like a driver
+    // fault instead of a typo and would have cost somebody an afternoon.
+    private final By addonItemTitle = By.cssSelector("h4[data-testid='cart-upsell-item-title']");
 
     // Addon Price Label [Adjusts dynamically based on region selected]
     private final By addonItemPrice = By.cssSelector("span[data-testid='cart-upsell-item-price']");
@@ -270,8 +274,77 @@ public class CartDrawerComponent extends BasePage<CartDrawerComponent> {
     }
 
     /**
+     * Counts the line items currently in the bag.
+     *
+     * <p>Counts DISTINCT line items, not units: a single line at quantity 3 counts once.
+     * That is the number the drawer itself shows as rows, and it is what a scenario means
+     * by "a strap, a clasp and a watch case are in the bag".
+     *
+     * @return the number of {@code cart-line-item} rows in the drawer.
+     */
+    public int getLineItemCount() {
+        int count = driver.findElements(buyItemContainer).size();
+        log.info("Cart drawer line-item count: {}", count);
+        return count;
+    }
+
+    /**
+     * Returns the visible title of every line item in the bag, in drawer order.
+     *
+     * @return a list of line-item titles (empty if the bag is empty).
+     */
+    public java.util.List<String> getLineItemTitles() {
+        java.util.List<String> titles = getElements(buyItemTitle).stream()
+                .map(org.openqa.selenium.WebElement::getText)
+                .map(String::trim)
+                .collect(java.util.stream.Collectors.toList());
+        log.info("Cart drawer line-item titles: {}", titles);
+        return titles;
+    }
+
+    /**
+     * Reports whether a line item whose title contains the given text is in the bag.
+     *
+     * <p>Substring, case-insensitive, on purpose: the drawer title ("FKM Rubber Strap -
+     * Black") is longer and cased differently from what a scenario naturally names it
+     * ("rubber strap"), and an exact-match check would fail on a bag that is perfectly
+     * correct.
+     *
+     * @param titleFragment a distinctive fragment of the product title.
+     * @return true if some line item's title contains the fragment.
+     */
+    public boolean containsLineItem(String titleFragment) {
+        String needle = titleFragment.toLowerCase();
+        return getLineItemTitles().stream()
+                .anyMatch(t -> t.toLowerCase().contains(needle));
+    }
+
+    /**
+     * Verifies the order-summary block rendered with a total.
+     *
+     * <p>Checks the TOTAL rather than the subtotal deliberately. The total is the number a
+     * shopper is asked to agree to and the one Razorpay is handed; a subtotal can render
+     * perfectly while the total is still resolving, and asserting the wrong one gives a
+     * green test for a drawer that has not finished pricing.
+     *
+     * @return true if the summary section and its total value are displayed.
+     */
+    public boolean isOrderTotalDisplayed() {
+        return isDisplayed(cartOrderSummarySection) && isDisplayed(totalPriceValue);
+    }
+
+    /**
+     * Returns the bag total exactly as rendered, currency symbol included (e.g. "₹11,000").
+     *
+     * @return the trimmed total text.
+     */
+    public String getOrderTotalText() {
+        return getText(totalPriceValue);
+    }
+
+    /**
      * Verifies if the cart is empty.
-     * 
+     *
      * @return true if empty cart state is displayed, false otherwise.
      */
     public boolean isCartEmpty() {

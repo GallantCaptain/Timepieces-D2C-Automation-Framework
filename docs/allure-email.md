@@ -8,7 +8,9 @@ It is **safe by default**: if SMTP isn't configured it logs a notice and exits 0
 so it never breaks a run. Sending failures are also non-fatal (use `--strict` to
 change that).
 
-Default recipient: **167759523+GallantCaptain@users.noreply.github.com** (override with `MAIL_TO`).
+Recipient: **`MAIL_TO` is required — there is no default.** It used to default to the
+framework's first owner's work address, so after they offboarded every report would have
+gone to a dead mailbox. The script now says so and skips rather than mailing into a void.
 
 ## What you must provide: an SMTP sender
 
@@ -24,7 +26,7 @@ these (locally as shell env vars; in CI as **repository secrets**):
 | `SMTP_STARTTLS` | no | `true` (default) for port 587 |
 | `SMTP_SSL` | no | `true` for implicit TLS (port 465); default `false` |
 | `MAIL_FROM` | no | default = `SMTP_USER` |
-| `MAIL_TO` | no | default `167759523+GallantCaptain@users.noreply.github.com` (comma-separated ok) |
+| `MAIL_TO` | **yes** | no default; comma-separated for several recipients |
 | `MAIL_MAX_ATTACH_MB` | no | default `20`; larger reports are sent as summary-only |
 
 > **Gmail / Google Workspace** (e.g. a `@timepieces-d2c.example` account): use

@@ -27,7 +27,7 @@ This section remains visible on the left side of the modal throughout all checko
 - **Order Instructions Button:** `button[data-testid="order-instructions-button"]` (triggers instructions textbox)
 - **Offers badge subtext:** `span[data-testid="summary-offer-coupon-subtext"]` (contains offers count, e.g., `7 offers available`)
 - **Offers Chevron Button:** `button[data-testid="summary-chevron-button"]` (opens coupon list)
-- **Identity Chip:** `button[data-testid="overview-contact-cta"]` (displays currently logged in contact, e.g., `Using as +91 98274 76997`, clickable to edit contact details)
+- **Identity Chip:** `button[data-testid="overview-contact-cta"]` (displays currently logged in contact, e.g., `Using as +91 XXXXX XXXXX`, clickable to edit contact details)
 - **Secured by Razorpay Badge:** `div[data-testid="secured-by-razorpay"]`
 
 ---

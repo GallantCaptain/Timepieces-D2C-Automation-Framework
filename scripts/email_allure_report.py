@@ -19,7 +19,7 @@ Configuration is entirely via environment variables (no secrets in source):
     SMTP_STARTTLS            'true' (default) | 'false'
     SMTP_SSL                 'false' (default) | 'true'  (implicit TLS, e.g. port 465)
     MAIL_FROM                default = SMTP_USER
-    MAIL_TO                  default = 167759523+GallantCaptain@users.noreply.github.com (comma-separated ok)
+    MAIL_TO                  REQUIRED to actually send (comma-separated ok). No default.
     MAIL_MAX_ATTACH_MB       default 20; larger reports are not attached
     ALLURE_REPORT_DIR        default target/site/allure-maven-plugin
     RUN_SOURCE               local | docker | ci (labels the subject/body)
@@ -44,7 +44,11 @@ import sys
 import zipfile
 from email.message import EmailMessage
 
-DEFAULT_TO = "167759523+GallantCaptain@users.noreply.github.com"
+# No default recipient, deliberately. This used to be the framework's first owner's
+# work address, which meant that after they offboarded every report would have been
+# posted to a mailbox that no longer exists — failing silently or, worse, bouncing to
+# nobody's attention. Set MAIL_TO in the gitignored .env (see .env.example).
+DEFAULT_TO = ""
 REPORT_DIR = pathlib.Path(os.environ.get("ALLURE_REPORT_DIR", "target/site/allure-maven-plugin"))
 
 
@@ -230,6 +234,15 @@ def main():
     cfg = smtp_config()
     if cfg is None:
         log("SMTP not configured (need SMTP_HOST, SMTP_USER, SMTP_PASSWORD) - skipping email.")
+        return 1 if strict else 0
+
+    # Checked here rather than left to the SMTP server, which rejects an empty recipient
+    # list with a generic error that reads like a connection problem. There is no default
+    # recipient any more (see DEFAULT_TO), so an unset MAIL_TO is a real configuration gap
+    # and should say so in those words.
+    if not cfg["mail_to"]:
+        log("MAIL_TO is not set and there is no default recipient - skipping email. "
+            "Add MAIL_TO=someone@example.com to the gitignored .env (see .env.example).")
         return 1 if strict else 0
 
     msg = build_message(cfg)

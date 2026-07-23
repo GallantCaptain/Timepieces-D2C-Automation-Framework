@@ -344,7 +344,7 @@ Last updated: 2026-07-10
 
 ### Stashed Action Plan
 
-- Email report notifications for all 3 CI/CD workflows to `167759523+GallantCaptain@users.noreply.github.com`, `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example` using `dawidd6/action-send-mail@v5`. Blocked on SMTP credentials from admin. Tracked as `TASK-CI-003`.
+- Email report notifications for all 3 CI/CD workflows to `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example` using `dawidd6/action-send-mail@v5`. Blocked on SMTP credentials from admin. Tracked as `TASK-CI-003`.
 
 ### Verification
 

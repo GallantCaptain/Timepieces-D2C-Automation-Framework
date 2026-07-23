@@ -334,6 +334,77 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
     }
 
     /**
+     * B.10b Types a mobile number and an email into the GUEST contact step and stops
+     * there. It does not press Continue, and it must not be changed to.
+     *
+     * <p>This is a safety rail, not an oversight. Pressing Continue makes Razorpay send a
+     * verification OTP by SMS to whatever number is in the box. In an automated suite that
+     * number is synthetic, which means it belongs either to nobody or — far more likely on
+     * a 10-digit Indian mobile range — to a real stranger who would receive unexplained
+     * SMS every time the pipeline ran. Nobody would ever see the bill, and nobody would
+     * ever connect the messages back to a test suite. Filling the fields proves everything
+     * this framework is entitled to prove: that the step renders, accepts input and is
+     * wired up. Whether the OTP sends is Razorpay's contract, not the storefront's.
+     *
+     * <p>Distinct from {@link #updateContactDetails(String, String)}, which is the
+     * SIGNED-IN path: it opens the popup from the "Using as +91…" identity chip and does
+     * submit. A signed-out shopper meets these same fields as the first screen of the
+     * modal (Contact → Address → Payment) with no chip to click.
+     *
+     * <p>Call only while switched INTO the Razorpay checkout frame.
+     *
+     * @param mobile a synthetic mobile number — never a real person's.
+     * @param email  a synthetic email address.
+     * @return this component instance for method chaining.
+     */
+    public RazorpayModalComponent typeGuestContactDetails(String mobile, String email) {
+        log.info("Typing guest contact details into the Razorpay contact step (no submit).");
+        sendKeys(contactNumberInput, mobile);
+        sendKeys(contactEmailInput, email);
+        return this;
+    }
+
+    /**
+     * V.8b Verifies the GUEST contact step is on screen: both inputs present.
+     *
+     * <p>Looser than {@link #isContactPopupDisplayed()} on purpose. That method also
+     * requires the "Contact details" heading and the country-code selector, which is right
+     * for the signed-in popup; the guest first-screen is the same two fields inside a
+     * different shell, and demanding the popup chrome there would fail against a perfectly
+     * correct screen — the same mistake that made the international rail check fail by
+     * insisting on a "Recommended" entry the product does not render.
+     *
+     * @return true if the mobile and email inputs are both present.
+     */
+    public boolean isGuestContactStepDisplayed() {
+        return !driver.findElements(contactNumberInput).isEmpty()
+                && !driver.findElements(contactEmailInput).isEmpty();
+    }
+
+    /**
+     * V.8c Reads back what the mobile input actually holds.
+     *
+     * <p>Read via the {@code value} property rather than {@code getText()}: an
+     * {@code <input>} has no text node, so {@code getText()} returns "" no matter what the
+     * user typed — an assertion built on it passes and proves nothing.
+     *
+     * @return the current value of the contact mobile input.
+     */
+    public String getContactNumberValue() {
+        return getAttribute(contactNumberInput, "value");
+    }
+
+    /**
+     * V.8d Reads back what the email input actually holds. Same {@code value} reasoning as
+     * {@link #getContactNumberValue()}.
+     *
+     * @return the current value of the contact email input.
+     */
+    public String getContactEmailValue() {
+        return getAttribute(contactEmailInput, "value");
+    }
+
+    /**
      * B.11 Enters the 4-digit magic-link OTP (one digit per box; guest identity
      * path — VERIFY-tier locators).
      *
@@ -483,6 +554,25 @@ public class RazorpayModalComponent extends BasePage<RazorpayModalComponent> {
         return !driver.findElements(razorpayContainer).isEmpty()
                 && !driver.findElements(checkoutIframe).isEmpty()
                 && !driver.findElements(razorpayBackdrop).isEmpty();
+    }
+
+    /**
+     * V.1b Verifies the modal has actually been dismissed — the checkout iframe is no
+     * longer VISIBLE.
+     *
+     * <p>Not simply {@code !isModalOpen()}. Razorpay tears its overlay down by hiding it,
+     * and leaves {@code div.razorpay-container} and the iframe in the DOM afterwards.
+     * {@link #isModalOpen()} asks whether those nodes are PRESENT, so it keeps answering
+     * "open" for a modal the shopper can no longer see — verified 2026-07-23, when a
+     * close-semantics scenario failed on a modal that had closed perfectly well.
+     *
+     * <p>Presence is the right question when waiting for the modal to arrive (the nodes are
+     * injected on demand) and the wrong one when checking that it has gone.
+     *
+     * @return true once the checkout iframe is no longer displayed.
+     */
+    public boolean isModalDismissed() {
+        return isEventuallyHidden(checkoutIframe);
     }
 
     /**

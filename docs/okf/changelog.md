@@ -64,7 +64,7 @@ This changelog is append-only. New entries must be added chronologically and mus
 - Updated staging-tests cron schedule to 02:00 IST (20:30 UTC) and production-tests cron schedule to 04:00 IST (22:30 UTC).
 - Fixed JDK distribution mismatch in test-pipeline.yml (`oracle` → `temurin`) for consistency with other workflows and Docker.
 - Confirmed `.github/modernize/` and `.github/java-upgrade/` directories are safe to delete (modernization tool artifacts with no code/CI dependencies).
-- Stashed email report notification plan (TASK-CI-003) for all 3 CI/CD workflows to `167759523+GallantCaptain@users.noreply.github.com`, `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example` using `dawidd6/action-send-mail@v5`; awaiting SMTP credentials from admin.
+- Stashed email report notification plan (TASK-CI-003) for all 3 CI/CD workflows to `stakeholder.two@timepieces-d2c.example`, `stakeholder.one@timepieces-d2c.example` using `dawidd6/action-send-mail@v5`; awaiting SMTP credentials from admin.
 - Implemented nightly exploratory search API test suite (TASK-CI-004) executing 50 randomized search queries from the data pool, running at 6:00 AM IST (00:30 UTC), defaulting to production environment.
 - Created `SearchApiExploratoryTest.java` with randomized shuffling, time-based seed logging for reproducibility, and RestAssured connection/socket timeouts (10 seconds) to prevent pipeline hangs.
 - Configured Cloudflare bypass header `x-automation-bypass` in `SearchApiExploratoryTest.java` and `SearchApiTest.java`.
@@ -1123,7 +1123,7 @@ This changelog is append-only. New entries must be added chronologically and mus
   - `RegressionRunner` tags → `"@Regression or @AuthGated"` (the account-orders
     feature the owner registered now actually executes; its precondition first
     attempts an API-backed session-cookie injection via
-    `AuthenticationEngine.loginViaBackendApi(9000000001)` → `timepieces_session`
+    `AuthenticationEngine.loginViaBackendApi(<pilot-phone-redacted>)` → `timepieces_session`
     cookie [owner/Agy change], then fails fast with the Cloudflare message).
   - Default `testng.xml` now carries a "UI Smoke Executions (TDD)" block with
     all 5 smoke classes (Accessory/Phase3/TimepiecesWorld/Homepage/BecomeMore) —
@@ -1763,3 +1763,62 @@ This changelog is append-only. New entries must be added chronologically and mus
   blamed. Reverting would have deleted a working feature, left the actual defect in place, and
   the very next `--profile grid up` would have failed exactly the same way — with the evidence
   that pointed at the real cause now gone from the tree.
+
+### PII scrub + payment/security tests reworked to the real flow (later same day)
+
+- **Scrubbed the departing owner's personal contact details from every tracked file.** A
+  real personal mobile number and a personal email were hardcoded in Java, in config, in a
+  report script's default recipient, and scattered through docs. They would otherwise have
+  ridden along in every future clone, and the tests that used the number would have sent an
+  OTP to a phone the owner may no longer hold.
+  - `AccountOrdersSteps` and `PdpLocatorScraper` no longer default to a real number; they
+    read `pilot.phone` (config/`-D`) and fail with an explicit message naming the key if it
+    is unset. There is deliberately NO default — a blank is safer than a stale real number.
+  - `staging.properties` / `production.properties` carry `pilot.phone=` (blank) with a
+    comment pointing to the gitignored `<env>.local.properties`.
+  - `email_allure_report.py` no longer defaults `MAIL_TO` to the owner's work address; it
+    skips with a clear message when `MAIL_TO` is unset (was mailing into a soon-dead inbox).
+  - A tracked-file sweep confirms zero occurrences of the number, its fragments, or either
+    email remain. NOTE: git HISTORY still contains them across ~24 commits — a full scrub
+    needs the same `git filter-repo` treatment used for the Zephyr token (ISSUE-013) if the
+    team decides the history matters; the working tree is clean.
+- **Reworked `Payment_Integration_Validation.feature` — it was 6-for-6 failing, all in the
+  Background.** The old Background filled a delivery form while the browser sat on the
+  homepage, and the scenarios assumed a native card form + place-order button +
+  confirmation page that this storefront does not have (payment is Razorpay's cross-origin
+  iframe). The file now follows the REAL flow the owner confirmed: homepage → sidebar →
+  Accessories → add a strap/clasp → Secure Checkout → the Razorpay modal opens in-page and a
+  signed-out shopper is asked for a mobile + email. Five @Regression scenarios, all green
+  against production:
+  - Accessories collection reachable from the sidebar
+  - a two-item bag (strap + its upsold clasp) with a rendered total
+  - Secure Checkout opens the modal IN-PAGE, no hard redirect
+  - a signed-out guest is asked for contact details before payment
+  - the modal closes only through its exit confirmation
+- **Card entry, declines, token transmission and the confirmation page are now @Manual /
+  @NotAutomated**, kept in the file as a specification with exactly what blocks them (a
+  Razorpay TEST key on staging, written sign-off to drive their sandbox, and the already-
+  mapped card.* inputs). RegressionRunner does not select them.
+- **Guest contact step is filled but NEVER submitted**, by design: pressing Continue would
+  send a verification SMS to whatever number is in the box, on every run, to a real stranger
+  who owns that synthetic-looking number. `RazorpayModalComponent.typeGuestContactDetails`
+  documents this as a safety rail. The synthetic number is an obvious-fake repeating-digit
+  value, not a plausible random one, precisely so it is recognisable if it ever leaks.
+- **Three real framework bugs found and fixed while reworking, each caught by a failing run,
+  not by reading:**
+  - `SidebarMenuComponent.openAccessoriesCollection` clicked the FIRST match of a selector
+    shared by an off-screen responsive twin (the click hit the hidden one, nothing
+    navigated) AND returned before navigation completed. Now waits for the visible link and
+    for the URL to change. Same hidden-twin family as the accessory-PDP fixes.
+  - `RazorpayModalComponent`: `isModalOpen()` is a PRESENCE check, and Razorpay hides its
+    overlay without removing the nodes, so it reported "open" forever after the modal was
+    shown once. Added `isModalDismissed()` (a visibility check) for close assertions.
+  - `CartDrawerComponent.addonItemTitle` had a stray trailing `]` in its selector
+    (`...-title']]`) — an InvalidSelectorException waiting for its first caller; fixed.
+- **Un-pended two `Account/ Accessory` steps** now that the cart drawer has real line-item
+  readers (`getLineItemCount`, `getLineItemTitles`, `containsLineItem`): the strap+clasp
+  "purchased together" and "recommended clasp added" scenarios in
+  `Accessory_Strap_Configurator.feature` now assert real cart membership and pass.
+- **ISSUE-022 filed** (Low): a watch case added from its own PDP did not join a strap+clasp
+  bag in an automated run, though the bag persists across navigation. The multi-item
+  scenario was scoped to the reliable two-item path rather than shipped flaky.

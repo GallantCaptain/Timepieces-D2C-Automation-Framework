@@ -127,8 +127,18 @@ public class PdpLocatorScraper {
     // Login (human-in-the-loop CAPTCHA + OTP hand-off)
     // ==========================================
     private void attemptLogin() {
-        String phone = System.getProperty("pdp.scraper.phone", "9000000001");
+        // No default. This used to fall back to a real personal mobile belonging to the
+        // framework's first owner; removed at offboarding (2026-07-23). Pass your own:
+        //     -Dpdp.scraper.phone=NNNNNNNNNN
+        String phone = System.getProperty("pdp.scraper.phone", "");
         String country = System.getProperty("pdp.scraper.country", "India");
+
+        if (phone.isBlank()) {
+            throw new IllegalStateException(
+                    "pdp.scraper.phone is not set. This tool logs into PRODUCTION with a real "
+                            + "account, so it needs a real number and there is deliberately no "
+                            + "default. Re-run with -Dpdp.scraper.phone=<10-digit-number>.");
+        }
 
         LoginPage loginPage = new LoginPage(driver).open();
         loginPage.configureCountryCodeByName(country).enterPhoneNumber(phone);

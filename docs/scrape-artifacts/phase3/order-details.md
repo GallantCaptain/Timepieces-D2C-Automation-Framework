@@ -41,7 +41,7 @@
 ## 3. Shipping & Billing Addresses (Redacted)
 * **Shipping Address Container**: `div[data-testid="order-detail-shipping-address"]`
   * **Recipient Name**: `div[data-testid="order-detail-shipping-address"] span.font-medium` -> `<redacted>` (e.g. "Avinash Rath")
-  * **Recipient Phone**: `div[data-testid="order-detail-shipping-address"] span:nth-of-type(3)` -> `<redacted>` (e.g. "+919000000001")
+  * **Recipient Phone**: `div[data-testid="order-detail-shipping-address"] span:nth-of-type(3)` -> `<redacted>` (e.g. "+91-XXXXXXXXXX")
   * **Address Lines**: `div[data-testid="order-detail-shipping-address"] p.text-gray-400` -> `<redacted>` (e.g. "Test - Payment, Test, New York 12344")
 * **Billing Address Container**: `div[data-testid="order-detail-billing-address"]`
   * **Recipient Name**: `div[data-testid="order-detail-billing-address"] span.font-medium` -> `<redacted>`

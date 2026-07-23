@@ -6,7 +6,7 @@
 > session. Production login serves a real Cloudflare Turnstile that WebDriver
 > cannot solve, so you (the human) solve the Cloudflare challenge live in the
 > visible Chrome window and enter the SMS OTP for the pilot number
-> **9000000001** (India). Once `/account` loads, the session cookies persist, so
+> **<pilot-phone-redacted>** (India). Once `/account` loads, the session cookies persist, so
 > all 3 pages below map in the same session without re-login.
 
 Locator ladder: `data-testid` → `id` → aria/role → text-anchor → semantic class →

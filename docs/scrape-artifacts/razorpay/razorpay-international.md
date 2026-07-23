@@ -36,7 +36,7 @@ Clicking "Proceed to Payment" on the `/checkout` page with a valid international
 Unlike the domestic panel which has order items, coupons, and GST additions, the international panel is highly streamlined:
 - **Price Summary Label:** `span` with text `Price Summary`
 - **Price Summary Value:** `h3` (displays total in USD, e.g. `$171.27`)
-- **Identity widget:** `button[data-testid="contact-sidebar-widget"]` (displays currently logged in contact, e.g., `Using as +91 98274 76997`)
+- **Identity widget:** `button[data-testid="contact-sidebar-widget"]` (displays currently logged in contact, e.g., `Using as +91 XXXXX XXXXX`)
 - **Secured by Razorpay Badge:** `div[data-testid="secured-by-razorpay"]`
 
 ### Payment Options Panel (Right Panel Chrome)
