@@ -8,6 +8,8 @@ name: cf-bypass-check
 #   * If "with header" is STILL challenged -> the rule does not cover the challenge source
 #     (e.g. Bot Fight Mode on the Free plan, or Browser Integrity Check) and must be broadened.
 on:
+  # Portfolio copy: manual runs only. Scheduled / PR / dispatch triggers removed so
+  # nothing runs automatically against the original application.
   workflow_dispatch:
     inputs:
       url:

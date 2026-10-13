@@ -5,19 +5,8 @@ name: staging-tests
 #   - a nightly schedule
 #   - manual dispatch
 on:
-  pull_request:
-    branches:
-      - main
-    # The browser suite exercises the Java app under src/. Skip it for PRs that only
-    # touch non-test assets so an unrelated change isn't gated on a long Selenium run.
-    paths-ignore:
-      - 'dashboard/**'
-      - 'docs/**'
-      - 'grafana-dashboards/**'
-      - '**/*.md'
-  schedule:
-    # 20:30 UTC nightly (02:00 IST). Staggered before production-tests (22:30 UTC).
-    - cron: "30 20 * * *"
+  # Portfolio copy: manual runs only. Scheduled / PR / dispatch triggers removed so
+  # nothing runs automatically against the original application.
   workflow_dispatch:
 
 # Prevent overlapping staging runs on the same ref (a fresh nightly/PR push supersedes

@@ -4,9 +4,8 @@ name: exploratory-search-tests
 #   - a nightly schedule at 6:00 AM IST (00:30 UTC)
 #   - manual dispatch (workflow_dispatch)
 on:
-  schedule:
-    # 00:30 UTC nightly (06:00 IST)
-    - cron: "30 0 * * *"
+  # Portfolio copy: manual runs only. Scheduled / PR / dispatch triggers removed so
+  # nothing runs automatically against the original application.
   workflow_dispatch:
 
 concurrency:

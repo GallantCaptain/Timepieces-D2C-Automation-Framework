@@ -1,12 +1,8 @@
 name: Test Suite Runner & Metrics Publisher
 
 on:
-  # PR runs are owned by staging-tests.yml. Running PRs here too would fire the
-  # staging suite twice per PR (two workflows hitting the same login number at once →
-  # OTP "too many attempts" cooldown). This pipeline now runs only on explicit
-  # dispatch and the dashboard's repository_dispatch (it keeps the Allure publish).
-  repository_dispatch:
-    types: [run-smoke-tests]
+  # Portfolio copy: manual runs only. Scheduled / PR / dispatch triggers removed so
+  # nothing runs automatically against the original application.
   workflow_dispatch:
     inputs:
       env:

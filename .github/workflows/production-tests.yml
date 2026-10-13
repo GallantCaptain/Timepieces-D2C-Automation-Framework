@@ -4,9 +4,8 @@ name: production-tests
 # manual dispatch. Production is NOT run per-PR — only verified, merged code is
 # exercised against the live site.
 on:
-  schedule:
-    # 22:30 UTC nightly (04:00 IST). Staggered after staging-tests (20:30 UTC).
-    - cron: "30 22 * * *"
+  # Portfolio copy: manual runs only. Scheduled / PR / dispatch triggers removed so
+  # nothing runs automatically against the original application.
   workflow_dispatch:
 
 # Never run two production suites at once (they would hit the same login number and
